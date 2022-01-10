@@ -8,9 +8,10 @@ namespace Xc.Command.Interface
 {
     public class DeligateCommand : ICommand
     {
-        public DeligateCommand(Func<Dictionary<string, string>, Task<string>> command)
+        public DeligateCommand(string command, Func<Dictionary<string, string>, Task<string>> commandFunction)
         {
-            this.command = command;
+            this.BaseCommand = command;
+            this.commandFunction = commandFunction;
         }
         public Func<ValueTask>? Dispose { get; set; }
         public ValueTask DisposeAsync()
@@ -19,12 +20,21 @@ namespace Xc.Command.Interface
             return ValueTask.CompletedTask;
         }
 
-        protected Func<Dictionary<string, string>, Task<string>>? command { get; set; }
+        protected Func<Dictionary<string, string>, Task<string>>? commandFunction { get; set; }
+
+        public string BaseCommand { get; }
+
+        public string FriendlyName => BaseCommand;
 
         public Task<string> Operate(Dictionary<string, string> parameters, IOutputMessageContext outputMesser)
         {
-            if (this.command != null) return this.command(parameters);
+            if (this.commandFunction != null) return this.commandFunction(parameters);
             return Task.FromResult(String.Empty);
+        }
+
+        public Task OutputHelp(IOutputMessageContext messageContext)
+        {
+            throw new NotImplementedException();
         }
     } 
 }

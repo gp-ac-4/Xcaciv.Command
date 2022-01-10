@@ -6,4 +6,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.IO.Abstractions" Version="16.0.8" />
+    <PackageReference Include="xc.loader" Version="1.0.2.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Xc.Command.Interface\Xc.Command.Interface.csproj" />
+  </ItemGroup>
+
 </Project>
