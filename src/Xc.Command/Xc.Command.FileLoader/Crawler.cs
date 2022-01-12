@@ -10,7 +10,7 @@ using Xc.Loader;
 
 namespace Xc.Command.FileLoader
 {
-    public class Crawler
+    public class Crawler : ICrawler
     {
         /// <summary>
         /// number of package dlls signaling the need to paralell process
@@ -19,7 +19,7 @@ namespace Xc.Command.FileLoader
         /// <summary>
         /// abstraction for file system
         /// </summary>
-        private IFileSystem fileSystem;
+        protected IFileSystem fileSystem;
         /// <summary>
         /// empty constructor with default IFileSystem
         /// </summary>
@@ -69,7 +69,7 @@ namespace Xc.Command.FileLoader
 
                     packagDesc.Commands = commands;
                 }
-                
+
                 packages.TryAdd(binPath, packagDesc);
             });
 
@@ -106,7 +106,7 @@ namespace Xc.Command.FileLoader
         /// <param name="subDirectory"></param>
         /// <param name="packageAction"></param>
         /// <param name="binaryDirectories"></param>
-        private void ForEachDirectory(string basePath, string subDirectory, Action<string, string> packageAction, string[] binaryDirectories)
+        protected void ForEachDirectory(string basePath, string subDirectory, Action<string, string> packageAction, string[] binaryDirectories)
         {
             foreach (var directory in binaryDirectories)
             {
@@ -123,7 +123,7 @@ namespace Xc.Command.FileLoader
         /// <param name="subDirectory"></param>
         /// <param name="packageAction"></param>
         /// <param name="binaryDirectories"></param>
-        private void ForEachDirectoryParallel(string basePath, string subDirectory, Action<string, string> packageAction, string[] binaryDirectories)
+        protected void ForEachDirectoryParallel(string basePath, string subDirectory, Action<string, string> packageAction, string[] binaryDirectories)
         {
             Parallel.ForEach(binaryDirectories, (directory) =>
             {

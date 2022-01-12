@@ -8,7 +8,7 @@ namespace Xc.Command.Interface
 {
     public class DeligateCommand : ICommand
     {
-        public DeligateCommand(string command, Func<Dictionary<string, string>, Task<string>> commandFunction)
+        public DeligateCommand(string command, Func<string[], Task<string>> commandFunction)
         {
             this.BaseCommand = command;
             this.commandFunction = commandFunction;
@@ -20,21 +20,22 @@ namespace Xc.Command.Interface
             return ValueTask.CompletedTask;
         }
 
-        protected Func<Dictionary<string, string>, Task<string>>? commandFunction { get; set; }
+        protected Func<string[], Task<string>>? commandFunction { get; set; }
 
         public string BaseCommand { get; }
 
         public string FriendlyName => BaseCommand;
 
-        public Task<string> Operate(Dictionary<string, string> parameters, IOutputMessageContext outputMesser)
+        public Task<string> Main(string[] parameters, IOutputMessageContext outputMesser)
         {
             if (this.commandFunction != null) return this.commandFunction(parameters);
             return Task.FromResult(String.Empty);
         }
 
-        public Task OutputHelp(IOutputMessageContext messageContext)
+        public async Task Help(IOutputMessageContext messageContext)
         {
-            throw new NotImplementedException();
+            await messageContext.WriteLine("Deligate Command, no help available.");
+            return;
         }
     } 
 }

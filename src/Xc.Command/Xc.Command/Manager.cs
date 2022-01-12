@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Xc.Command.FileLoader;
 using Xc.Command.Interface;
+using Xc.Loader;
 
 namespace Xc.Command
 {
@@ -12,6 +15,125 @@ namespace Xc.Command
     /// </summary>
     public class Manager
     {
-        protected Dictionary<string, CommandDescription> Commands { get; set; } =  new Dictionary<string, CommandDescription>();
+        /// <summary>
+        /// registered commands
+        /// </summary>
+        protected Dictionary<string, CommandDescription> Commands { get; set;  } =  new Dictionary<string, CommandDescription>();
+        /// <summary>
+        /// restricted directories containing command packages
+        /// if no restrictedDirectory is specified the current running directory will be used
+        /// </summary>
+        protected IVerfiedSourceDirectories PackageBinaryDirectories { get; set; } = new VerfiedSourceDirectories(new FileSystem());
+        /// <summary>
+        /// Command Manger
+        /// </summary>
+        public Manager() { }
+        /// <summary>
+        /// Command Manager constructor to specify restricted directory
+        /// </summary>
+        /// <param name="restrictedDirectory"></param>
+        public Manager(string restrictedDirectory) 
+        {
+            this.PackageBinaryDirectories.SetRestrictedDirectory(restrictedDirectory);
+        }
+        /// <summary>
+        /// Command Manager test constructor
+        /// </summary>
+        /// <param name="packageBinearyDirectories"></param>
+        public Manager(IVerfiedSourceDirectories packageBinearyDirectories)
+        {
+            this.PackageBinaryDirectories = packageBinearyDirectories;
+        }
+        /// <summary>
+        /// add a base directory for loading command packages
+        /// default directory structure for a plugin will be:
+        ///     directory/PluginName/bin/PluginName.dll
+        /// </summary>
+        /// <param name="directory"></param>
+        public void AddPackageDirectory(string directory)
+        {
+            this.PackageBinaryDirectories.AddDirectory(directory);
+        }
+        /// <summary>
+        /// (re)populate command collection using a crawler
+        /// </summary>
+        /// <param name="crawler"></param>
+        /// <param name="subDirectory"></param>
+        /// <exception cref="Exceptions.InValidConfigurationException"></exception>
+        public void LoadCommands(ICrawler crawler, string subDirectory = "bin")
+        {
+            if (this.PackageBinaryDirectories.Directories.Count == 0) throw new Exceptions.InValidConfigurationException("No base package directory configured.");
+
+            this.Commands.Clear();
+            foreach (var directory in this.PackageBinaryDirectories.Directories)
+            {
+                foreach (var command in crawler.LoadPackageDescriptions(directory, subDirectory).SelectMany(o => o.Value.Commands))
+                {
+                    this.Commands.Add(command.Value.BaseCommand, command.Value);
+                }
+            }
+        }
+        /// <summary>
+        /// parse a command line, find and execute the command passing in the arguments
+        /// </summary>
+        /// <param name="commandLine"></param>
+        public async Task Run(string commandLine, IOutputMessageContext output)
+        {
+            var commandName = GetCommand(commandLine);
+            var args = PrepareArgs(commandLine);
+            await Run(commandName, args, output);
+        }
+        /// <summary>
+        /// execute command event
+        /// </summary>
+        /// <param name="commandKey"></param>
+        /// <param name="args"></param>
+        /// <param name="output"></param>
+        private async Task Run(string commandKey, string[] args, IOutputMessageContext output)
+        {
+            if (!this.Commands.ContainsKey(commandKey))
+            {
+                await output.SetStatusMessage($"Command [{commandKey}] not found.");
+                return;
+            }
+            try
+            {
+                var commandDiscription = this.Commands[commandKey];
+                using (var context = AssemblyContext.LoadFromPath(commandDiscription.PackageDescription.FullPath))
+                {
+                    var commandInstance = context.GetInstance<ICommand>(commandDiscription.FullTypeName);
+                    await commandInstance.Main(args, output);
+                }
+            }
+            catch (Exception ex)
+            {
+                await output.SetStatusMessage(ex.ToString());
+            }
+        }
+        /// <summary>
+        /// parse primary command from a command line
+        /// </summary>
+        /// <param name="commandLine">full command line</param>
+        /// <returns></returns>
+        public static string GetCommand(string commandLine)
+        {
+            var commandText = commandLine.Substring(0, commandLine.IndexOf(' ')).ToUpper();
+            return CommandDescription.InvalidCommandChars.Replace(commandText, "");
+        }
+        /// <summary>
+        /// parses arguments from a command line
+        /// </summary>
+        /// <param name="commandLine">full command line</param>
+        /// <returns></returns>
+        public static string[] PrepareArgs(string commandLine)
+        {
+            var args = System.Text.RegularExpressions.Regex.Matches(commandLine, @"[\""].+?[\""]|[\w-]+")
+                .Cast<System.Text.RegularExpressions.Match>()
+                .Select(o => CommandDescription.InvalidCommandChars.Replace(o.Value, ""))
+                .ToArray();
+
+            return args.Skip(1).ToArray();
+        }
+
     }
 }

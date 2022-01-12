@@ -10,16 +10,16 @@ public class CommandDescription
     /// <summary>
     /// sanitized internal command text
     /// </summary>
-    private string command = string.Empty;
+    protected string command = string.Empty;
     /// <summary>
     /// regex for clensing command
     /// no exceptions
     /// </summary>
-    public static Regex InvalidCommandChars = new Regex(@"[^-_\da-zA-Z]+");
+    public static Regex InvalidCommandChars = new Regex(@"[^-_\da-zA-Z ""]+");
     /// <summary>
     /// text command
     /// </summary>
-    public string BaseCommand { get => command; set => command = InvalidCommandChars.Replace(value, ""); }
+    public string BaseCommand { get => command; set => command = InvalidCommandChars.Replace(value, "").ToUpper(); }
     /// <summary>
     /// Fully Namespaced Type Name
     /// </summary>

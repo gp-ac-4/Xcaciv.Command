@@ -16,7 +16,7 @@ namespace Xc.Command.Interface
         /// </summary>
         string BaseCommand { get; }
         /// <summary>
-        /// Display name
+        /// Display name - may contain special characters
         /// </summary>
         string FriendlyName { get; }
         /// <summary>
@@ -25,13 +25,13 @@ namespace Xc.Command.Interface
         /// <param name="parameters"></param>
         /// <param name="messageContext"></param>
         /// <returns></returns>
-        Task<string> Operate(Dictionary<string, string> parameters, IOutputMessageContext messageContext);
+        Task<string> Main(string[] parameters, IOutputMessageContext messageContext);
         /// <summary>
         /// output usage instructions via message context
         /// </summary>
         /// <param name="messageContext"></param>
         /// <returns></returns>
-        Task OutputHelp(IOutputMessageContext messageContext);
+        Task Help(IOutputMessageContext messageContext);
     }
 }
  
