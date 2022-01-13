@@ -1,17 +1,17 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xc.Command", "Xc.Command\Xc.Command.csproj", "{E6280E51-8ED7-4ED0-819A-063251C9E53D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xcaciv.Command", "Xcaciv.Command\Xcaciv.Command.csproj", "{E6280E51-8ED7-4ED0-819A-063251C9E53D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xc.Command.Interface", "Xc.Command.Interface\Xc.Command.Interface.csproj", "{1D54A8C6-1E92-4B5B-9EBB-147839480D73}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xcaciv.Command.Interface", "Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj", "{1D54A8C6-1E92-4B5B-9EBB-147839480D73}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xc.Command.FileLoader", "Xc.Command.FileLoader\Xc.Command.FileLoader.csproj", "{BC290BFF-4ACA-4D84-96DC-5432F9722C87}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xcaciv.Command.FileLoader", "Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj", "{BC290BFF-4ACA-4D84-96DC-5432F9722C87}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xc.Command.FileLoaderTests", "Xc.Command.FileLoaderTests\Xc.Command.FileLoaderTests.csproj", "{9B087B2C-5852-4B56-B213-727CB6048784}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xcaciv.Command.FileLoaderTests", "Xcaciv.Command.FileLoaderTests\Xcaciv.Command.FileLoaderTests.csproj", "{9B087B2C-5852-4B56-B213-727CB6048784}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xc.CommandTests", "Xc.CommandTests\Xc.CommandTests.csproj", "{B517F2E2-DFEF-4C9E-9C5E-DBCF7873AAA9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xcaciv.CommandTests", "Xcaciv.CommandTests\Xcaciv.CommandTests.csproj", "{B517F2E2-DFEF-4C9E-9C5E-DBCF7873AAA9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

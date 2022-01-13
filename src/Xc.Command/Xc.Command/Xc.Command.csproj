@@ -1,15 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>0.0.1-beta1</Version>
+    <AssemblyName>Xc.Command</AssemblyName>
+    <RootNamespace>Xc.Command</RootNamespace>
   </PropertyGroup>
-
   <ItemGroup>
-    <ProjectReference Include="..\Xc.Command.FileLoader\Xc.Command.FileLoader.csproj" />
-    <ProjectReference Include="..\Xc.Command.Interface\Xc.Command.Interface.csproj" />
+    <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj" />
+    <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
   </ItemGroup>
-
 </Project>

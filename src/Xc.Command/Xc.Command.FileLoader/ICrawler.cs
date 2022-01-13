@@ -1,6 +1,6 @@
-﻿using Xc.Command.Interface;
+using Xcaciv.Command.Interface;
 
-namespace Xc.Command.FileLoader
+namespace Xcaciv.Command.FileLoader
 {
     public interface ICrawler
     {

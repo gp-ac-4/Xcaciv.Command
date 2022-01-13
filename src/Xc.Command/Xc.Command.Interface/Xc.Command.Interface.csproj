@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>0.0.1-beta1</Version>
+    <AssemblyName>Xc.Command.Interface</AssemblyName>
+    <RootNamespace>Xc.Command.Interface</RootNamespace>
   </PropertyGroup>
-
 </Project>

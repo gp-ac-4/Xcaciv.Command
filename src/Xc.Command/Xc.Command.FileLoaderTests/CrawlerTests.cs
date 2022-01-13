@@ -1,4 +1,4 @@
-﻿using Xc.Command.FileLoader;
+using Xcaciv.Command.FileLoader;
 using Xunit;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.IO.Abstractions.TestingHelpers;
 using System.IO.Abstractions;
 using System.IO;
 
-namespace Xc.Command.FileLoaderTests
+namespace Xcaciv.Command.FileLoaderTests
 {
     public class CrawlerTests
     {

@@ -1,4 +1,4 @@
-﻿namespace Xc.Command.Interface;
+namespace Xcaciv.Command.Interface;
 
 public class PackageDescription
 {

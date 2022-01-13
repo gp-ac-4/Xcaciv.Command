@@ -1,6 +1,6 @@
-﻿using System.IO.Abstractions;
+using System.IO.Abstractions;
 
-namespace Xc.Command.FileLoader
+namespace Xcaciv.Command.FileLoader
 {
     public class VerfiedSourceDirectories : IVerfiedSourceDirectories
     {

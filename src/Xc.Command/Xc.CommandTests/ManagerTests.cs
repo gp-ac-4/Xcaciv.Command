@@ -1,12 +1,12 @@
-﻿using Xunit;
-using Xc.Command;
+using Xunit;
+using Xcaciv.Command;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Xc.CommandTests
+namespace Xcaciv.CommandTests
 {
     public class ManagerTests
     {

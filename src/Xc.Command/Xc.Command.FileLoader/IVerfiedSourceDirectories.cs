@@ -1,5 +1,5 @@
-﻿
-namespace Xc.Command.FileLoader
+
+namespace Xcaciv.Command.FileLoader
 {
     public interface IVerfiedSourceDirectories
     {

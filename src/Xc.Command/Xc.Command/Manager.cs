@@ -1,14 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Xc.Command.FileLoader;
-using Xc.Command.Interface;
-using Xc.Loader;
+using Xcaciv.Command.FileLoader;
+using Xcaciv.Command.Interface;
+using Xcaciv.Loader;
 
-namespace Xc.Command
+namespace Xcaciv.Command
 {
     /// <summary>
     /// Command Manager

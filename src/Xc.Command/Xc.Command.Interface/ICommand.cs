@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Xc.Command.Interface
+namespace Xcaciv.Command.Interface
 {
     /// <summary>
     /// interface for commands that can be issued from a shell
