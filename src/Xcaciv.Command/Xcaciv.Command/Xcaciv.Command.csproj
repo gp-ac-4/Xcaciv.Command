@@ -4,8 +4,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>0.0.1-beta1</Version>
-    <AssemblyName>Xc.Command</AssemblyName>
-    <RootNamespace>Xc.Command</RootNamespace>
+    <AssemblyName>Xcaciv.Command</AssemblyName>
+    <RootNamespace>Xcaciv.Command</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj" />

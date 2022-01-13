@@ -1,9 +1,8 @@
 using Xcaciv.Command.Interface;
 
-namespace Xcaciv.Command.FileLoader
+namespace Xcaciv.Command.FileLoader;
+
+public interface ICrawler
 {
-    public interface ICrawler
-    {
-        IDictionary<string, PackageDescription> LoadPackageDescriptions(string basePath, string subDirectory);
-    }
+    IDictionary<string, PackageDescription> LoadPackageDescriptions(string basePath, string subDirectory);
 }

@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>0.0.1-beta1</Version>
-    <AssemblyName>Xc.Command.Interface</AssemblyName>
-    <RootNamespace>Xc.Command.Interface</RootNamespace>
+    <AssemblyName>Xcaciv.Command.Interface</AssemblyName>
+    <RootNamespace>Xcaciv.Command.Interface</RootNamespace>
   </PropertyGroup>
 </Project>
