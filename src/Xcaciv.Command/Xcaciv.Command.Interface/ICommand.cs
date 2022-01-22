@@ -25,13 +25,13 @@ namespace Xcaciv.Command.Interface
         /// <param name="parameters"></param>
         /// <param name="messageContext"></param>
         /// <returns></returns>
-        Task<string> Main(string[] parameters, IOutputMessageContext messageContext);
+        Task<string> Main(string[] parameters, ITextIoContext messageContext);
         /// <summary>
         /// output usage instructions via message context
         /// </summary>
         /// <param name="messageContext"></param>
         /// <returns></returns>
-        Task Help(IOutputMessageContext messageContext);
+        Task Help(ITextIoContext messageContext);
     }
 }
  

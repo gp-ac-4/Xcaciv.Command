@@ -77,7 +77,7 @@ public class Manager
     /// parse a command line, find and execute the command passing in the arguments
     /// </summary>
     /// <param name="commandLine"></param>
-    public async Task Run(string commandLine, IOutputMessageContext output)
+    public async Task Run(string commandLine, ITextIoContext output)
     {
         var commandName = GetCommand(commandLine);
         var args = PrepareArgs(commandLine);
@@ -89,7 +89,7 @@ public class Manager
     /// <param name="commandKey"></param>
     /// <param name="args"></param>
     /// <param name="output"></param>
-    private async Task Run(string commandKey, string[] args, IOutputMessageContext output)
+    private async Task Run(string commandKey, string[] args, ITextIoContext output)
     {
         if (!this.Commands.ContainsKey(commandKey))
         {

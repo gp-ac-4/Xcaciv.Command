@@ -9,7 +9,7 @@ namespace Xcaciv.Command.Interface;
 /// <summary>
 /// thread safe message pump for UI syncronization context
 /// </summary>
-public interface IOutputMessageContext
+public interface ITextIoContext
 {
     /// <summary>
     /// current message context identifier
@@ -49,5 +49,5 @@ public interface IOutputMessageContext
     /// </summary>
     /// <param name="Name">friendly name for user output</param>
     /// <returns></returns>
-    Task<IOutputMessageContext> GetChild(string Name);
+    Task<ITextIoContext> GetChild(string Name);
 }

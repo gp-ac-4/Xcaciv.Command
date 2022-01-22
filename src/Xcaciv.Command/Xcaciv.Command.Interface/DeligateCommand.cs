@@ -26,13 +26,13 @@ namespace Xcaciv.Command.Interface
 
         public string FriendlyName => BaseCommand;
 
-        public Task<string> Main(string[] parameters, IOutputMessageContext outputMesser)
+        public Task<string> Main(string[] parameters, ITextIoContext outputMesser)
         {
             if (this.commandFunction != null) return this.commandFunction(parameters);
             return Task.FromResult(String.Empty);
         }
 
-        public async Task Help(IOutputMessageContext messageContext)
+        public async Task Help(ITextIoContext messageContext)
         {
             await messageContext.WriteLine("Deligate Command, no help available.");
             return;
