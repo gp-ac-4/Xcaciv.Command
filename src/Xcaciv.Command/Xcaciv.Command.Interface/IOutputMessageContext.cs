@@ -12,6 +12,18 @@ namespace Xcaciv.Command.Interface;
 public interface IOutputMessageContext
 {
     /// <summary>
+    /// current message context identifier
+    /// </summary>
+    Guid Id { get; }
+    /// <summary>
+    /// friendly name for user output
+    /// </summary>
+    string Name { get; }
+    /// <summary>
+    /// parent context identifier if there is one
+    /// </summary>
+    Guid? Parent { get; }
+    /// <summary>
     /// output message text ending in new line
     /// used for cumulative output
     /// </summary>
@@ -32,4 +44,10 @@ public interface IOutputMessageContext
     /// <param name="step"></param>
     /// <returns>whole number signifying percentage</returns>
     Task<int> SetProgress(int total, int step);
+    /// <summary>
+    /// create a child output context
+    /// </summary>
+    /// <param name="Name">friendly name for user output</param>
+    /// <returns></returns>
+    Task<IOutputMessageContext> GetChild(string Name);
 }
