@@ -13,7 +13,7 @@ namespace Xcaciv.Command;
 /// <summary>
 /// Command Manager
 /// </summary>
-public class Manager : ICommandManager
+public class CommandManager : ICommandManager
 {
     protected ICrawler Crawler;
 
@@ -29,11 +29,11 @@ public class Manager : ICommandManager
     /// <summary>
     /// Command Manger
     /// </summary>
-    public Manager() : this(new Crawler()) { }
+    public CommandManager() : this(new Crawler()) { }
     /// <summary>
     /// Command Manger
     /// </summary>
-    public Manager(ICrawler crawler) 
+    public CommandManager(ICrawler crawler) 
     {
         this.Crawler = crawler;
     }
@@ -41,7 +41,7 @@ public class Manager : ICommandManager
     /// Command Manager constructor to specify restricted directory
     /// </summary>
     /// <param name="restrictedDirectory"></param>
-    public Manager(ICrawler crawler,string restrictedDirectory) : this(crawler)
+    public CommandManager(ICrawler crawler,string restrictedDirectory) : this(crawler)
     {
         this.PackageBinaryDirectories.SetRestrictedDirectory(restrictedDirectory);
     }
@@ -49,7 +49,7 @@ public class Manager : ICommandManager
     /// Command Manager test constructor
     /// </summary>
     /// <param name="packageBinearyDirectories"></param>
-    public Manager(IVerfiedSourceDirectories packageBinearyDirectories)
+    public CommandManager(IVerfiedSourceDirectories packageBinearyDirectories)
     {
         this.PackageBinaryDirectories = packageBinearyDirectories;
     }

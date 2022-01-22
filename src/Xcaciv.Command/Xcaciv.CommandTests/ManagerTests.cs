@@ -15,9 +15,9 @@ namespace Xcaciv.CommandTests
         {
             var expected = "DIR";
             var commandLine = $"{expected} - some options here";
-            var manager = new Manager();
+            var manager = new CommandManager();
 
-            var actual = Manager.GetCommand(commandLine);
+            var actual = CommandManager.GetCommand(commandLine);
 
             Assert.Equal(expected, actual);
         }
@@ -28,9 +28,9 @@ namespace Xcaciv.CommandTests
             var command = "DIR";
             var expected = new[] { "-some", "options", "here" };
             var commandLine = $"{command} " + String.Join(' ', expected);
-            var manager = new Manager();
+            var manager = new CommandManager();
 
-            var actual = Manager.PrepareArgs(commandLine);
+            var actual = CommandManager.PrepareArgs(commandLine);
             Assert.Equal(expected, actual);
         }
 
@@ -40,7 +40,7 @@ namespace Xcaciv.CommandTests
             var expected = "DIR";
             var commandLine = $"{expected}*'`%^! -some options here";
             
-            var actual = Manager.GetCommand(commandLine);
+            var actual = CommandManager.GetCommand(commandLine);
 
             Assert.Equal(expected, actual);
         }
@@ -52,7 +52,7 @@ namespace Xcaciv.CommandTests
             var expected = new[] { "-some", "options", "here" };
             var commandLine = $"{command} *'`%^!" + String.Join(' ', expected);
             
-            var actual = Manager.PrepareArgs(commandLine);
+            var actual = CommandManager.PrepareArgs(commandLine);
             Assert.Equal(expected, actual);
         }
 
@@ -63,7 +63,7 @@ namespace Xcaciv.CommandTests
             var expected = new[] { "-some", "\"two word\"", "and_three_word", "options" };
             var commandLine = $"{command} " + String.Join(' ', expected);
             
-            var actual = Manager.PrepareArgs(commandLine);
+            var actual = CommandManager.PrepareArgs(commandLine);
             Assert.Equal(expected, actual);
         }
     }
