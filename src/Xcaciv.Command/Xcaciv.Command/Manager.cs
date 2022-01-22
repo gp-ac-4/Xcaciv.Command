@@ -13,8 +13,10 @@ namespace Xcaciv.Command;
 /// <summary>
 /// Command Manager
 /// </summary>
-public class Manager
+public class Manager : ICommandManager
 {
+    protected ICrawler Crawler;
+
     /// <summary>
     /// registered commands
     /// </summary>
@@ -27,12 +29,19 @@ public class Manager
     /// <summary>
     /// Command Manger
     /// </summary>
-    public Manager() { }
+    public Manager() : this(new Crawler()) { }
+    /// <summary>
+    /// Command Manger
+    /// </summary>
+    public Manager(ICrawler crawler) 
+    {
+        this.Crawler = crawler;
+    }
     /// <summary>
     /// Command Manager constructor to specify restricted directory
     /// </summary>
     /// <param name="restrictedDirectory"></param>
-    public Manager(string restrictedDirectory)
+    public Manager(ICrawler crawler,string restrictedDirectory) : this(crawler)
     {
         this.PackageBinaryDirectories.SetRestrictedDirectory(restrictedDirectory);
     }
@@ -60,14 +69,14 @@ public class Manager
     /// <param name="crawler"></param>
     /// <param name="subDirectory"></param>
     /// <exception cref="Exceptions.InValidConfigurationException"></exception>
-    public void LoadCommands(ICrawler crawler, string subDirectory = "bin")
+    public void LoadCommands(string subDirectory = "bin")
     {
         if (this.PackageBinaryDirectories.Directories.Count == 0) throw new Exceptions.InValidConfigurationException("No base package directory configured.");
 
         this.Commands.Clear();
         foreach (var directory in this.PackageBinaryDirectories.Directories)
         {
-            foreach (var command in crawler.LoadPackageDescriptions(directory, subDirectory).SelectMany(o => o.Value.Commands))
+            foreach (var command in Crawler.LoadPackageDescriptions(directory, subDirectory).SelectMany(o => o.Value.Commands))
             {
                 this.Commands.Add(command.Value.BaseCommand, command.Value);
             }
