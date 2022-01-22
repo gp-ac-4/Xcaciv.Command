@@ -24,6 +24,12 @@ public interface ITextIoContext
     /// </summary>
     Guid? Parent { get; }
     /// <summary>
+    /// get command text from context
+    /// </summary>
+    /// <param name="prompt"></param>
+    /// <returns></returns>
+    Task<string> PromptForCommand(string prompt);
+    /// <summary>
     /// output message text ending in new line
     /// used for cumulative output
     /// </summary>
