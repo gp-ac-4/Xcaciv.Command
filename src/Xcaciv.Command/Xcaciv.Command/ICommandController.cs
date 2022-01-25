@@ -3,7 +3,7 @@ using Xcaciv.Command.Interface;
 
 namespace Xcaciv.Command
 {
-    public interface ICommandManager
+    public interface ICommandController
     {
         void AddPackageDirectory(string directory);
         void LoadCommands(string subDirectory = "bin");

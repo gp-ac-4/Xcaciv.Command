@@ -1,14 +1,38 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.0.7</Version>
+    <Version>0.0.11</Version>
     <AssemblyName>Xcaciv.Command</AssemblyName>
     <RootNamespace>Xcaciv.Command</RootNamespace>
+    <IsPublishable>True</IsPublishable>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <!--<NuspecFile>Xcaciv.Command.nuspec</NuspecFile>-->
+    <TargetFramework>net6.0</TargetFramework>
+    <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj" />
-    <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
+    <PackageReference Include="System.IO.Abstractions" Version="16.1.4" />
+    <PackageReference Include="Xcaciv.Loader" Version="1.0.2.4" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj">
+      <IncludeAssets>Xcaciv.Command.FileLoader.dll</IncludeAssets>
+    </ProjectReference>
+    <ProjectReference Packge="True" Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj">
+      <IncludeAssets>Xcaciv.Command.Interface.dll</IncludeAssets>
+    </ProjectReference>
+  
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <Target DependsOnTargets="ResolveReferences" Name="CopyProjectReferencesToPackage">
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+    </ItemGroup>
+  </Target>
 </Project>

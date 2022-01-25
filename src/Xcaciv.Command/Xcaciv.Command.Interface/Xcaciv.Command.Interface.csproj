@@ -3,8 +3,9 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.0.5</Version>
+    <Version>0.0.6</Version>
     <AssemblyName>Xcaciv.Command.Interface</AssemblyName>
     <RootNamespace>Xcaciv.Command.Interface</RootNamespace>
+    <PackageLicenseFile>D:\Development\github\ac-4\Xcaciv.Cupcake\LICENSE</PackageLicenseFile>
   </PropertyGroup>
 </Project>
