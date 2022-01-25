@@ -7,7 +7,6 @@
     <RootNamespace>Xcaciv.Command</RootNamespace>
     <IsPublishable>True</IsPublishable>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-    <!--<NuspecFile>Xcaciv.Command.nuspec</NuspecFile>-->
     <TargetFramework>net6.0</TargetFramework>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
   </PropertyGroup>
