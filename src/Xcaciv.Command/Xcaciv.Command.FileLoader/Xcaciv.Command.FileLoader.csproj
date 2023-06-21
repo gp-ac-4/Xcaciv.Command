@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>Xcaciv.Command.FileLoader</AssemblyName>
@@ -8,7 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.IO.Abstractions" Version="16.1.4" />
-    <PackageReference Include="Xcaciv.Loader" Version="1.0.2.4" />
+    <PackageReference Include="Xcaciv.Loader" Version="1.0.2.7" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />

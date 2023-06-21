@@ -15,5 +15,5 @@ public class PackageDescription
     /// full path to location of binary
     /// </summary>
     public string FullPath { get; set; } = String.Empty;
-    public Dictionary<string, CommandDescription> Commands { get; set; }
+    public Dictionary<string, CommandDescription> Commands { get; set; } = new Dictionary<string, CommandDescription>();
 }
