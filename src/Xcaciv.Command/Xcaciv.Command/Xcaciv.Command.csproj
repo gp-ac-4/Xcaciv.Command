@@ -2,7 +2,7 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.0.15</Version>
+    <Version>1.0.16</Version>
     <AssemblyName>Xcaciv.Command</AssemblyName>
     <RootNamespace>Xcaciv.Command</RootNamespace>
     <IsPublishable>True</IsPublishable>
@@ -20,7 +20,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.IO.Abstractions" Version="16.1.4" />
-    <PackageReference Include="Xcaciv.Loader" Version="1.0.2.7" />
+    <PackageReference Include="Xcaciv.Loader" Version="1.0.2.8" />
   </ItemGroup>
   
   <ItemGroup>
@@ -42,6 +42,14 @@
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <Target DependsOnTargets="ResolveReferences" Name="CopyProjectReferencesToPackage">

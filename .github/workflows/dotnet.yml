@@ -32,7 +32,12 @@ jobs:
       run: dotnet restore $env:Solution_Name
     - name: Debug Build
       run: dotnet build $env:Solution_Name --no-restore --configuration Debug
-    - name: Test
-      run: dotnet test $env:Solution_Name --no-build --verbosity normal
-    - name: Clean Build
-      run: dotnet clean $env:Solution_Name
+    - name: Test with dotnet
+      run: dotnet test $env:Solution_Name --no-build --logger trx --results-directory "TestResults-${{ matrix.dotnet-version }}"
+    - name: Upload dotnet test results
+      uses: actions/upload-artifact@v4
+      with:
+        name: dotnet-results-${{ matrix.dotnet-version }}
+        path: TestResults-${{ matrix.dotnet-version }}
+      # Use always() to always run this step to publish test results when there are test failures
+      if: ${{ always() }}
