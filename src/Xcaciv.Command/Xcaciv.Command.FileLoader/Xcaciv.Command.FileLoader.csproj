@@ -7,8 +7,8 @@
     <RootNamespace>Xcaciv.Command.FileLoader</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.IO.Abstractions" Version="16.1.4" />
-    <PackageReference Include="Xcaciv.Loader" Version="1.0.2.8" />
+    <PackageReference Include="System.IO.Abstractions" />
+    <PackageReference Include="Xcaciv.Loader" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
