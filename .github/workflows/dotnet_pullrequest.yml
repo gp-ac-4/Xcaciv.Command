@@ -10,11 +10,7 @@ jobs:
     runs-on: windows-latest
 
     env:
-      Solution_Name: src\Xcaciv.Command\Xcaciv.Command.sln
-      Test_Project_Path: src\Xcaciv.Command\**\*Tests.csproj
-      Net_Project_Directory: Xcaciv.Command
-      Net_Project_Path: src\Xcaciv.Command\Xcaciv.Command\Xcaciv.Command.csproj
-      Nuget_Project_Path: src\Xcaciv.Command\Xcaciv.Command\Xcaciv.Command.csproj
+      Solution_Name: Xcaciv.Command.sln
 
     steps:
     - name: Checkout
@@ -28,9 +24,10 @@ jobs:
 
     - name: Configure Nuget Source
       run: |
-          dotnet nuget add source "https://nuget.pkg.github.com/xcaciv/index.json" -n "github" -u xcaciv -p ${{ secrets.NUGET_PAT }} --store-password-in-clear-text
+        dotnet nuget update source github -s "https://nuget.pkg.github.com/xcaciv/index.json" -u xcaciv -p ${{ secrets.NUGET_PAT }} --store-password-in-clear-text --configfile $env:Nuget_Config_Path
     - name: Restore dependencies
       run: dotnet restore $env:Solution_Name
+        
     - name: Debug Build
       run: dotnet build $env:Solution_Name --no-restore --configuration Debug
     - name: Test with dotnet

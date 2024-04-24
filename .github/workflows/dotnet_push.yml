@@ -10,9 +10,9 @@ jobs:
     runs-on: windows-latest
 
     env:
-      Solution_Name: src\Xcaciv.Command\Xcaciv.Command.sln
-      Nuget_Project_Path: src\Xcaciv.Command\Xcaciv.Command\Xcaciv.Command.csproj
-      Nuget_Config_Path: src\Xcaciv.Command\NuGet.config
+      Solution_Name: Xcaciv.Command.sln
+      Nuget_Project_Path: src\Xcaciv.Command\Xcaciv.Command.csproj
+      Nuget_Config_Path: NuGet.config
 
     steps:
     - name: Checkout
