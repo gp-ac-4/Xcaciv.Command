@@ -26,8 +26,12 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
+    - name: Configure Nuget Source
+      run: |
+        dotnet nuget add source "https://nuget.pkg.github.com/xcaciv/index.json" -n "github" -u xcaciv -p ${{ secrets.NUGET_PAT }} --store-password-in-clear-text
     - name: Restore dependencies
       run: dotnet restore $env:Solution_Name
+      
     - name: Debug Build
       run: dotnet build $env:Solution_Name --no-restore --configuration Debug
     - name: Test with dotnet
@@ -45,9 +49,6 @@ jobs:
     - name: Nuget Package
       run: |
         dotnet pack $env:Nuget_Project_Path --no-build  --configuration Release
-    - name: Configure Nuget Source
-      run: |
-        dotnet nuget add source "https://nuget.pkg.github.com/xcaciv/index.json" -n "github" -u xcaciv -p ${{ secrets.NUGET_PAT }} --store-password-in-clear-text
     - name: Nuget Push
       run: |
         dotnet nuget push **\*.nupkg -k ${{ secrets.NUGET_PAT }} -s "github" --skip-duplicate

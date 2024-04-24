@@ -15,7 +15,7 @@ jobs:
       Net_Project_Directory: Xcaciv.Command
       Net_Project_Path: src\Xcaciv.Command\Xcaciv.Command\Xcaciv.Command.csproj
       Nuget_Project_Path: src\Xcaciv.Command\Xcaciv.Command\Xcaciv.Command.csproj
-      
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -26,6 +26,9 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
+    - name: Configure Nuget Source
+      run: |
+          dotnet nuget add source "https://nuget.pkg.github.com/xcaciv/index.json" -n "github" -u xcaciv -p ${{ secrets.NUGET_PAT }} --store-password-in-clear-text
     - name: Restore dependencies
       run: dotnet restore $env:Solution_Name
     - name: Debug Build
