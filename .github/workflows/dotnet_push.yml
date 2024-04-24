@@ -11,10 +11,8 @@ jobs:
 
     env:
       Solution_Name: src\Xcaciv.Command\Xcaciv.Command.sln
-      Test_Project_Path: src\Xcaciv.Command\**\*Tests.csproj
-      Net_Project_Directory: Xcaciv.Command
-      Net_Project_Path: src\Xcaciv.Command\Xcaciv.Command\Xcaciv.Command.csproj
       Nuget_Project_Path: src\Xcaciv.Command\Xcaciv.Command\Xcaciv.Command.csproj
+      Nuget_Config_Path: src\Xcaciv.Command\NuGet.config
 
     steps:
     - name: Checkout
@@ -28,7 +26,7 @@ jobs:
 
     - name: Configure Nuget Source
       run: |
-        dotnet nuget add source "https://nuget.pkg.github.com/xcaciv/index.json" -n "github" -u xcaciv -p ${{ secrets.NUGET_PAT }} --store-password-in-clear-text
+        dotnet nuget update source github -s "https://nuget.pkg.github.com/xcaciv/index.json" -u xcaciv -p ${{ secrets.NUGET_PAT }} --store-password-in-clear-text --configfile $env:Nuget_Config_Path
     - name: Restore dependencies
       run: dotnet restore $env:Solution_Name
       
@@ -48,7 +46,7 @@ jobs:
         dotnet build $env:Nuget_Project_Path --no-restore --configuration Release
     - name: Nuget Package
       run: |
-        dotnet pack $env:Nuget_Project_Path --no-build  --configuration Release
+        dotnet pack $env:Nuget_Project_Path --configuration Release
     - name: Nuget Push
       run: |
         dotnet nuget push **\*.nupkg -k ${{ secrets.NUGET_PAT }} -s "github" --skip-duplicate
