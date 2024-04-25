@@ -125,8 +125,13 @@ public class CommandController : ICommandController
     /// <returns></returns>
     public static string GetCommand(string commandLine)
     {
-        var commandText = commandLine.Substring(0, commandLine.IndexOf(' ')).ToUpper();
-        return CommandDescription.InvalidCommandChars.Replace(commandText, "");
+        // get the first word in the command line
+        var commandText = (commandLine.Contains(' ')) ?
+            commandLine.Substring(0, commandLine.IndexOf(' ')).ToUpper() :
+            commandLine.ToUpper();
+
+        // remove invalid characters
+        return CommandDescription.InvalidCommandChars.Replace(commandText.Trim(), "");
     }
     /// <summary>
     /// parses arguments from a command line
