@@ -77,10 +77,19 @@ public class CommandController : ICommandController
         {
             foreach (var command in Crawler.LoadPackageDescriptions(directory, subDirectory).SelectMany(o => o.Value.Commands))
             {
-                this.Commands.Add(command.Value.BaseCommand, command.Value);
+                AddCommand(command.Value);
             }
         }
     }
+    /// <summary>
+    /// install a single command into the index
+    /// </summary>
+    /// <param name="command"></param>
+    public void AddCommand(CommandDescription command)
+    {
+        this.Commands.Add(command.BaseCommand.ToUpper(), command);
+    }
+
     /// <summary>
     /// parse a command line, find and execute the command passing in the arguments
     /// </summary>
@@ -126,9 +135,11 @@ public class CommandController : ICommandController
     public static string GetCommand(string commandLine)
     {
         // get the first word in the command line
-        var commandText = (commandLine.Contains(' ')) ?
-            commandLine.Substring(0, commandLine.IndexOf(' ')).ToUpper() :
-            commandLine.ToUpper();
+        var commandText = (
+            (commandLine.Contains(' ')) ?
+            commandLine.Substring(0, commandLine.IndexOf(' ')) :
+            commandLine
+            ).ToUpper();
 
         // remove invalid characters
         return CommandDescription.InvalidCommandChars.Replace(commandText.Trim(), "");
