@@ -17,7 +17,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B6212A8E-CCFE-492A-95E3-2AAD25970292}"
 	ProjectSection(SolutionItems) = preProject
 		src\Directory.Packages.props = src\Directory.Packages.props
-		NuGet.config = NuGet.config
 	EndProjectSection
 EndProject
 Global
