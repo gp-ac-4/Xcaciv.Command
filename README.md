@@ -4,6 +4,6 @@ Excessively modular command framework capable of executing a line of text as a c
 
 ```csharp
     var commandManager = new Xc.Command.Manager();
-    manager.LoadCommands(new Crawler());
-    _ = manager.Run("Say Hello to my little friend");
+    commandManager.LoadCommands(new Crawler());
+    _ = commandManager.Run("Say Hello to my little friend");
 ```
