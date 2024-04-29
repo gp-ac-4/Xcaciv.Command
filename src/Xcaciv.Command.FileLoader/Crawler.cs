@@ -16,6 +16,9 @@ public class Crawler : ICrawler
     /// number of package dlls signaling the need to paralell process
     /// </summary>
     public static int ParallelizeAt { get; set; } = 50;
+
+    private const string SearchPattern = "*.dll";
+
     /// <summary>
     /// abstraction for file system
     /// </summary>
@@ -44,11 +47,13 @@ public class Crawler : ICrawler
         var packages = new ConcurrentDictionary<string, PackageDescription>();
 
         // use a callback to process listing commands
-        this.CrawlPackagePaths(basePath, subDirectory, (name, binPath) =>
+        this.CrawlPackagePaths(basePath, subDirectory, (key, binPath) =>
         {
+            // This is the package action
+
             var packagDesc = new PackageDescription()
             {
-                Name = name,
+                Name = key,
                 FullPath = binPath,
             };
 
@@ -70,7 +75,7 @@ public class Crawler : ICrawler
                 packagDesc.Commands = commands;
             }
 
-            packages.TryAdd(binPath, packagDesc);
+            if (packagDesc.Commands.Count > 0) packages.TryAdd(key, packagDesc);
         });
 
         return packages;
@@ -88,19 +93,20 @@ public class Crawler : ICrawler
         basePath = fileSystem.Path.GetFullPath(basePath);
         if (!this.fileSystem.Directory.Exists(basePath)) throw new DirectoryNotFoundException(basePath);
 
-        var binaryDirectories = fileSystem.Directory.GetDirectories(basePath, fileSystem.Path.Combine("*", subDirectory),
-                SearchOption.AllDirectories);
+        string searchMask = (String.IsNullOrEmpty(subDirectory)) ? SearchPattern : fileSystem.Path.Combine("*", subDirectory, SearchPattern);
 
-        if (!binaryDirectories.Any()) throw new Exceptions.NoPackageDirectoryFoundException($"No packages found in {basePath}.");
+        var binaryCommandCollections = this.fileSystem.Directory.GetFiles(basePath, searchMask, SearchOption.AllDirectories);
+
+        if (!binaryCommandCollections.Any()) throw new Exceptions.NoPackageDirectoryFoundException($"No packages found in {basePath}.");
 
         // avoid overhead of paralell if it is not needed
-        if (binaryDirectories.Count() > ParallelizeAt)
+        if (binaryCommandCollections.Count() > ParallelizeAt)
         {
-            ForEachDirectoryParallel(basePath, subDirectory, packageAction, binaryDirectories);
+            ForEachDirectoryParallel(basePath, subDirectory, packageAction, binaryCommandCollections);
         }
         else
         {
-            ForEachDirectory(basePath, subDirectory, packageAction, binaryDirectories);
+            ForEachDirectory(basePath, subDirectory, packageAction, binaryCommandCollections);
         }
     }
     /// <summary>
@@ -112,11 +118,11 @@ public class Crawler : ICrawler
     /// <param name="binaryDirectories"></param>
     protected void ForEachDirectory(string basePath, string subDirectory, Action<string, string> packageAction, string[] binaryDirectories)
     {
-        foreach (var directory in binaryDirectories)
+        foreach (var packageFilePath in binaryDirectories)
         {
-            var packageName = directory.Remove(0, basePath.Length).Replace(subDirectory, String.Empty).Replace(@"\", String.Empty);
-            var packageFilePath = fileSystem.Path.Combine(directory, packageName + ".dll");
-
+            var fileName = fileSystem.Path.GetFileNameWithoutExtension(packageFilePath);
+            var uniqueId = fileSystem.Path.GetDirectoryName(packageFilePath)?.Remove(0, basePath.Length)?.Replace(@"\", String.Empty);
+            var packageName = $"{fileName}-{uniqueId}";
             if (fileSystem.File.Exists(packageFilePath)) packageAction(packageName, packageFilePath);
         }
     }
@@ -129,11 +135,11 @@ public class Crawler : ICrawler
     /// <param name="binaryDirectories"></param>
     protected void ForEachDirectoryParallel(string basePath, string subDirectory, Action<string, string> packageAction, string[] binaryDirectories)
     {
-        Parallel.ForEach(binaryDirectories, (directory) =>
+        Parallel.ForEach(binaryDirectories, (packageFilePath) =>
         {
-            var packageName = directory.Remove(0, basePath.Length).Replace(subDirectory, String.Empty).Replace(@"\", String.Empty);
-            var packageFilePath = fileSystem.Path.Combine(directory, packageName + ".dll");
-
+            var fileName = fileSystem.Path.GetFileNameWithoutExtension(packageFilePath);
+            var uniqueId = fileSystem.Path.GetDirectoryName(packageFilePath)?.Remove(0, basePath.Length)?.Replace(@"\", String.Empty);
+            var packageName = $"{fileName}-{uniqueId}";
             if (fileSystem.File.Exists(packageFilePath)) packageAction(packageName, packageFilePath);
         });
     }

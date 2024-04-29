@@ -70,7 +70,7 @@ public class CommandController : ICommandController
     /// <exception cref="Exceptions.InValidConfigurationException"></exception>
     public void LoadCommands(string subDirectory = "bin")
     {
-        if (this.PackageBinaryDirectories.Directories.Count == 0) throw new Exceptions.NoPluginsFoundException("No base package directory configured.");
+        if (this.PackageBinaryDirectories.Directories.Count == 0) throw new Exceptions.NoPluginsFoundException("No base package directory configured. (Did you set the restricted directory?)");
 
         this.Commands.Clear();
         foreach (var directory in this.PackageBinaryDirectories.Directories)

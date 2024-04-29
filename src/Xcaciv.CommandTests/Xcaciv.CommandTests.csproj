@@ -19,6 +19,8 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj" />
+    <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
     <ProjectReference Include="..\Xcaciv.Command\Xcaciv.Command.csproj" />
   </ItemGroup>
 </Project>
