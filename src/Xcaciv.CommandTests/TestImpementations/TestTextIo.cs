@@ -14,22 +14,36 @@ namespace Xcaciv.CommandTests.TestImpementations
 
         public string Name => "TestTextIo";
 
-        public Guid? Parent => null;
+        public Guid? Parent { get; set; } = null;
+        /// <summary>
+        /// test collection of children to verify commmand behavior
+        /// </summary>
+        public List<TestTextIo> Children { get; private set; } = new List<TestTextIo>();
+
+        /// <summary>
+        /// test collection of output chunks to verify behavior
+        /// </summary>
+        public List<string> Output { get; private set; } = new List<string>();
 
         public Task<ITextIoContext> GetChild(string Name)
         {
-            return Task.FromResult<ITextIoContext>(new TestTextIo());
+            var child = new TestTextIo();
+            child.Parent = this.Id;
+            this.Children.Add(child);
+            return Task.FromResult<ITextIoContext>(child);
         }
 
-        private List<string> _output = new List<string>()
-        {
-            "say what is up",
-            "say this is a test"
-        };
-
+        public Dictionary<string, string> PromptAnswers { get; private set; } = new Dictionary<string, string>();
+        
         public Task<string> PromptForCommand(string prompt)
         {
-            return Task.FromResult(_output.First());
+            this.Output.Add($"PROMPT> {prompt}");
+
+            var answer = PromptAnswers.ContainsKey(prompt) ? 
+                    PromptAnswers[prompt] : 
+                    prompt;
+
+            return Task.FromResult(answer);
         }
 
         public Task<int> SetProgress(int total, int step)
@@ -39,11 +53,19 @@ namespace Xcaciv.CommandTests.TestImpementations
 
         public Task SetStatusMessage(string message)
         {
+            this.Output.Add(message);
             return Task.CompletedTask;
         }
 
-        public Task WriteLine(string message)
+        public Task OutputLine(string message)
         {
+            this.Output.Add(message);
+            return Task.CompletedTask;
+        }
+
+        public Task OutputChunk(string message)
+        {
+            this.Output.Add(message);
             return Task.CompletedTask;
         }
     }

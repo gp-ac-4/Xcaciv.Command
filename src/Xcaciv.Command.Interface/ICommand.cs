@@ -25,7 +25,7 @@ namespace Xcaciv.Command.Interface
         /// <param name="parameters"></param>
         /// <param name="messageContext"></param>
         /// <returns></returns>
-        Task<string> Main(string[] parameters, ITextIoContext messageContext);
+        IAsyncEnumerable<string> Main(string[] parameters, ITextIoContext messageContext);
         /// <summary>
         /// output usage instructions via message context
         /// </summary>

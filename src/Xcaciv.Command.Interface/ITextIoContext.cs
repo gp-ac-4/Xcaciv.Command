@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 namespace Xcaciv.Command.Interface;
 
 /// <summary>
-/// thread safe message pump for UI syncronization context
+/// thread safe string pump for UI syncronization context
+/// This interface is used to abstract the UI from the command processor
 /// </summary>
 public interface ITextIoContext
 {
@@ -30,12 +31,20 @@ public interface ITextIoContext
     /// <returns></returns>
     Task<string> PromptForCommand(string prompt);
     /// <summary>
-    /// output message text ending in new line
+    /// output text WITHOUT new line
+    /// used for cumulative standard output
+    /// SHOULD NOT CONTAIN ACTUAL RESULT
+    /// </summary>
+    /// <param name="message"></param>
+    /// <returns></returns>
+    Task OutputChunk(string message);
+    /// <summary>
+    /// output text ending in new line
     /// used for cumulative output
     /// </summary>
     /// <param name="message"></param>
     /// <returns></returns>
-    Task WriteLine(string message);
+    Task OutputLine(string message);
     /// <summary>
     /// replace status text with new text
     /// used for static status output
@@ -52,6 +61,7 @@ public interface ITextIoContext
     Task<int> SetProgress(int total, int step);
     /// <summary>
     /// create a child output context
+    /// may track the instance for later use
     /// </summary>
     /// <param name="Name">friendly name for user output</param>
     /// <returns></returns>

@@ -87,6 +87,6 @@ public class CrawlerTests
         var crawler = new Crawler(fileSystem);
         var packages = crawler.LoadPackageDescriptions(commandPackageDir, String.Empty);
 
-        Assert.True(packages.Where(p => p.Value.Commands.ContainsKey("SAY")).Any());
+        Assert.True(packages.Where(p => p.Value.Commands.ContainsKey("ECHO")).Any());
     }
 }

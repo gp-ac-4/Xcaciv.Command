@@ -27,15 +27,19 @@ namespace Xcaciv.CommandTests
 #endif
         }
         [Fact()]
-        public void LoadCommandsTest()
+        public async Task LoadCommandsTestAsync()
         {
-
             var commands = new CommandController(new Crawler(), @"..\..\..\..\..\");
             commands.AddPackageDirectory(commandPackageDir);
             
             commands.LoadCommands(string.Empty);
             var textio = new TestImpementations.TestTextIo();
-            _ = commands.Run("Say what is up", textio);
+            // simulate user input
+            await commands.Run("echo what is up", textio);
+
+            // verify the output of the first run
+            // by looking at the output of the second output line
+            Assert.Equal("what", textio.Children.First().Output[1]);
         }
     }
 }

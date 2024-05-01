@@ -94,11 +94,12 @@ public class CommandController : ICommandController
     /// parse a command line, find and execute the command passing in the arguments
     /// </summary>
     /// <param name="commandLine"></param>
-    public async Task Run(string commandLine, ITextIoContext output)
+    public async Task Run(string commandLine, ITextIoContext ioContext)
     {
+        // parse the command line before processing the context
         var commandName = GetCommand(commandLine);
         var args = PrepareArgs(commandLine);
-        await Run(commandName, args, output);
+        await Run(commandName, args, ioContext);
     }
     /// <summary>
     /// execute command event
@@ -113,18 +114,24 @@ public class CommandController : ICommandController
             await ioContext.SetStatusMessage($"Command [{commandKey}] not found.");
             return;
         }
+
+        var childIoContext = await ioContext.GetChild(this.Commands[commandKey].PackageDescription.Name);
+
         try
         {
             var commandDiscription = this.Commands[commandKey];
             using (var context = AssemblyContext.LoadFromPath(commandDiscription.PackageDescription.FullPath))
             {
                 var commandInstance = context.GetInstance<ICommand>(commandDiscription.FullTypeName);
-                await commandInstance.Main(args, ioContext);
+                await foreach(var resultMessage in commandInstance.Main(args, childIoContext))
+                {
+                    await childIoContext.OutputChunk(resultMessage);
+                }
             }
         }
         catch (Exception ex)
         {
-            await ioContext.SetStatusMessage(ex.ToString());
+            await childIoContext.SetStatusMessage(ex.ToString());
         }
     }
     /// <summary>
