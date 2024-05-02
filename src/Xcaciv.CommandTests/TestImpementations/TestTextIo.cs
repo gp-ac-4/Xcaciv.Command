@@ -2,19 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
+using System.Reflection.PortableExecutable;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
+using Xcaciv.Command;
 using Xcaciv.Command.Interface;
 
 namespace Xcaciv.CommandTests.TestImpementations
 {
-    public class TestTextIo : ITextIoContext
+    public class TestTextIo : AbstractTextIo
     {
-        public Guid Id => new Guid();
-
-        public string Name => "TestTextIo";
-
-        public Guid? Parent { get; set; } = null;
         /// <summary>
         /// test collection of children to verify commmand behavior
         /// </summary>
@@ -25,17 +23,24 @@ namespace Xcaciv.CommandTests.TestImpementations
         /// </summary>
         public List<string> Output { get; private set; } = new List<string>();
 
-        public Task<ITextIoContext> GetChild(string Name)
+        public Dictionary<string, string> PromptAnswers { get; private set; } = new Dictionary<string, string>();
+
+        public TestTextIo(string[]? arguments = null) : base("TestTextIo", null)
         {
-            var child = new TestTextIo();
-            child.Parent = this.Id;
+            this.Parameters = arguments ?? string.Empty.Split(' ');
+        }
+
+        public override Task<ITextIoContext> GetChild(string[]? childArguments = null)
+        {
+            var child = new TestTextIo(childArguments)
+            {
+                Parent = this.Id
+            };
             this.Children.Add(child);
             return Task.FromResult<ITextIoContext>(child);
         }
 
-        public Dictionary<string, string> PromptAnswers { get; private set; } = new Dictionary<string, string>();
-        
-        public Task<string> PromptForCommand(string prompt)
+        public override Task<string> PromptForCommand(string prompt)
         {
             this.Output.Add($"PROMPT> {prompt}");
 
@@ -46,27 +51,22 @@ namespace Xcaciv.CommandTests.TestImpementations
             return Task.FromResult(answer);
         }
 
-        public Task<int> SetProgress(int total, int step)
+        public override Task<int> SetProgress(int total, int step)
         {
             return Task.FromResult(step);
         }
 
-        public Task SetStatusMessage(string message)
+        public override Task SetStatusMessage(string message)
         {
             this.Output.Add(message);
             return Task.CompletedTask;
         }
 
-        public Task OutputLine(string message)
+        public override Task HandleOutputChunk(string chunk)
         {
-            this.Output.Add(message);
+            this.Output.Add(chunk);
             return Task.CompletedTask;
         }
 
-        public Task OutputChunk(string message)
-        {
-            this.Output.Add(message);
-            return Task.CompletedTask;
-        }
     }
 }

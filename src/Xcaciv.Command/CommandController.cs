@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Xcaciv.Command.FileLoader;
 using Xcaciv.Command.Interface;
@@ -15,10 +16,11 @@ namespace Xcaciv.Command;
 /// </summary>
 public class CommandController : ICommandController
 {
+    protected const string PIPELINE_CHAR = "|";
     protected ICrawler Crawler;
 
     /// <summary>
-    /// registered commands
+    /// registered command
     /// </summary>
     protected Dictionary<string, CommandDescription> Commands { get; set; } = new Dictionary<string, CommandDescription>();
     /// <summary>
@@ -97,17 +99,57 @@ public class CommandController : ICommandController
     public async Task Run(string commandLine, ITextIoContext ioContext)
     {
         // parse the command line before processing the context
-        var commandName = GetCommand(commandLine);
-        var args = PrepareArgs(commandLine);
-        await Run(commandName, args, ioContext);
+        // check to see if it is a pipeline
+        if (commandLine.Contains(PIPELINE_CHAR))
+        {
+            await PipelineTheBitch(commandLine, ioContext);
+        }
+        else
+        {
+            var commandName = GetCommand(commandLine);
+            var args = PrepareArgs(commandLine);
+            var childContext = await ioContext.GetChild(args);
+            await ExecuteCommand(commandName, childContext);
+        }        
     }
+
+    private async Task PipelineTheBitch(string commandLine, ITextIoContext ioContext)
+    {
+        var tasks = new List<Task>();
+        var pipeChannel = null as Channel<string>;
+
+        // split the command line into command by the pipeline character
+        foreach(var command in commandLine.Split(PIPELINE_CHAR))
+        {
+            var commandName = GetCommand(command);
+            var args = PrepareArgs(command);
+            var childContext = await ioContext.GetChild(args);
+
+            // if not the first command in the pipeline, set the read pipe
+            if (pipeChannel != null)
+            {
+                childContext.setInputPipe(pipeChannel.Reader);
+            }
+
+            // set the write pipe
+            pipeChannel = Channel.CreateUnbounded<string>();
+            childContext.SetOutputPipe(pipeChannel.Writer);
+
+            tasks.Add(ExecuteCommand(commandName, childContext));
+        }
+
+        // when the last command is done, set the read pipe
+        ioContext.setInputPipe(pipeChannel?.Reader);
+        await Task.WhenAll(tasks);
+    }
+
     /// <summary>
     /// execute command event
     /// </summary>
     /// <param name="commandKey"></param>
     /// <param name="args"></param>
     /// <param name="ioContext"></param>
-    private async Task Run(string commandKey, string[] args, ITextIoContext ioContext)
+    private async Task ExecuteCommand(string commandKey, ITextIoContext ioContext)
     {
         if (!this.Commands.ContainsKey(commandKey))
         {
@@ -115,23 +157,21 @@ public class CommandController : ICommandController
             return;
         }
 
-        var childIoContext = await ioContext.GetChild(this.Commands[commandKey].PackageDescription.Name);
-
         try
         {
             var commandDiscription = this.Commands[commandKey];
             using (var context = AssemblyContext.LoadFromPath(commandDiscription.PackageDescription.FullPath))
             {
                 var commandInstance = context.GetInstance<ICommand>(commandDiscription.FullTypeName);
-                await foreach(var resultMessage in commandInstance.Main(args, childIoContext))
+                await foreach(var resultMessage in commandInstance.Main(ioContext, ioContext))
                 {
-                    await childIoContext.OutputChunk(resultMessage);
+                    await ioContext.OutputChunk(resultMessage);
                 }
             }
         }
         catch (Exception ex)
         {
-            await childIoContext.SetStatusMessage(ex.ToString());
+            await ioContext.SetStatusMessage(ex.ToString());
         }
     }
     /// <summary>
@@ -163,6 +203,7 @@ public class CommandController : ICommandController
             .Select(o => CommandDescription.InvalidCommandChars.Replace(o.Value, ""))
             .ToArray();
 
+        // the first item in the array is the command
         return args.Skip(1).ToArray();
     }
 
