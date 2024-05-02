@@ -8,7 +8,7 @@ namespace Xcaciv.Command.Interface
 {
     public class DeligateCommand : ICommand
     {
-        public DeligateCommand(string command, Func<string[], Task<string>> commandFunction)
+        public DeligateCommand(string command, Func<IInputContext, IAsyncEnumerable<string>> commandFunction)
         {
             this.BaseCommand = command;
             this.commandFunction = commandFunction;
@@ -20,22 +20,37 @@ namespace Xcaciv.Command.Interface
             return ValueTask.CompletedTask;
         }
 
-        protected Func<string[], Task<string>>? commandFunction { get; set; }
+        protected Func<IInputContext, IAsyncEnumerable<string>>? commandFunction { get; set; }
 
         public string BaseCommand { get; }
 
         public string FriendlyName => BaseCommand;
-
-        public Task<string> Main(string[] parameters, ITextIoContext outputMesser)
+        /// <summary>
+        /// primary command execution method
+        /// </summary>
+        /// <param name="parameters"></param>
+        /// <param name="messageContext"></param>
+        /// <returns></returns>
+        async IAsyncEnumerable<string> ICommand.Main(IInputContext input, IStatusContext statusContext)
         {
-            if (this.commandFunction != null) return this.commandFunction(parameters);
-            return Task.FromResult(String.Empty);
+            if (this.commandFunction != null)
+            {
+                await foreach (var p in this.commandFunction(input))
+                {
+                    yield return p;
+                }
+            }
+            else
+            {
+                yield break;
+            }
         }
 
         public async Task Help(ITextIoContext messageContext)
         {
-            await messageContext.WriteLine("Deligate Command, no help available.");
+            await messageContext.OutputChunk("Deligate Command, no help available.");
             return;
         }
+
     } 
 }

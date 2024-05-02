@@ -2,14 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Xcaciv.Command.Interface;
 
 /// <summary>
-/// thread safe message pump for UI syncronization context
+/// String pump for UI syncronization context.
+/// This interface is used to abstract the UI from the command processor.
+/// Implementations shoudl be thread safe. They should handle pipeline input and 
+/// output via ChannelReader and ChannelWriter. The implementation should default
+/// to a particular bound output, but should prioritise the pipeline when channels
+/// are available.
 /// </summary>
-public interface ITextIoContext
+public interface ITextIoContext : IStatusContext, IInputContext, IOutputContext, IAsyncDisposable
 {
     /// <summary>
     /// current message context identifier
@@ -24,36 +30,11 @@ public interface ITextIoContext
     /// </summary>
     Guid? Parent { get; }
     /// <summary>
-    /// get command text from context
-    /// </summary>
-    /// <param name="prompt"></param>
-    /// <returns></returns>
-    Task<string> PromptForCommand(string prompt);
-    /// <summary>
-    /// output message text ending in new line
-    /// used for cumulative output
-    /// </summary>
-    /// <param name="message"></param>
-    /// <returns></returns>
-    Task WriteLine(string message);
-    /// <summary>
-    /// replace status text with new text
-    /// used for static status output
-    /// </summary>
-    /// <param name="message"></param>
-    /// <returns></returns>
-    Task SetStatusMessage(string message);
-    /// <summary>
-    /// set proces progress based on total
-    /// </summary>
-    /// <param name="total"></param>
-    /// <param name="step"></param>
-    /// <returns>whole number signifying percentage</returns>
-    Task<int> SetProgress(int total, int step);
-    /// <summary>
     /// create a child output context
+    /// may track the instance for later use
     /// </summary>
-    /// <param name="Name">friendly name for user output</param>
+    /// <param name="childArguments">arguments to pass to child context</param>
+    /// <param name="pipeline">specify we are dealing with a pipeline</param>
     /// <returns></returns>
-    Task<ITextIoContext> GetChild(string Name);
+    Task<ITextIoContext> GetChild(string[]? childArguments = null); 
 }

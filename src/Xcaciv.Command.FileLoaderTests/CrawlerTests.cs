@@ -8,11 +8,29 @@ using System.Threading.Tasks;
 using System.IO.Abstractions.TestingHelpers;
 using System.IO.Abstractions;
 using System.IO;
+using Xunit.Abstractions;
+using System.Runtime.Serialization;
+using Xcaciv.Command.Interface;
 
 namespace Xcaciv.Command.FileLoaderTests;
 
 public class CrawlerTests
 {
+    private ITestOutputHelper _testOutput;
+    private string commandPackageDir = @"..\..\..\..\zTestCommandPackage\bin\{1}\";
+
+    public CrawlerTests(ITestOutputHelper output)
+    {
+        this._testOutput = output;
+#if DEBUG
+        this._testOutput.WriteLine("Tests in Debug mode");
+        this.commandPackageDir = commandPackageDir.Replace("{1}", "Debug");
+#else
+        this._testOutput.WriteLine("Tests in Release mode??");
+        this.commandPackageDir = commandPackageDir.Replace("{1}", "Release");
+#endif
+    }
+
     private static string basePath = @"C:\Program\Commands\";
     private static string subDirectory = "bin";
 
@@ -60,5 +78,15 @@ public class CrawlerTests
         crawler.CrawlPackagePaths(basePath, subDirectory, (name, binPath) => paths.Add(name, binPath));
 
         Assert.Equal("C:\\Program\\Commands\\Hello\\bin\\Hello.dll", paths.FirstOrDefault().Value);
+    }
+
+    [Fact()]
+    public void LoadPackageDescriptionsTest()
+    {
+        IFileSystem fileSystem = new FileSystem();
+        var crawler = new Crawler(fileSystem);
+        var packages = crawler.LoadPackageDescriptions(commandPackageDir, String.Empty);
+
+        Assert.True(packages.Where(p => p.Value.Commands.ContainsKey("ECHO")).Any());
     }
 }

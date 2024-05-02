@@ -20,12 +20,12 @@ namespace Xcaciv.Command.Interface
         /// </summary>
         string FriendlyName { get; }
         /// <summary>
-        /// name value collection of parameters
+        /// primary command execution method
         /// </summary>
         /// <param name="parameters"></param>
-        /// <param name="messageContext"></param>
+        /// <param name="messageContext">used for progress and status messages</param>
         /// <returns></returns>
-        Task<string> Main(string[] parameters, ITextIoContext messageContext);
+        IAsyncEnumerable<string> Main(IInputContext input, IStatusContext statusContext);
         /// <summary>
         /// output usage instructions via message context
         /// </summary>

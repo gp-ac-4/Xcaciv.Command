@@ -11,6 +11,7 @@ jobs:
 
     env:
       Solution_Name: Xcaciv.Command.sln
+      Nuget_Config_Path: NuGet.config
 
     steps:
     - name: Checkout
