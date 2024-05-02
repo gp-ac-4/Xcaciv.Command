@@ -139,7 +139,7 @@ public class CommandController : ICommandController
         }
 
         // when the last command is done, set the read pipe
-        ioContext.setInputPipe(pipeChannel?.Reader);
+        ioContext.setInputPipe((pipeChannel ?? Channel.CreateBounded<string>(0)).Reader);
         await Task.WhenAll(tasks);
     }
 
