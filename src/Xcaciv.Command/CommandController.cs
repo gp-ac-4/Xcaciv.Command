@@ -165,7 +165,7 @@ public class CommandController : ICommandController
             var commandDiscription = this.Commands[commandKey];
             using (var context = AssemblyContext.LoadFromPath(commandDiscription.PackageDescription.FullPath))
             {
-                var commandInstance = context.GetInstance<ICommand>(commandDiscription.FullTypeName);
+                var commandInstance = context.GetInstance<ICommandDirective>(commandDiscription.FullTypeName);
                 await foreach(var resultMessage in commandInstance.Main(ioContext, ioContext))
                 {
                     await ioContext.OutputChunk(resultMessage);

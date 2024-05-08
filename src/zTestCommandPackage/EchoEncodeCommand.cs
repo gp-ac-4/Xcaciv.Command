@@ -8,7 +8,7 @@ using Xcaciv.Command.Interface;
 
 namespace zTestCommandPackage
 {
-    public class EchoEncodeCommand : EchoCommand, ICommand
+    public class EchoEncodeCommand : EchoCommand, ICommandDirective
     {
         public EchoEncodeCommand()
         {

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Xcaciv.Command.Interface
 {
-    public class DeligateCommand : ICommand
+    public class DeligateCommand : ICommandDirective
     {
         public DeligateCommand(string command, Func<IInputContext, IAsyncEnumerable<string>> commandFunction)
         {
@@ -31,7 +31,7 @@ namespace Xcaciv.Command.Interface
         /// <param name="parameters"></param>
         /// <param name="messageContext"></param>
         /// <returns></returns>
-        async IAsyncEnumerable<string> ICommand.Main(IInputContext input, IStatusContext statusContext)
+        async IAsyncEnumerable<string> ICommandDirective.Main(IInputContext input, IStatusContext statusContext)
         {
             if (this.commandFunction != null)
             {
