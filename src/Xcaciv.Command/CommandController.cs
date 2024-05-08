@@ -108,8 +108,9 @@ public class CommandController : ICommandController
         {
             var commandName = GetCommand(commandLine);
             var args = PrepareArgs(commandLine);
-            var childContext = await ioContext.GetChild(args);
-            await ExecuteCommand(commandName, childContext);
+            await using (var childContext = await ioContext.GetChild(args))
+                await ExecuteCommand(commandName, childContext);
+            
         }        
     }
 
@@ -123,8 +124,7 @@ public class CommandController : ICommandController
         {
             var commandName = GetCommand(command);
             var args = PrepareArgs(command);
-            var childContext = await ioContext.GetChild(args);
-
+            await using var childContext = await ioContext.GetChild(args);
             // if not the first command in the pipeline, set the read pipe
             if (pipeChannel != null)
             {
@@ -138,9 +138,12 @@ public class CommandController : ICommandController
             tasks.Add(ExecuteCommand(commandName, childContext));
         }
 
-        // when the last command is done, set the read pipe
-        ioContext.setInputPipe((pipeChannel ?? Channel.CreateBounded<string>(0)).Reader);
         await Task.WhenAll(tasks);
+
+        await foreach (var output in (pipeChannel ?? Channel.CreateBounded<string>(0)).Reader.ReadAllAsync())
+        {
+            await ioContext.OutputChunk(output);
+        }
     }
 
     /// <summary>
@@ -173,6 +176,10 @@ public class CommandController : ICommandController
         {
             await ioContext.SetStatusMessage(ex.ToString());
         }
+        finally
+        {
+            await ioContext.Complete($"ExecuteCommand: {commandKey} Done.");
+        }
     }
     /// <summary>
     /// parse primary command from a command line
@@ -181,12 +188,10 @@ public class CommandController : ICommandController
     /// <returns></returns>
     public static string GetCommand(string commandLine)
     {
-        // get the first word in the command line
-        var commandText = (
-            (commandLine.Contains(' ')) ?
-            commandLine.Substring(0, commandLine.IndexOf(' ')) :
-            commandLine
-            ).ToUpper();
+        commandLine= commandLine.Trim();
+        var commandText = ((commandLine.Contains(' ')) ?
+                commandLine.Substring(0, commandLine.Trim().IndexOf(' '))
+                 : commandLine).ToUpper();
 
         // remove invalid characters
         return CommandDescription.InvalidCommandChars.Replace(commandText.Trim(), "");

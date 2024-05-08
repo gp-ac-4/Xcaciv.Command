@@ -10,15 +10,9 @@ namespace zTestCommandPackage
 {
     public class EchoCommand : ICommand
     {
-        public string BaseCommand => "ECHO";
+        public string BaseCommand { get; protected set; } = "ECHO";
 
-        public string FriendlyName => "echo";
-
-        public ValueTask DisposeAsync()
-        {
-            // nothing to dispose
-            return ValueTask.CompletedTask;
-        }
+        public string FriendlyName { get; protected set; } = "echo";
 
         public Task Help(ITextIoContext messageContext)
         {
@@ -27,12 +21,31 @@ namespace zTestCommandPackage
 
         public async IAsyncEnumerable<string> Main(IInputContext input, IStatusContext statusContext)
         {
-            await statusContext.SetStatusMessage("ECHO test start");
-            foreach (var p in input.Parameters)
+            await statusContext.SetStatusMessage($"{this.BaseCommand} test start");
+            if (input.HasPipedInput)
             {
-                yield return $"{p}";
+                await foreach (var p in input.ReadInputPipeChunks())
+                    yield return this.FormatEcho(p);
             }
-            await statusContext.SetStatusMessage("ECHO test end");
+            else
+            {
+                foreach (var p in input.Parameters)
+                {
+                    yield return this.FormatEcho(p);
+                }
+            }
+            await statusContext.SetStatusMessage($"{this.BaseCommand} test end");
+        }
+
+        public virtual string FormatEcho(string p)
+        {
+            return $"{p}";
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            // nothing to dispose
+            return ValueTask.CompletedTask;
         }
     }
 }

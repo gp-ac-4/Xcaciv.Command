@@ -26,8 +26,8 @@ namespace Xcaciv.Command
 
         public string[] Parameters { get; set; } = Array.Empty<string>();
 
-        private ChannelReader<string>? inputPipe;
-        private ChannelWriter<string>? outputPipe;
+        protected ChannelReader<string>? inputPipe;
+        protected ChannelWriter<string>? outputPipe;
         /// <summary>
         /// constructor requires a name and optional parent guid
         /// </summary>
@@ -109,8 +109,16 @@ namespace Xcaciv.Command
         /// <returns></returns>
         public ValueTask DisposeAsync()
         {
-            this.outputPipe?.Complete();
+            this.Complete().Wait();
             return ValueTask.CompletedTask;
+        }
+
+        public Task Complete(string? message = null)
+        {
+            if (!String.IsNullOrEmpty(message)) this.SetStatusMessage(message).Wait();
+
+            this.outputPipe?.TryComplete();
+            return Task.CompletedTask;
         }
     }
 }

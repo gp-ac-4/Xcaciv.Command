@@ -22,6 +22,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "zTestCommandPackage", "src\zTestCommandPackage\zTestCommandPackage.csproj", "{B062C312-8C65-45E6-AF49-0692502DA605}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "zTestCommandPackage.Tests", "src\zTestCommandPackage.Tests\zTestCommandPackage.Tests.csproj", "{59AB8C54-097B-48E9-B42F-37E4252B81D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,10 @@ Global
 		{B062C312-8C65-45E6-AF49-0692502DA605}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B062C312-8C65-45E6-AF49-0692502DA605}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B062C312-8C65-45E6-AF49-0692502DA605}.Release|Any CPU.Build.0 = Release|Any CPU
+		{59AB8C54-097B-48E9-B42F-37E4252B81D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59AB8C54-097B-48E9-B42F-37E4252B81D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59AB8C54-097B-48E9-B42F-37E4252B81D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59AB8C54-097B-48E9-B42F-37E4252B81D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,6 +66,7 @@ Global
 		{9B087B2C-5852-4B56-B213-727CB6048784} = {6FEF8306-B2C7-489D-9ECC-23BCC8B53C41}
 		{B517F2E2-DFEF-4C9E-9C5E-DBCF7873AAA9} = {6FEF8306-B2C7-489D-9ECC-23BCC8B53C41}
 		{B062C312-8C65-45E6-AF49-0692502DA605} = {6FEF8306-B2C7-489D-9ECC-23BCC8B53C41}
+		{59AB8C54-097B-48E9-B42F-37E4252B81D9} = {6FEF8306-B2C7-489D-9ECC-23BCC8B53C41}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2C5022E1-F2BA-4FD4-8841-D4B32BD6A7E8}
