@@ -62,10 +62,37 @@ namespace Xcaciv.CommandTests.TestImpementations
             return Task.CompletedTask;
         }
 
+        public override Task OutputChunk(string message)
+        {
+            this.Output.Add("> " + message);
+            return base.OutputChunk(message);
+        }
+
         public override Task HandleOutputChunk(string chunk)
         {
             this.Output.Add(chunk);
             return Task.CompletedTask;
+        }
+
+        public override string ToString()
+        {
+            string output = string.Empty;
+            if (this.HasPipedInput)
+            {
+                // combine output into one string seperated by new lines
+                // and then add the children output
+                output = String.Join(Environment.NewLine, this.Output);
+                foreach (var chidl in this.Children)
+                {
+                    output += chidl.ToString() + Environment.NewLine;
+                }
+            }
+
+
+
+            output += String.Join('-', this.Output);
+
+            return output;
         }
 
     }

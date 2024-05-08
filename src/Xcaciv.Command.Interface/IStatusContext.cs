@@ -23,5 +23,11 @@ namespace Xcaciv.Command.Interface
         /// <param name="step"></param>
         /// <returns>whole number signifying percentage</returns>
         Task<int> SetProgress(int total, int step);
+        /// <summary>
+        /// signal that the status is complete
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        Task Complete(string? message);
     }
 }

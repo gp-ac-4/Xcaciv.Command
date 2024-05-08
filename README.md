@@ -1,6 +1,6 @@
 # Xcaciv.Command
 
-Excessively modular command framework capable of executing a line of text as a command with options without leaving command assembly in memory.
+Excessively modular, async pipeable, text command framework.
 
 ```csharp
     var commandManager = new Xc.Command.Manager();
@@ -11,3 +11,11 @@ Excessively modular command framework capable of executing a line of text as a c
 ```
 
 Commands are .NET class libraries that contain implementations of the `Xc.Command.ICommand` interface.
+
+## Roadmap
+
+[X] Threaded piplineing
+[ ] Internal commands `SAY` and `REGIF`
+[ ] External commands `HEAD` and `SITECERT` (start of web util package)
+[ ] Binary package installer
+[ ] Source package installer

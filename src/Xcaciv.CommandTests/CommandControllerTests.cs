@@ -27,7 +27,7 @@ namespace Xcaciv.CommandTests
 #endif
         }
         [Fact()]
-        public async Task LoadCommandsTestAsync()
+        public async Task RunCommandsTestAsync()
         {
             var commands = new CommandController(new Crawler(), @"..\..\..\..\..\");
             commands.AddPackageDirectory(commandPackageDir);
@@ -39,7 +39,22 @@ namespace Xcaciv.CommandTests
 
             // verify the output of the first run
             // by looking at the output of the second output line
-            Assert.Equal("what", textio.Children.First().Output[1]);
+            Assert.Equal("> what", textio.Children.First().Output[1]);
+        }
+        [Fact()]
+        public async Task PipeCommandsTestAsync()
+        {
+            var commands = new CommandController(new Crawler(), @"..\..\..\..\..\");
+            commands.AddPackageDirectory(commandPackageDir);
+
+            commands.LoadCommands(string.Empty);
+            var textio = new TestImpementations.TestTextIo();
+            // simulate user input
+            await commands.Run("echo what is up | echo2 | echoe ", textio);
+
+            // verify the output of the first run
+            // by looking at the output of the second output line
+            Assert.Equal("> :d2hhdC13aGF0:-:d2hhdC13aGF0:-> :aXMtaXM=:-:aXMtaXM=:-> :dXAtdXA=:-:dXAtdXA=:", textio.ToString());
         }
     }
 }
