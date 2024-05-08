@@ -62,6 +62,12 @@ namespace Xcaciv.CommandTests.TestImpementations
             return Task.CompletedTask;
         }
 
+        public override Task OutputChunk(string message)
+        {
+            this.Output.Add("> " + message);
+            return base.OutputChunk(message);
+        }
+
         public override Task HandleOutputChunk(string chunk)
         {
             this.Output.Add(chunk);

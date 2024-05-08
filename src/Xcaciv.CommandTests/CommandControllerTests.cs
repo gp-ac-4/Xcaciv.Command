@@ -54,7 +54,7 @@ namespace Xcaciv.CommandTests
 
             // verify the output of the first run
             // by looking at the output of the second output line
-            Assert.Equal(":d2hhdC13aGF0:-:aXMtaXM=:-:dXAtdXA=:", textio.ToString());
+            Assert.Equal("> :d2hhdC13aGF0:-:d2hhdC13aGF0:-> :aXMtaXM=:-:aXMtaXM=:-> :dXAtdXA=:-:dXAtdXA=:", textio.ToString());
         }
     }
 }

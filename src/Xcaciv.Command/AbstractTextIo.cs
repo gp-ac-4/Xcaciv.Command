@@ -46,7 +46,7 @@ namespace Xcaciv.Command
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        public Task OutputChunk(string message)
+        public virtual Task OutputChunk(string message)
         {
             if (this.outputPipe == null)
             {
