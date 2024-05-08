@@ -39,7 +39,7 @@ namespace Xcaciv.CommandTests
 
             // verify the output of the first run
             // by looking at the output of the second output line
-            Assert.Equal("what", textio.Children.First().Output[1]);
+            Assert.Equal("> what", textio.Children.First().Output[1]);
         }
         [Fact()]
         public async Task PipeCommandsTestAsync()
