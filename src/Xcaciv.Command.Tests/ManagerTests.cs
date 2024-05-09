@@ -1,0 +1,70 @@
+using Xunit;
+using Xcaciv.Command;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Xcaciv.Command.Tests
+{
+    public class ManagerTests
+    {
+        [Fact()]
+        public void GetCommandTest()
+        {
+            var expected = "DIR";
+            var commandLine = $"{expected} - some options here";
+            var manager = new CommandController();
+
+            var actual = CommandController.GetCommand(commandLine);
+
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact()]
+        public void PrepareArgsTest()
+        {
+            var command = "DIR";
+            var expected = new[] { "-some", "options", "here" };
+            var commandLine = $"{command} " + string.Join(' ', expected);
+            var manager = new CommandController();
+
+            var actual = CommandController.PrepareArgs(commandLine);
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact()]
+        public void GetCommand_HostileInput_Filters()
+        {
+            var expected = "DIR";
+            var commandLine = $"{expected}*'`%^! -some options here";
+
+            var actual = CommandController.GetCommand(commandLine);
+
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact()]
+        public void PrepareArgs_HostileInput_Filters()
+        {
+            var command = "DIR";
+            var expected = new[] { "-some", "options", "here" };
+            var commandLine = $"{command} *'`%^!" + string.Join(' ', expected);
+
+            var actual = CommandController.PrepareArgs(commandLine);
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact()]
+        public void PrepareArgs_Quotes_Groups()
+        {
+            var command = "DIR";
+            var expected = new[] { "-some", @"two word", "and_three_word", "options" , ".*? [0-9|a-z] ~!@#$%^&*()" };
+            var commandLine = $@"{command} """ + string.Join(@""" """, expected) + '"';
+
+            var actual = CommandController.PrepareArgs(commandLine);
+            Assert.Equal(expected, actual);
+        }
+    }
+}

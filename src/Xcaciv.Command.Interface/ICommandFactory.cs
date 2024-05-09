@@ -15,5 +15,5 @@ public interface ICommandFactory
     /// new up a instance of a particular command and box it
     /// </summary>
     /// <returns></returns>
-    ICommandDirective CreateCommandInstance();
+    ICommandDelegate CreateCommandInstance();
 }

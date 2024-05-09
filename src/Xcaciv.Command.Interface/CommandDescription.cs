@@ -15,7 +15,12 @@ public class CommandDescription
     /// regex for clensing command
     /// no exceptions
     /// </summary>
-    public static Regex InvalidCommandChars = new Regex(@"[^-_\da-zA-Z ""]+");
+    public static Regex InvalidCommandChars = new Regex(@"[^-_\da-zA-Z ]+");
+    /// <summary>
+    /// regex for clensing parameters
+    /// no exceptions
+    /// </summary>
+    public static Regex InvalidParameterChars = new Regex(@"[^-_\da-zA-Z .*?\[\]|""~!@#$%^&*\(\)]+");
     /// <summary>
     /// text command
     /// </summary>
