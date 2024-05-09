@@ -35,7 +35,10 @@ namespace Xcaciv.Command.Commands
             if (input.HasPipedInput)
             {
                 await foreach (var p in input.ReadInputPipeChunks())
+                {
+                    if (string.IsNullOrEmpty(p)) continue;
                     yield return this.HandlePipedChunk(p, input.Parameters, statusContext);
+                }
             }
             else
             {

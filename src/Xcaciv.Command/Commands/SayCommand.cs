@@ -27,7 +27,5 @@ namespace Xcaciv.Command.Commands
             return pipedChunk;
         }
 
-        public static CommandDescription CommandDescription => new CommandDescription() { 
-        };
     }
 }

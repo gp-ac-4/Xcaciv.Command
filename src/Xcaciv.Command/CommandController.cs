@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
@@ -76,7 +77,6 @@ public class CommandController : ICommandController
     {
         if (this.PackageBinaryDirectories.Directories.Count == 0) throw new Exceptions.NoPluginsFoundException("No base package directory configured. (Did you set the restricted directory?)");
 
-        this.Commands.Clear();
         foreach (var directory in this.PackageBinaryDirectories.Directories)
         {
             foreach (var command in Crawler.LoadPackageDescriptions(directory, subDirectory).SelectMany(o => o.Value.Commands))
@@ -98,16 +98,24 @@ public class CommandController : ICommandController
 
         foreach (var command in AssemblyContext.GetLoadedTypes<ICommandDelegate>())
         {
-            await using (var commandInstance = AssemblyContext.GetInstance<ICommandDelegate>(command))
+            try
             {
-                var description = new CommandDescription()
+                await using (var commandInstance = AssemblyContext.GetInstance<ICommandDelegate>(command))
                 {
-                    BaseCommand = commandInstance.BaseCommand,
-                    FullTypeName = command.FullName ?? String.Empty,
-                    PackageDescription = packagDescription
-                };
-                AddCommand(description);
-            }            
+                    var description = new CommandDescription()
+                    {
+                        BaseCommand = commandInstance.BaseCommand,
+                        FullTypeName = command.FullName ?? String.Empty,
+                        PackageDescription = packagDescription
+                    };
+                    AddCommand(description);
+                }
+            }
+            catch (Exception e) 
+            { 
+                Debug.WriteLine($"Exception loading {command.FullName}");
+                Debug.WriteLine(e);
+            }
         }
 
     }
