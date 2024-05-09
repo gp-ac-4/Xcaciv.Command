@@ -62,7 +62,7 @@ public class Crawler : ICrawler
                 var commands = new Dictionary<string, CommandDescription>();
                 packagDesc.Version = context.GetVersion();
 
-                foreach (var command in context.GetAllInstances<ICommand>())
+                foreach (var command in context.GetAllInstances<ICommandDelegate>())
                 {
                     commands[command.BaseCommand] = new CommandDescription()
                     {

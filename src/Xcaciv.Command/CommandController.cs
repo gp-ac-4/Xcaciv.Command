@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
@@ -74,7 +77,6 @@ public class CommandController : ICommandController
     {
         if (this.PackageBinaryDirectories.Directories.Count == 0) throw new Exceptions.NoPluginsFoundException("No base package directory configured. (Did you set the restricted directory?)");
 
-        this.Commands.Clear();
         foreach (var directory in this.PackageBinaryDirectories.Directories)
         {
             foreach (var command in Crawler.LoadPackageDescriptions(directory, subDirectory).SelectMany(o => o.Value.Commands))
@@ -82,6 +84,40 @@ public class CommandController : ICommandController
                 AddCommand(command.Value);
             }
         }
+    }
+
+    public async void LoadDefaultCommands()
+    {
+        // This is the package action
+        var key = "Default";
+        var packagDescription = new PackageDescription()
+        {
+            Name = key,
+            FullPath = "",
+        };
+
+        foreach (var command in AssemblyContext.GetLoadedTypes<ICommandDelegate>())
+        {
+            try
+            {
+                await using (var commandInstance = AssemblyContext.GetInstance<ICommandDelegate>(command))
+                {
+                    var description = new CommandDescription()
+                    {
+                        BaseCommand = commandInstance.BaseCommand,
+                        FullTypeName = command.FullName ?? String.Empty,
+                        PackageDescription = packagDescription
+                    };
+                    AddCommand(description);
+                }
+            }
+            catch (Exception e) 
+            { 
+                Debug.WriteLine($"Exception loading {command.FullName}");
+                Debug.WriteLine(e);
+            }
+        }
+
     }
     /// <summary>
     /// install a single command into the index
@@ -163,13 +199,19 @@ public class CommandController : ICommandController
         try
         {
             var commandDiscription = this.Commands[commandKey];
-            using (var context = AssemblyContext.LoadFromPath(commandDiscription.PackageDescription.FullPath))
+            var executeDeligate = Type.GetType(commandDiscription.FullTypeName);
+            if (executeDeligate == null)
             {
-                var commandInstance = context.GetInstance<ICommand>(commandDiscription.FullTypeName);
-                await foreach(var resultMessage in commandInstance.Main(ioContext, ioContext))
+                using (var context = AssemblyContext.LoadFromPath(commandDiscription.PackageDescription.FullPath))
                 {
-                    await ioContext.OutputChunk(resultMessage);
+                    var commandInstance = context.GetInstance<ICommandDelegate>(commandDiscription.FullTypeName);
+                    await ExecuteCommand(ioContext, commandInstance);
                 }
+            }
+            else
+            {
+                var commandInstance = AssemblyContext.GetInstance<ICommandDelegate>(executeDeligate);
+                await ExecuteCommand(ioContext, commandInstance);
             }
         }
         catch (Exception ex)
@@ -181,6 +223,15 @@ public class CommandController : ICommandController
             await ioContext.Complete($"ExecuteCommand: {commandKey} Done.");
         }
     }
+
+    private static async Task ExecuteCommand(ITextIoContext ioContext, ICommandDelegate commandInstance)
+    {
+        await foreach (var resultMessage in commandInstance.Main(ioContext, ioContext))
+        {
+            await ioContext.OutputChunk(resultMessage);
+        }
+    }
+
     /// <summary>
     /// parse primary command from a command line
     /// </summary>
@@ -203,9 +254,9 @@ public class CommandController : ICommandController
     /// <returns></returns>
     public static string[] PrepareArgs(string commandLine)
     {
-        var args = System.Text.RegularExpressions.Regex.Matches(commandLine, @"[\""].+?[\""]|[\w-]+")
+        var args = System.Text.RegularExpressions.Regex.Matches(commandLine, @"[\""].*?[\""]|[\w-]+")
             .Cast<System.Text.RegularExpressions.Match>()
-            .Select(o => CommandDescription.InvalidCommandChars.Replace(o.Value, ""))
+            .Select(o => CommandDescription.InvalidParameterChars.Replace(o.Value, "").Trim('"'))
             .ToArray();
 
         // the first item in the array is the command

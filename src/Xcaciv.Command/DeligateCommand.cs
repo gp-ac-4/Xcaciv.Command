@@ -7,7 +7,7 @@ using Xcaciv.Command.Interface;
 
 namespace Xcaciv.Command
 {
-    public class DeligateCommand : ICommand
+    public class DeligateCommand : ICommandDelegate
     {
         public DeligateCommand(string command, Func<IInputContext, IAsyncEnumerable<string>> commandFunction)
         {
@@ -27,7 +27,7 @@ namespace Xcaciv.Command
 
         public string FriendlyName => BaseCommand;
 
-        async IAsyncEnumerable<string> ICommand.Main(IInputContext input, IStatusContext statusContext)
+        async IAsyncEnumerable<string> ICommandDelegate.Main(IInputContext input, IStatusContext statusContext)
         {
             if (commandFunction != null)
             {

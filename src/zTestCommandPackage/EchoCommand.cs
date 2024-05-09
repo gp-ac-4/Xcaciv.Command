@@ -8,7 +8,7 @@ using Xcaciv.Command.Interface;
 
 namespace zTestCommandPackage
 {
-    public class EchoCommand : ICommand
+    public class EchoCommand : ICommandDelegate
     {
         public string BaseCommand { get; protected set; } = "ECHO";
 

@@ -1,4 +1,4 @@
-﻿using System;
+﻿ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
@@ -8,7 +8,7 @@ using Xcaciv.Command.Interface;
 
 namespace zTestCommandPackage
 {
-    public class EchoEncodeCommand : EchoCommand, ICommand
+    public class EchoEncodeCommand : EchoCommand, ICommandDelegate
     {
         public EchoEncodeCommand()
         {

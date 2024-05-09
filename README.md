@@ -14,8 +14,10 @@ Commands are .NET class libraries that contain implementations of the `Xc.Comman
 
 ## Roadmap
 
-[X] Threaded piplineing
-[ ] Internal commands `SAY` and `REGIF`
-[ ] External commands `HEAD` and `SITECERT` (start of web util package)
-[ ] Binary package installer
-[ ] Source package installer
+- [X] Threaded piplineing
+- [ ] Internal commands `SAY` and `REGIF`
+- [ ] External commands `HEAD` and `SITECERT` (start of web util package)
+- [ ] Binary package installer
+- [ ] Cupcake shell platform
+- [ ] Source package installer
+- [ ] dotnet tool installer
