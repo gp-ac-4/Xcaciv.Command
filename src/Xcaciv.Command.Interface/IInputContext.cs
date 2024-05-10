@@ -21,7 +21,7 @@ namespace Xcaciv.Command.Interface
         /// when running in a pipeline this will be the pipe that the command will read from
         /// </summary>
         /// <param name="reader"></param>
-        void setInputPipe(ChannelReader<string> reader);
+        void SetInputPipe(ChannelReader<string> reader);
         /// <summary>
         /// when in a pipeline, read input from the pipe
         /// </summary>

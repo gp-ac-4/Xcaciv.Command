@@ -31,7 +31,7 @@ namespace Xcaciv.Command.Interface
         /// </summary>
         /// <param name="messageContext"></param>
         /// <returns></returns>
-        Task Help(ITextIoContext messageContext);
+        void Help(IOutputContext outputContext);
     }
 }
  

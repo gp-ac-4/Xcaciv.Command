@@ -24,9 +24,9 @@ namespace Xcaciv.Command.Commands
             return ValueTask.CompletedTask;
         }
 
-        public virtual Task Help(ITextIoContext messageContext)
+        public virtual void Help(IOutputContext outputContext)
         {
-            return Task.FromResult(HelpString);
+            outputContext.OutputChunk($"[{BaseCommand}] ({FriendlyName}): {HelpString}");
         }
 
         public async IAsyncEnumerable<string> Main(IInputContext input, IStatusContext statusContext)

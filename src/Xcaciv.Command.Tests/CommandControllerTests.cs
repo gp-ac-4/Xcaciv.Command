@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using Xunit.Abstractions;
 using System.IO.Abstractions;
 using Xcaciv.Command.FileLoader;
+using System.IO.Abstractions.TestingHelpers;
+using Moq;
 
 namespace Xcaciv.Command.Tests
 {
@@ -55,6 +57,19 @@ namespace Xcaciv.Command.Tests
             // verify the output of the first run
             // by looking at the output of the second output line
             Assert.Equal("> :d2hhdC13aGF0:-:d2hhdC13aGF0:-> :aXMtaXM=:-:aXMtaXM=:-> :dXAtdXA=:-:dXAtdXA=:", textio.ToString());
+        }
+
+        [Fact()]
+        public void LoadDefaultCommandsTest()
+        {
+            var commands = new CommandController(new Crawler(), @"..\..\..\..\..\") as ICommandController;
+            commands.LoadDefaultCommands();
+
+            var textio = new TestImpementations.TestTextIo();
+            commands.GetHelp(string.Empty, textio);
+            
+            // Note: currently Loader is not unloading assemblies for performance reasons
+            Assert.Contains("REGIF", textio.ToString());
         }
     }
 }

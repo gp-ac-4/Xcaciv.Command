@@ -96,24 +96,28 @@ public class CommandController : ICommandController
             FullPath = "",
         };
 
-        foreach (var command in AssemblyContext.GetLoadedTypes<ICommandDelegate>())
+        foreach (var commandType in AssemblyContext.GetLoadedTypes<ICommandDelegate>())
         {
             try
             {
-                await using (var commandInstance = AssemblyContext.GetInstance<ICommandDelegate>(command))
+                await using (var commandInstance = AssemblyContext.GetInstance<ICommandDelegate>(commandType))
                 {
                     var description = new CommandDescription()
                     {
                         BaseCommand = commandInstance.BaseCommand,
-                        FullTypeName = command.FullName ?? String.Empty,
-                        PackageDescription = packagDescription
+                        FullTypeName = commandType.FullName ?? String.Empty,
+                        PackageDescription = new PackageDescription()
+                        {
+                            Name = key,
+                            FullPath = commandType.Assembly.Location
+                        }
                     };
                     AddCommand(description);
                 }
             }
             catch (Exception e) 
             { 
-                Debug.WriteLine($"Exception loading {command.FullName}");
+                Debug.WriteLine($"Exception loading {commandType.FullName}");
                 Debug.WriteLine(e);
             }
         }
@@ -150,12 +154,12 @@ public class CommandController : ICommandController
         }        
     }
 
-    private async Task PipelineTheBitch(string commandLine, ITextIoContext ioContext)
+    protected async Task PipelineTheBitch(string commandLine, ITextIoContext ioContext)
     {
         var tasks = new List<Task>();
         var pipeChannel = null as Channel<string>;
 
-        // split the command line into command by the pipeline character
+        // split the command line into commands by the pipeline character
         foreach(var command in commandLine.Split(PIPELINE_CHAR))
         {
             var commandName = GetCommand(command);
@@ -164,7 +168,7 @@ public class CommandController : ICommandController
             // if not the first command in the pipeline, set the read pipe
             if (pipeChannel != null)
             {
-                childContext.setInputPipe(pipeChannel.Reader);
+                childContext.SetInputPipe(pipeChannel.Reader);
             }
 
             // set the write pipe
@@ -188,7 +192,7 @@ public class CommandController : ICommandController
     /// <param name="commandKey"></param>
     /// <param name="args"></param>
     /// <param name="ioContext"></param>
-    private async Task ExecuteCommand(string commandKey, ITextIoContext ioContext)
+    protected async Task ExecuteCommand(string commandKey, ITextIoContext ioContext)
     {
         if (!this.Commands.ContainsKey(commandKey))
         {
@@ -199,20 +203,11 @@ public class CommandController : ICommandController
         try
         {
             var commandDiscription = this.Commands[commandKey];
-            var executeDeligate = Type.GetType(commandDiscription.FullTypeName);
-            if (executeDeligate == null)
-            {
-                using (var context = AssemblyContext.LoadFromPath(commandDiscription.PackageDescription.FullPath))
-                {
-                    var commandInstance = context.GetInstance<ICommandDelegate>(commandDiscription.FullTypeName);
-                    await ExecuteCommand(ioContext, commandInstance);
-                }
-            }
-            else
-            {
-                var commandInstance = AssemblyContext.GetInstance<ICommandDelegate>(executeDeligate);
-                await ExecuteCommand(ioContext, commandInstance);
-            }
+            
+            ICommandDelegate commandInstance;
+            commandInstance = GetCommandInstance(commandDiscription);
+
+            await ExecuteCommand(ioContext, commandInstance);
         }
         catch (Exception ex)
         {
@@ -224,7 +219,26 @@ public class CommandController : ICommandController
         }
     }
 
-    private static async Task ExecuteCommand(ITextIoContext ioContext, ICommandDelegate commandInstance)
+    protected static ICommandDelegate GetCommandInstance(CommandDescription commandDiscription)
+    {
+        var executeDeligateType = Type.GetType(commandDiscription.FullTypeName);
+        ICommandDelegate commandInstance;
+        if (executeDeligateType == null)
+        {
+            using (var context = AssemblyContext.LoadFromPath(commandDiscription.PackageDescription.FullPath))
+            {
+                commandInstance = context.GetInstance<ICommandDelegate>(commandDiscription.FullTypeName);
+            }
+        }
+        else
+        {
+            commandInstance = AssemblyContext.GetInstance<ICommandDelegate>(executeDeligateType);
+        }
+
+        return commandInstance;
+    }
+
+    protected static async Task ExecuteCommand(ITextIoContext ioContext, ICommandDelegate commandInstance)
     {
         await foreach (var resultMessage in commandInstance.Main(ioContext, ioContext))
         {
@@ -262,5 +276,39 @@ public class CommandController : ICommandController
         // the first item in the array is the command
         return args.Skip(1).ToArray();
     }
+    /// <summary>
+    /// output all the help strings
+    /// </summary>
+    /// <param name="context"></param>
+    public void GetHelp(string command, IOutputContext context)
+    {
+        if (String.IsNullOrEmpty(command))
+            foreach(var description in Commands)
+            {
+                var cmdInsance = GetCommandInstance(description.Value);
+                cmdInsance.Help(context);
+            }
+        else
+        {
+            try
+            {
+                var commandKey = GetCommand(command);
+                if (Commands.TryGetValue(commandKey, out CommandDescription? value))
+                {
+                    var description = value;
 
+                    var cmdInsance = GetCommandInstance(description);
+                    cmdInsance.Help(context);
+                }
+                else
+                {
+                    context.OutputChunk($"Command [{commandKey}] not found.").Wait();
+                }
+            }
+            catch (Exception ex)
+            {
+                context.OutputChunk(ex.Message).Wait();
+            }
+        }
+    }
 }
