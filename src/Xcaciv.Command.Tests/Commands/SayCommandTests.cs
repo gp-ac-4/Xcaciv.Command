@@ -23,7 +23,7 @@ namespace Xcaciv.Command.Tests.Commands
 
             // verify the output of the first run
             // by looking at the output of the second output line
-            Assert.Equal("> what is up", textio.Children.First().Output[1]);
+            Assert.Equal("what is up", textio.Children.First().Output.First());
         }
     }
 }

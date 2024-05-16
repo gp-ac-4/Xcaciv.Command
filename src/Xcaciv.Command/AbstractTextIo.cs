@@ -20,6 +20,7 @@ namespace Xcaciv.Command
     /// <param name="parentId"></param>
     public abstract class AbstractTextIo(string name, Guid? parentId = null) : ITextIoContext
     {
+        public bool Verbose { get; set; } = false;
 
         public Guid Id { get; } = Guid.NewGuid();
 
@@ -119,6 +120,16 @@ namespace Xcaciv.Command
             if (!String.IsNullOrEmpty(message)) this.SetStatusMessage(message).Wait();
 
             this.outputPipe?.TryComplete();
+            return Task.CompletedTask;
+        }
+
+        public virtual Task AddTraceMessage(string message)
+        {
+            if (this.Verbose)
+            {
+                return this.SetStatusMessage(message);
+            }
+
             return Task.CompletedTask;
         }
     }

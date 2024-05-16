@@ -31,6 +31,8 @@ public class CommandController : ICommandController
     /// if no restrictedDirectory is specified the current running directory will be used
     /// </summary>
     protected IVerfiedSourceDirectories PackageBinaryDirectories { get; set; } = new VerfiedSourceDirectories(new FileSystem());
+
+    public string HelpCommand { get; set; } = "HELP";
     /// <summary>
     /// Command Manger
     /// </summary>
@@ -100,7 +102,7 @@ public class CommandController : ICommandController
         {
             try
             {
-                await using (var commandInstance = AssemblyContext.GetInstance<ICommandDelegate>(commandType))
+                await using (var commandInstance = AssemblyContext.ActivateInstance<ICommandDelegate>(commandType))
                 {
                     var description = new CommandDescription()
                     {
@@ -196,7 +198,14 @@ public class CommandController : ICommandController
     {
         if (!this.Commands.ContainsKey(commandKey))
         {
-            await ioContext.SetStatusMessage($"Command [{commandKey}] not found.");
+            if (commandKey == this.HelpCommand)
+            {
+                this.GetHelp(string.Empty, ioContext);
+            }
+            else
+            {
+                await ioContext.SetStatusMessage($"Command [{commandKey}] not found. Try typing '{this.HelpCommand}'");
+            }
             return;
         }
 
@@ -215,7 +224,7 @@ public class CommandController : ICommandController
         }
         finally
         {
-            await ioContext.Complete($"ExecuteCommand: {commandKey} Done.");
+            await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Done.");
         }
     }
 
@@ -225,14 +234,14 @@ public class CommandController : ICommandController
         ICommandDelegate commandInstance;
         if (executeDeligateType == null)
         {
-            using (var context = AssemblyContext.LoadFromPath(commandDiscription.PackageDescription.FullPath))
+            using (var context = new AssemblyContext(commandDiscription.PackageDescription.FullPath, basePathRestriction:"*"))
             {
-                commandInstance = context.GetInstance<ICommandDelegate>(commandDiscription.FullTypeName);
+                commandInstance = context.CreateInstance<ICommandDelegate>(commandDiscription.FullTypeName);
             }
         }
         else
         {
-            commandInstance = AssemblyContext.GetInstance<ICommandDelegate>(executeDeligateType);
+            commandInstance = AssemblyContext.ActivateInstance<ICommandDelegate>(executeDeligateType);
         }
 
         return commandInstance;

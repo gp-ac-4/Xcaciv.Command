@@ -17,6 +17,14 @@ namespace Xcaciv.Command.Interface
         /// <returns></returns>
         Task SetStatusMessage(string message);
         /// <summary>
+        /// adds to the trace collection
+        /// can be output to the screen when being verbose
+        /// messages should help troubleshooting for developers and users
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        Task AddTraceMessage(string message);
+        /// <summary>
         /// set proces progress based on total
         /// </summary>
         /// <param name="total"></param>

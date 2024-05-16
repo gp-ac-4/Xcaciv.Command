@@ -27,7 +27,8 @@ namespace Xcaciv.Command.Tests.TestImpementations
 
         public TestTextIo(string[]? arguments = null) : base("TestTextIo", null)
         {
-            Parameters = arguments ?? string.Empty.Split(' ');
+            this.Parameters = arguments ?? string.Empty.Split(' ');
+            this.Verbose = true;
         }
 
         public override Task<ITextIoContext> GetChild(string[]? childArguments = null)
@@ -60,12 +61,6 @@ namespace Xcaciv.Command.Tests.TestImpementations
         {
             Output.Add(message);
             return Task.CompletedTask;
-        }
-
-        public override Task OutputChunk(string message)
-        {
-            Output.Add("> " + message);
-            return base.OutputChunk(message);
         }
 
         public override Task HandleOutputChunk(string chunk)
