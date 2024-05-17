@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -28,6 +32,8 @@ public class CommandController : ICommandController
     /// if no restrictedDirectory is specified the current running directory will be used
     /// </summary>
     protected IVerfiedSourceDirectories PackageBinaryDirectories { get; set; } = new VerfiedSourceDirectories(new FileSystem());
+
+    public string HelpCommand { get; set; } = "HELP";
     /// <summary>
     /// Command Manger
     /// </summary>
@@ -74,7 +80,6 @@ public class CommandController : ICommandController
     {
         if (this.PackageBinaryDirectories.Directories.Count == 0) throw new Exceptions.NoPluginsFoundException("No base package directory configured. (Did you set the restricted directory?)");
 
-        this.Commands.Clear();
         foreach (var directory in this.PackageBinaryDirectories.Directories)
         {
             foreach (var command in Crawler.LoadPackageDescriptions(directory, subDirectory).SelectMany(o => o.Value.Commands))
@@ -84,12 +89,48 @@ public class CommandController : ICommandController
         }
     }
     /// <summary>
+    /// load the built in commands
+    /// </summary>
+    public void LoadDefaultCommands()
+    {
+        // This is the package action
+        var key = "Default";
+        var packagDescription = new PackageDescription()
+        {
+            Name = key,
+            FullPath = "",
+        };
+
+        AddCommand(new CommandDescription()
+        {
+            BaseCommand = "REGIF",
+            FullTypeName = "Xcaciv.Command.Commands.RegifCommand",
+            PackageDescription = new PackageDescription()
+            {
+                Name = key,
+                FullPath = ""
+            }
+        });
+
+        AddCommand(new CommandDescription()
+        {
+            BaseCommand = "SAY",
+            FullTypeName = "Xcaciv.Command.Commands.SayCommand",
+            PackageDescription = new PackageDescription()
+            {
+                Name = key,
+                FullPath = ""
+            }
+        });
+    }
+    /// <summary>
     /// install a single command into the index
     /// </summary>
     /// <param name="command"></param>
     public void AddCommand(CommandDescription command)
     {
-        this.Commands.Add(command.BaseCommand.ToUpper(), command);
+        var key = command.BaseCommand.ToUpper();
+        this.Commands[key] = command;
     }
 
     /// <summary>
@@ -114,12 +155,12 @@ public class CommandController : ICommandController
         }        
     }
 
-    private async Task PipelineTheBitch(string commandLine, ITextIoContext ioContext)
+    protected async Task PipelineTheBitch(string commandLine, ITextIoContext ioContext)
     {
         var tasks = new List<Task>();
         var pipeChannel = null as Channel<string>;
 
-        // split the command line into command by the pipeline character
+        // split the command line into commands by the pipeline character
         foreach(var command in commandLine.Split(PIPELINE_CHAR))
         {
             var commandName = GetCommand(command);
@@ -128,7 +169,7 @@ public class CommandController : ICommandController
             // if not the first command in the pipeline, set the read pipe
             if (pipeChannel != null)
             {
-                childContext.setInputPipe(pipeChannel.Reader);
+                childContext.SetInputPipe(pipeChannel.Reader);
             }
 
             // set the write pipe
@@ -152,25 +193,29 @@ public class CommandController : ICommandController
     /// <param name="commandKey"></param>
     /// <param name="args"></param>
     /// <param name="ioContext"></param>
-    private async Task ExecuteCommand(string commandKey, ITextIoContext ioContext)
+    protected async Task ExecuteCommand(string commandKey, ITextIoContext ioContext)
     {
         if (!this.Commands.ContainsKey(commandKey))
         {
-            await ioContext.SetStatusMessage($"Command [{commandKey}] not found.");
+            if (commandKey == this.HelpCommand)
+            {
+                this.GetHelp(string.Empty, ioContext);
+            }
+            else
+            {
+                await ioContext.SetStatusMessage($"Command [{commandKey}] not found. Try typing '{this.HelpCommand}'");
+            }
             return;
         }
 
         try
         {
             var commandDiscription = this.Commands[commandKey];
-            using (var context = AssemblyContext.LoadFromPath(commandDiscription.PackageDescription.FullPath))
-            {
-                var commandInstance = context.GetInstance<ICommand>(commandDiscription.FullTypeName);
-                await foreach(var resultMessage in commandInstance.Main(ioContext, ioContext))
-                {
-                    await ioContext.OutputChunk(resultMessage);
-                }
-            }
+            
+            ICommandDelegate commandInstance;
+            commandInstance = GetCommandInstance(commandDiscription);
+
+            await ExecuteCommand(ioContext, commandInstance);
         }
         catch (Exception ex)
         {
@@ -178,9 +223,37 @@ public class CommandController : ICommandController
         }
         finally
         {
-            await ioContext.Complete($"ExecuteCommand: {commandKey} Done.");
+            await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Done.");
         }
     }
+
+    protected static ICommandDelegate GetCommandInstance(CommandDescription commandDiscription)
+    {
+        var executeDeligateType = Type.GetType(commandDiscription.FullTypeName);
+        ICommandDelegate commandInstance;
+        if (executeDeligateType == null)
+        {
+            using (var context = new AssemblyContext(commandDiscription.PackageDescription.FullPath, basePathRestriction:"*"))
+            {
+                commandInstance = context.CreateInstance<ICommandDelegate>(commandDiscription.FullTypeName);
+            }
+        }
+        else
+        {
+            commandInstance = AssemblyContext.ActivateInstance<ICommandDelegate>(executeDeligateType);
+        }
+
+        return commandInstance;
+    }
+
+    protected static async Task ExecuteCommand(ITextIoContext ioContext, ICommandDelegate commandInstance)
+    {
+        await foreach (var resultMessage in commandInstance.Main(ioContext, ioContext))
+        {
+            await ioContext.OutputChunk(resultMessage);
+        }
+    }
+
     /// <summary>
     /// parse primary command from a command line
     /// </summary>
@@ -203,13 +276,47 @@ public class CommandController : ICommandController
     /// <returns></returns>
     public static string[] PrepareArgs(string commandLine)
     {
-        var args = System.Text.RegularExpressions.Regex.Matches(commandLine, @"[\""].+?[\""]|[\w-]+")
+        var args = System.Text.RegularExpressions.Regex.Matches(commandLine, @"[\""].*?[\""]|[\w-]+")
             .Cast<System.Text.RegularExpressions.Match>()
-            .Select(o => CommandDescription.InvalidCommandChars.Replace(o.Value, ""))
+            .Select(o => CommandDescription.InvalidParameterChars.Replace(o.Value, "").Trim('"'))
             .ToArray();
 
         // the first item in the array is the command
         return args.Skip(1).ToArray();
     }
+    /// <summary>
+    /// output all the help strings
+    /// </summary>
+    /// <param name="context"></param>
+    public void GetHelp(string command, IOutputContext context)
+    {
+        if (String.IsNullOrEmpty(command))
+            foreach(var description in Commands)
+            {
+                var cmdInsance = GetCommandInstance(description.Value);
+                cmdInsance.Help(context);
+            }
+        else
+        {
+            try
+            {
+                var commandKey = GetCommand(command);
+                if (Commands.TryGetValue(commandKey, out CommandDescription? value))
+                {
+                    var description = value;
 
+                    var cmdInsance = GetCommandInstance(description);
+                    cmdInsance.Help(context);
+                }
+                else
+                {
+                    context.OutputChunk($"Command [{commandKey}] not found.").Wait();
+                }
+            }
+            catch (Exception ex)
+            {
+                context.OutputChunk(ex.Message).Wait();
+            }
+        }
+    }
 }

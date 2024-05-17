@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Xcaciv.Command;
 using Xcaciv.Command.Interface;
 
-namespace zTestCommandPackage.Tests.TestImplementations
+namespace Xcaciv.Command.Tests.TestImpementations
 {
     public class TestTextIo : AbstractTextIo
     {
@@ -25,16 +25,17 @@ namespace zTestCommandPackage.Tests.TestImplementations
 
         public Dictionary<string, string> PromptAnswers { get; private set; } = new Dictionary<string, string>();
 
-        public TestTextIo(string[]? arguments = null) : base("TestTestTextIo", null)
+        public TestTextIo(string[]? arguments = null) : base("TestTextIo", null)
         {
             this.Parameters = arguments ?? string.Empty.Split(' ');
+            this.Verbose = true;
         }
 
         public override Task<ITextIoContext> GetChild(string[]? childArguments = null)
         {
             var child = new TestTextIo(childArguments)
             {
-                Parent = this.Id
+                Parent = Id
             };
             Children.Add(child);
             return Task.FromResult<ITextIoContext>(child);
@@ -70,13 +71,21 @@ namespace zTestCommandPackage.Tests.TestImplementations
 
         public override string ToString()
         {
-            // combine output into one string seperated by new lines
-            // and then add the children output
-            string output = string.Join(Environment.NewLine, Output);
-            foreach (var chidl in Children)
+            string output = string.Empty;
+            if (HasPipedInput)
             {
-                output += chidl.ToString() + Environment.NewLine;
+                // combine output into one string seperated by new lines
+                // and then add the children output
+                output = string.Join(Environment.NewLine, Output);
+                foreach (var chidl in Children)
+                {
+                    output += chidl.ToString() + Environment.NewLine;
+                }
             }
+
+
+
+            output += string.Join('-', Output);
 
             return output;
         }

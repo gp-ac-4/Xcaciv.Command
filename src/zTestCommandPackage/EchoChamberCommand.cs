@@ -8,11 +8,11 @@ using Xcaciv.Command.Interface;
 
 namespace zTestCommandPackage
 {
-    public class EchoChamberCommand : EchoCommand, ICommand
+    public class EchoChamberCommand : EchoCommand, ICommandDelegate
     {
         public EchoChamberCommand() 
         {
-            this.FriendlyName = "echo2";
+            this.FriendlyName = "echo-echo";
             this.BaseCommand = "ECHO2";
         }
 

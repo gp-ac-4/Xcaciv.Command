@@ -8,15 +8,15 @@ using Xcaciv.Command.Interface;
 
 namespace zTestCommandPackage
 {
-    public class EchoCommand : ICommand
+    public class EchoCommand : ICommandDelegate
     {
         public string BaseCommand { get; protected set; } = "ECHO";
 
         public string FriendlyName { get; protected set; } = "echo";
 
-        public Task Help(ITextIoContext messageContext)
+        public void Help(IOutputContext outputContext)
         {
-            throw new NotImplementedException();
+            outputContext.OutputChunk($"[{BaseCommand}] ({FriendlyName}) - test command to output each parameter as a chunk");
         }
 
         public async IAsyncEnumerable<string> Main(IInputContext input, IStatusContext statusContext)

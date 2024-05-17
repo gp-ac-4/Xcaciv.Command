@@ -1,10 +1,5 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO.Abstractions;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
 using Xcaciv.Loader;
 
@@ -57,13 +52,16 @@ public class Crawler : ICrawler
                 FullPath = binPath,
             };
 
-            using (var context = AssemblyContext.LoadFromPath(binPath))
+            using (var context = new AssemblyContext(binPath, basePathRestriction:"*"))
             {
                 var commands = new Dictionary<string, CommandDescription>();
                 packagDesc.Version = context.GetVersion();
 
-                foreach (var command in context.GetAllInstances<ICommand>())
+                foreach (var commandType in context.GetTypes<ICommandDelegate>())
                 {
+                    if (commandType == null) continue; // not sure why it could be null, but the compiler says so
+
+                    var command = context.CreateInstance<ICommandDelegate>(commandType);
                     commands[command.BaseCommand] = new CommandDescription()
                     {
                         BaseCommand = command.BaseCommand,
