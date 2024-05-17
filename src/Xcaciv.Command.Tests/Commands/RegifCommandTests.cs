@@ -30,7 +30,7 @@ namespace Xcaciv.Command.Tests.Commands
         {
             var commands = new CommandController(new Crawler(), @"..\..\..\..\..\");
             commands.AddPackageDirectory(commandPackageDir);
-            commands.LoadDefaultCommands();
+            commands.EnableDefaultCommands();
             commands.LoadCommands(string.Empty);
                        
 
