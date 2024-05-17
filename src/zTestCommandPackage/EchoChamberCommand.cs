@@ -12,7 +12,7 @@ namespace zTestCommandPackage
     {
         public EchoChamberCommand() 
         {
-            this.FriendlyName = "echo2";
+            this.FriendlyName = "echo-echo";
             this.BaseCommand = "ECHO2";
         }
 

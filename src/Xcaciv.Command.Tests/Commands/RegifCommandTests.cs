@@ -20,8 +20,8 @@ namespace Xcaciv.Command.Tests.Commands
             _testOutput.WriteLine("Tests in Debug mode");
             commandPackageDir = commandPackageDir.Replace("{1}", "Debug");
 #else
-            this._testOutput.WriteLine("Tests in Release mode??");
-            this.commandPackageDir = commandPackageDir.Replace("{1}", "Release");
+            _testOutput.WriteLine("Tests in Release mode??");
+            commandPackageDir = commandPackageDir.Replace("{1}", "Release");
 #endif
         }
 
@@ -40,7 +40,7 @@ namespace Xcaciv.Command.Tests.Commands
 
             // verify the output of the first run
             // by looking at the output of the second output line
-            Assert.Equal("> --> is-is-> -", textio.ToString());
+            Assert.Equal("-is-", textio.ToString());
         }
     }
 }

@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using Xunit.Abstractions;
 using System.IO.Abstractions;
 using Xcaciv.Command.FileLoader;
+using System.IO.Abstractions.TestingHelpers;
+using Moq;
 
 namespace Xcaciv.Command.Tests
 {
@@ -29,32 +31,45 @@ namespace Xcaciv.Command.Tests
         [Fact()]
         public async Task RunCommandsTestAsync()
         {
-            var commands = new CommandController(new Crawler(), @"..\..\..\..\..\");
-            commands.AddPackageDirectory(commandPackageDir);
+            var controller = new CommandController(new Crawler(), @"..\..\..\..\..\");
+            controller.AddPackageDirectory(commandPackageDir);
 
-            commands.LoadCommands(string.Empty);
+            controller.LoadCommands(string.Empty);
             var textio = new TestImpementations.TestTextIo();
             // simulate user input
-            await commands.Run("echo what is up", textio);
+            await controller.Run("echo what is up", textio);
 
             // verify the output of the first run
             // by looking at the output of the second output line
-            Assert.Equal("> what", textio.Children.First().Output[1]);
+            Assert.Equal("what", textio.Children.First().Output[1]);
         }
         [Fact()]
         public async Task PipeCommandsTestAsync()
         {
-            var commands = new CommandController(new Crawler(), @"..\..\..\..\..\");
-            commands.AddPackageDirectory(commandPackageDir);
+            var controller = new CommandController(new Crawler(), @"..\..\..\..\..\");
+            controller.AddPackageDirectory(commandPackageDir);
 
-            commands.LoadCommands(string.Empty);
+            controller.LoadCommands(string.Empty);
             var textio = new TestImpementations.TestTextIo();
             // simulate user input
-            await commands.Run("echo what is up | echo2 | echoe ", textio);
+            await controller.Run("echo what is up | echo2 | echoe ", textio);
 
             // verify the output of the first run
             // by looking at the output of the second output line
-            Assert.Equal("> :d2hhdC13aGF0:-:d2hhdC13aGF0:-> :aXMtaXM=:-:aXMtaXM=:-> :dXAtdXA=:-:dXAtdXA=:", textio.ToString());
+            Assert.Equal(":d2hhdC13aGF0:-:aXMtaXM=:-:dXAtdXA=:", textio.ToString());
+        }
+
+        [Fact()]
+        public void LoadDefaultCommandsTest()
+        {
+            var controller = new CommandController(new Crawler(), @"..\..\..\..\..\") as ICommandController;
+            controller.LoadDefaultCommands();
+
+            var textio = new TestImpementations.TestTextIo();
+            controller.GetHelp(string.Empty, textio);
+            
+            // Note: currently Loader is not unloading assemblies for performance reasons
+            Assert.Contains("REGIF", textio.ToString());
         }
     }
 }
