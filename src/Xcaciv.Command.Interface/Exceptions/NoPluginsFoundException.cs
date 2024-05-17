@@ -1,12 +1,13 @@
-﻿namespace Xcaciv.Command.Interface.Exceptions;
-
-public class NoPluginsFoundException : Exception
+﻿namespace Xcaciv.Command.Interface.Exceptions
 {
-    public NoPluginsFoundException(string message) : base(message)
+    public class NoPluginsFoundException : Exception
     {
-    }
+        public NoPluginsFoundException(string message) : base(message)
+        {
+        }
 
-    public NoPluginsFoundException(string message, Exception innerException) : base(message, innerException)
-    {
+        public NoPluginsFoundException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
     }
 }

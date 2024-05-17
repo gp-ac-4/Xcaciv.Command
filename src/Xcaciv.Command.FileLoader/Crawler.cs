@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.IO.Abstractions;
 using Xcaciv.Command.Interface;
+using Xcaciv.Command.Interface.Exceptions;
 using Xcaciv.Loader;
 
 namespace Xcaciv.Command.FileLoader;
@@ -95,7 +96,7 @@ public class Crawler : ICrawler
 
         var binaryCommandCollections = this.fileSystem.Directory.GetFiles(basePath, searchMask, SearchOption.AllDirectories);
 
-        if (!binaryCommandCollections.Any()) throw new Exceptions.NoPackageDirectoryFoundException($"No packages found in {basePath}.");
+        if (!binaryCommandCollections.Any()) throw new NoPackageDirectoryFoundException($"No packages found in {basePath}.");
 
         // avoid overhead of paralell if it is not needed
         if (binaryCommandCollections.Count() > ParallelizeAt)
