@@ -11,6 +11,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Xcaciv.Command.FileLoader;
 using Xcaciv.Command.Interface;
+using Xcaciv.Command.Interface.Exceptions;
 using Xcaciv.Loader;
 
 namespace Xcaciv.Command;
@@ -75,10 +76,10 @@ public class CommandController : Interface.ICommandController
     /// (re)populate command collection using a crawler
     /// </summary>
     /// <param name="subDirectory"></param>
-    /// <exception cref="Exceptions.InValidConfigurationException"></exception>
+    /// <exception cref="Interface.Exceptions.InValidConfigurationException"></exception>
     public void LoadCommands(string subDirectory = "bin")
     {
-        if (this.PackageBinaryDirectories.Directories.Count == 0) throw new Exceptions.NoPluginsFoundException("No base package directory configured. (Did you set the restricted directory?)");
+        if (this.PackageBinaryDirectories.Directories.Count == 0) throw new NoPluginsFoundException("No base package directory configured. (Did you set the restricted directory?)");
 
         foreach (var directory in this.PackageBinaryDirectories.Directories)
         {
