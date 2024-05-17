@@ -9,6 +9,7 @@ using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Xcaciv.Command.Commands;
 using Xcaciv.Command.FileLoader;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Exceptions;
@@ -102,10 +103,11 @@ public class CommandController : Interface.ICommandController
             FullPath = "",
         };
 
+        var regif = new RegifCommand();
         AddCommand(new CommandDescription()
         {
-            BaseCommand = "REGIF",
-            FullTypeName = "Xcaciv.Command.Commands.RegifCommand",
+            BaseCommand = regif.BaseCommand,
+            FullTypeName = regif.GetType().FullName ?? String.Empty,
             PackageDescription = new PackageDescription()
             {
                 Name = key,
@@ -113,10 +115,11 @@ public class CommandController : Interface.ICommandController
             }
         });
 
+        var say = new SayCommand();
         AddCommand(new CommandDescription()
         {
-            BaseCommand = "SAY",
-            FullTypeName = "Xcaciv.Command.Commands.SayCommand",
+            BaseCommand = say.BaseCommand,
+            FullTypeName = say.GetType().FullName ?? String.Empty,
             PackageDescription = new PackageDescription()
             {
                 Name = key,
