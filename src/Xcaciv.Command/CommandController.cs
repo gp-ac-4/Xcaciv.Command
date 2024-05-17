@@ -5,6 +5,7 @@ using System.Data;
 using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -87,8 +88,10 @@ public class CommandController : ICommandController
             }
         }
     }
-
-    public async void LoadDefaultCommands()
+    /// <summary>
+    /// load the built in commands
+    /// </summary>
+    public void LoadDefaultCommands()
     {
         // This is the package action
         var key = "Default";
@@ -98,32 +101,27 @@ public class CommandController : ICommandController
             FullPath = "",
         };
 
-        foreach (var commandType in AssemblyContext.GetLoadedTypes<ICommandDelegate>())
+        AddCommand(new CommandDescription()
         {
-            try
+            BaseCommand = "REGIF",
+            FullTypeName = "Xcaciv.Command.Commands.RegifCommand",
+            PackageDescription = new PackageDescription()
             {
-                await using (var commandInstance = AssemblyContext.ActivateInstance<ICommandDelegate>(commandType))
-                {
-                    var description = new CommandDescription()
-                    {
-                        BaseCommand = commandInstance.BaseCommand,
-                        FullTypeName = commandType.FullName ?? String.Empty,
-                        PackageDescription = new PackageDescription()
-                        {
-                            Name = key,
-                            FullPath = commandType.Assembly.Location
-                        }
-                    };
-                    AddCommand(description);
-                }
+                Name = key,
+                FullPath = ""
             }
-            catch (Exception e) 
-            { 
-                Debug.WriteLine($"Exception loading {commandType.FullName}");
-                Debug.WriteLine(e);
-            }
-        }
+        });
 
+        AddCommand(new CommandDescription()
+        {
+            BaseCommand = "SAY",
+            FullTypeName = "Xcaciv.Command.Commands.SayCommand",
+            PackageDescription = new PackageDescription()
+            {
+                Name = key,
+                FullPath = ""
+            }
+        });
     }
     /// <summary>
     /// install a single command into the index
@@ -131,7 +129,8 @@ public class CommandController : ICommandController
     /// <param name="command"></param>
     public void AddCommand(CommandDescription command)
     {
-        this.Commands.Add(command.BaseCommand.ToUpper(), command);
+        var key = command.BaseCommand.ToUpper();
+        this.Commands[key] = command;
     }
 
     /// <summary>
