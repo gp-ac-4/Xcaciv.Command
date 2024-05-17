@@ -24,9 +24,9 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj">
-		<IncludeAssets>Xcaciv.Command.FileLoader.dll</IncludeAssets>
-    </ProjectReference>
+	  <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj">
+		  <IncludeAssets>Xcaciv.Command.FileLoader.dll</IncludeAssets>
+	  </ProjectReference>
     <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />  
   </ItemGroup>
   
