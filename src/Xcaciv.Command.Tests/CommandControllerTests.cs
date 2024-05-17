@@ -58,12 +58,12 @@ namespace Xcaciv.Command.Tests
             // by looking at the output of the second output line
             Assert.Equal(":d2hhdC13aGF0:-:aXMtaXM=:-:dXAtdXA=:", textio.ToString());
         }
-
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
         [Fact()]
         public void LoadDefaultCommandsTest()
         {
-            var controller = new CommandController(new Crawler(), @"..\..\..\..\..\") as ICommandController;
-            controller.LoadDefaultCommands();
+            var controller = new CommandController(new Crawler(), @"..\..\..\..\..\") as Interface.ICommandController;
+            controller.EnableDefaultCommands();
 
             var textio = new TestImpementations.TestTextIo();
             controller.GetHelp(string.Empty, textio);
@@ -71,5 +71,6 @@ namespace Xcaciv.Command.Tests
             // Note: currently Loader is not unloading assemblies for performance reasons
             Assert.Contains("REGIF", textio.ToString());
         }
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
     }
 }

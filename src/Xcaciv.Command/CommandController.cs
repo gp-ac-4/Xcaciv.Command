@@ -18,7 +18,7 @@ namespace Xcaciv.Command;
 /// <summary>
 /// Command Manager
 /// </summary>
-public class CommandController : ICommandController
+public class CommandController : Interface.ICommandController
 {
     protected const string PIPELINE_CHAR = "|";
     protected ICrawler Crawler;
@@ -91,7 +91,7 @@ public class CommandController : ICommandController
     /// <summary>
     /// load the built in commands
     /// </summary>
-    public void LoadDefaultCommands()
+    public void EnableDefaultCommands()
     {
         // This is the package action
         var key = "Default";
@@ -319,4 +319,5 @@ public class CommandController : ICommandController
             }
         }
     }
+
 }

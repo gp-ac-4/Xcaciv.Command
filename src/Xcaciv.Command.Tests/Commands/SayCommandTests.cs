@@ -15,7 +15,7 @@ namespace Xcaciv.Command.Tests.Commands
         public async Task HandleExecutionTest()
         {
             var commands = new CommandController(new Crawler(), "");
-            commands.LoadDefaultCommands();
+            commands.EnableDefaultCommands();
 
             var textio = new TestImpementations.TestTextIo();
             // simulate user input
