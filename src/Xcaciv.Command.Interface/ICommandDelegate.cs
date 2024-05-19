@@ -25,7 +25,7 @@ namespace Xcaciv.Command.Interface
         /// <param name="parameters"></param>
         /// <param name="messageContext">used for progress and status messages</param>
         /// <returns></returns>
-        IAsyncEnumerable<string> Main(IInputContext input, IStatusContext statusContext);
+        IAsyncEnumerable<string> Main(IInputContext input, IEnvironment statusContext);
         /// <summary>
         /// output usage instructions via message context
         /// </summary>

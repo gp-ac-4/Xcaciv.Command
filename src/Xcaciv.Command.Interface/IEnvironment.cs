@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Xcaciv.Command.Interface
 {
-    public interface IStatusContext
+    public interface IEnvironment
     {
         /// <summary>
         /// replace status text with new text

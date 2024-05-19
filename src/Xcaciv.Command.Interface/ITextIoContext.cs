@@ -15,7 +15,7 @@ namespace Xcaciv.Command.Interface;
 /// to a particular bound output, but should prioritise the pipeline when channels
 /// are available.
 /// </summary>
-public interface ITextIoContext : IStatusContext, IInputContext, IOutputContext, IAsyncDisposable
+public interface ITextIoContext : IEnvironment, IInputContext, IOutputContext, IAsyncDisposable
 {
     /// <summary>
     /// current message context identifier
