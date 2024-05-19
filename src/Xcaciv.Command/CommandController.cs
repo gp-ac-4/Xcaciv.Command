@@ -127,7 +127,7 @@ public class CommandController : Interface.ICommandController
             }
         });
 
-        var set = new SayCommand();
+        var set = new SetCommand();
         AddCommand(new CommandDescription()
         {
             BaseCommand = set.BaseCommand,
