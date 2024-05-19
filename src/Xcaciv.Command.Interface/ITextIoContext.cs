@@ -15,7 +15,7 @@ namespace Xcaciv.Command.Interface;
 /// to a particular bound output, but should prioritise the pipeline when channels
 /// are available.
 /// </summary>
-public interface ITextIoContext : IStatusContext, IInputContext, IOutputContext, IAsyncDisposable
+public interface ITextIoContext : IEnvironment, IInputContext, IOutputContext, IAsyncDisposable
 {
     /// <summary>
     /// current message context identifier
@@ -31,6 +31,7 @@ public interface ITextIoContext : IStatusContext, IInputContext, IOutputContext,
     Guid? Parent { get; }
     /// <summary>
     /// create a child output context
+    /// MUST pass down expected Environment values
     /// may track the instance for later use
     /// </summary>
     /// <param name="childArguments">arguments to pass to child context</param>
