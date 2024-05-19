@@ -24,7 +24,7 @@ namespace Xcaciv.Command.Commands
 
         protected string regex { get; set; } = string.Empty;
 
-        public override string HandleExecution(string[] parameters, IStatusContext status)
+        public override string HandleExecution(string[] parameters, IEnvironment status)
         {
             var output = new StringBuilder();
             setRegexExpression(parameters);
@@ -39,7 +39,7 @@ namespace Xcaciv.Command.Commands
             return output.ToString().Trim();
         }
 
-        public override string HandlePipedChunk(string stringToCheck, string[] parameters, IStatusContext status)
+        public override string HandlePipedChunk(string stringToCheck, string[] parameters, IEnvironment status)
         {
             if (parameters.Length > 0)
             {

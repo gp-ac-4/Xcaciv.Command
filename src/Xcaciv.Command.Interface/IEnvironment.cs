@@ -37,5 +37,19 @@ namespace Xcaciv.Command.Interface
         /// <param name="message"></param>
         /// <returns></returns>
         Task Complete(string? message);
+        /// <summary>
+        /// add a value to the environment, across commands
+        /// the storage mechanism should be apropriate to the running environment
+        /// probably a ConcurrentDictionary<TKey,TValue>
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        void SetValue(string key, string value);
+        /// <summary>
+        /// retrieve global environment value
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns>String.Empty if not found</returns>
+        string GetValue(string key);
     }
 }

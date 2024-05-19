@@ -31,6 +31,7 @@ public interface ITextIoContext : IEnvironment, IInputContext, IOutputContext, I
     Guid? Parent { get; }
     /// <summary>
     /// create a child output context
+    /// MUST pass down expected Environment values
     /// may track the instance for later use
     /// </summary>
     /// <param name="childArguments">arguments to pass to child context</param>

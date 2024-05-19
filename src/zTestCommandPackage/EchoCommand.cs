@@ -19,7 +19,7 @@ namespace zTestCommandPackage
             outputContext.OutputChunk($"[{BaseCommand}] ({FriendlyName}) - test command to output each parameter as a chunk");
         }
 
-        public async IAsyncEnumerable<string> Main(IInputContext input, IStatusContext statusContext)
+        public async IAsyncEnumerable<string> Main(IInputContext input, IEnvironment statusContext)
         {
             await statusContext.SetStatusMessage($"{this.BaseCommand} test start");
             if (input.HasPipedInput)

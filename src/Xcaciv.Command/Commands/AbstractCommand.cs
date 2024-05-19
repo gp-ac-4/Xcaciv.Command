@@ -29,25 +29,25 @@ namespace Xcaciv.Command.Commands
             outputContext.OutputChunk($"[{BaseCommand}] ({FriendlyName}): {HelpString}");
         }
 
-        public async IAsyncEnumerable<string> Main(IInputContext input, IStatusContext statusContext)
+        public async IAsyncEnumerable<string> Main(IInputContext input, IEnvironment environment)
         {
             if (input.HasPipedInput)
             {
                 await foreach (var p in input.ReadInputPipeChunks())
                 {
                     if (string.IsNullOrEmpty(p)) continue;
-                    yield return this.HandlePipedChunk(p, input.Parameters, statusContext);
+                    yield return this.HandlePipedChunk(p, input.Parameters, environment);
                 }
             }
             else
             {
-                yield return HandleExecution(input.Parameters, statusContext);
+                yield return HandleExecution(input.Parameters, environment);
             }
         }
 
-        public abstract string HandlePipedChunk(string pipedChunk, string[] parameters, IStatusContext status);
+        public abstract string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironment env);
 
-        public abstract string HandleExecution(string[] parameters, IStatusContext status);
+        public abstract string HandleExecution(string[] parameters, IEnvironment env);
 
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.PortableExecutable;
@@ -18,7 +19,7 @@ namespace Xcaciv.Command
     /// </remarks>
     /// <param name="name"></param>
     /// <param name="parentId"></param>
-    public abstract class AbstractTextIo(string name, Guid? parentId = null) : ITextIoContext
+    public abstract class AbstractTextIo(string name, Guid? parentId = default) : ITextIoContext
     {
         public bool Verbose { get; set; } = false;
 
@@ -34,7 +35,11 @@ namespace Xcaciv.Command
 
         protected ChannelReader<string>? inputPipe;
         protected ChannelWriter<string>? outputPipe;
-
+        /// <summary>
+        /// implementation must set the expected child's properties and pass environment values
+        /// </summary>
+        /// <param name="childArguments"></param>
+        /// <returns></returns>
         public abstract Task<ITextIoContext> GetChild(string[]? childArguments = null);
         /// <summary>
         /// handles the Channel output and allows the implementation to handle 
@@ -127,10 +132,46 @@ namespace Xcaciv.Command
         {
             if (this.Verbose)
             {
-                return this.SetStatusMessage(message);
+                return this.OutputChunk("\tTRACE" + message);
             }
-
+            // if we are not verbose, send the output to DEBUG
+            System.Diagnostics.Debug.WriteLine(message);
             return Task.CompletedTask;
+        }
+        /// <summary>
+        /// Thread safe collection of env vars
+        /// MUST be set when creating a child!
+        /// </summary>
+        protected ConcurrentDictionary<string, string> EnvironmentVariables { get; set; } = new ConcurrentDictionary<string, string>();
+        /// <summary>
+        /// <see cref="Xcaciv.Command.Interface.IEnvironment"/>
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="addValue"></param>
+        /// <returns></returns>
+        public void SetValue(string key, string addValue)
+        {
+            // make case insensitive var names
+            key = key.ToUpper();
+            EnvironmentVariables.AddOrUpdate(key, addValue, (key, value) =>
+            {
+                AddTraceMessage($"Environment value {key} changed from {value} to {addValue}.").Wait();
+                return addValue;
+            });
+        }
+        /// <summary>
+        /// <see cref="Xcaciv.Command.Interface.IEnvironment"/>
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public string GetValue(string key)
+        {
+            // make case insensitive var names
+            key = key.ToUpper();
+
+            string? returnValue;
+            EnvironmentVariables.TryGetValue(key, out returnValue);
+            return returnValue ?? String.Empty;
         }
     }
 }
