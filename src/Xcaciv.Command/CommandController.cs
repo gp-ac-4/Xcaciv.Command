@@ -126,6 +126,18 @@ public class CommandController : Interface.ICommandController
                 FullPath = ""
             }
         });
+
+        var set = new SayCommand();
+        AddCommand(new CommandDescription()
+        {
+            BaseCommand = set.BaseCommand,
+            FullTypeName = set.GetType().FullName ?? String.Empty,
+            PackageDescription = new PackageDescription()
+            {
+                Name = key,
+                FullPath = ""
+            }
+        });
     }
     /// <summary>
     /// install a single command into the index
@@ -199,7 +211,28 @@ public class CommandController : Interface.ICommandController
     /// <param name="ioContext"></param>
     protected async Task ExecuteCommand(string commandKey, ITextIoContext ioContext)
     {
-        if (!this.Commands.ContainsKey(commandKey))
+        if (Commands.TryGetValue(commandKey, out CommandDescription? commandDiscription))
+        {
+            try
+            {
+                await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Start.");
+
+                var commandInstance = GetCommandInstance(commandDiscription);
+
+                await ExecuteCommand(ioContext, commandInstance);
+            }
+            catch (Exception ex)
+            {
+                await ioContext.OutputChunk($"Error executing {commandKey} (see trace for more info)");
+                await ioContext.SetStatusMessage("Error");
+                await ioContext.AddTraceMessage(ex.ToString());
+            }
+            finally
+            {
+                await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Done.");
+            }
+        }
+        else
         {
             if (commandKey == this.HelpCommand)
             {
@@ -207,27 +240,10 @@ public class CommandController : Interface.ICommandController
             }
             else
             {
-                await ioContext.SetStatusMessage($"Command [{commandKey}] not found. Try typing '{this.HelpCommand}'");
+                var message = $"Command[{commandKey}] not found.";
+                await ioContext.OutputChunk($"{message} Try '{this.HelpCommand}'");
+                await ioContext.AddTraceMessage(message);
             }
-            return;
-        }
-
-        try
-        {
-            var commandDiscription = this.Commands[commandKey];
-            
-            ICommandDelegate commandInstance;
-            commandInstance = GetCommandInstance(commandDiscription);
-
-            await ExecuteCommand(ioContext, commandInstance);
-        }
-        catch (Exception ex)
-        {
-            await ioContext.SetStatusMessage(ex.ToString());
-        }
-        finally
-        {
-            await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Done.");
         }
     }
 
