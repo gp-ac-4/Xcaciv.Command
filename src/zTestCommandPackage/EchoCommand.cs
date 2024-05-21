@@ -5,9 +5,11 @@ using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
+using Xcaciv.Command.Interface.Attributes;
 
 namespace zTestCommandPackage
 {
+    [BaseCommand("ECHO", "ECHO")]
     public class EchoCommand : ICommandDelegate
     {
         public string BaseCommand { get; protected set; } = "ECHO";

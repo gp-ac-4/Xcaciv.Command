@@ -33,4 +33,8 @@ public class CommandDescription
     /// full path to containing assembly
     /// </summary>
     public PackageDescription PackageDescription { get; set; } = new PackageDescription();
+    /// <summary>
+    /// explicitly indicates if a command modifes the environment
+    /// </summary>
+    public bool ModifiesEnvironment { get; set; }
 }

@@ -4,17 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
+using Xcaciv.Command.Interface.Attributes;
 
 namespace Xcaciv.Command.Commands
 {
+    [BaseCommand("Set", "Set environment values", Prototype = "SET <varname> = <value>")]
+    [CommandParameter("Key")]
+    [CommandParameter("Value")]
+    [CommandHelpRemarks("This is a special command that is able to modify the Env outside its own context.")]
     internal class SetCommand : AbstractCommand
     {
-        public override string BaseCommand => "SET";
-
-        public override string FriendlyName => "Set environment values";
-
-        public override string HelpString => "SET <varname> = <value>";
-
         public override string HandleExecution(string[] parameters, IEnvironment env)
         {
             var varName = String.Empty;

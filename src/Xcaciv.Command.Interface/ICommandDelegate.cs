@@ -12,14 +12,6 @@ namespace Xcaciv.Command.Interface
     public interface ICommandDelegate : IAsyncDisposable
     {
         /// <summary>
-        /// unique typed command - alphanumeric with dash or underscore
-        /// </summary>
-        string BaseCommand { get; }
-        /// <summary>
-        /// Display name - may contain special characters
-        /// </summary>
-        string FriendlyName { get; }
-        /// <summary>
         /// primary command execution method
         /// </summary>
         /// <param name="parameters"></param>
