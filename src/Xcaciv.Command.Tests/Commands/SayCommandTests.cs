@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xcaciv.Command.FileLoader;
 using Xcaciv.Command.Commands;
+using Xcaciv.Command.Interface.Attributes;
 
 namespace Xcaciv.Command.Tests.Commands
 {
@@ -52,6 +53,39 @@ namespace Xcaciv.Command.Tests.Commands
             // verify the output of the first run
             // by looking at the output of the second output line
             Assert.Equal("what is up!", textio.Children.First().Output.First());
+        }
+
+        [Fact()]
+        public void BaseAttributeTest()
+        {
+
+            //var actual = SayCommand.ProcessEnvValues("what is %direction%!", textio);
+
+            var attributes = Attribute.GetCustomAttribute(typeof(SayCommand), typeof(BaseCommandAttribute)) as BaseCommandAttribute;
+
+            Assert.NotNull(attributes);
+            Assert.Equal("Like echo but more valley.", attributes.Description);
+        }
+
+        [Fact()]
+        public void ParameterAttributeTest()
+        {
+
+            var attributes = Attribute.GetCustomAttribute(typeof(SayCommand), typeof(CommandParameterAttribute)) as CommandParameterAttribute;
+
+            Assert.NotNull(attributes);
+            Assert.Equal("<thing to output>", attributes.ValueName);
+        }
+
+        [Fact()]
+        public void MultipleParameterAttributeTest()
+        {
+
+            var attributes = Attribute.GetCustomAttributes(typeof(SayCommand), typeof(CommandHelpRemarksAttribute)) as CommandHelpRemarksAttribute[];
+
+            Assert.NotNull(attributes);
+            Assert.NotEmpty(attributes);
+            Assert.Equal(2, attributes.Length);
         }
     }
 }

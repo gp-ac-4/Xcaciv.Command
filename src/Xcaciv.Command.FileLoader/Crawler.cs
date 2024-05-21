@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO.Abstractions;
 using Xcaciv.Command.Interface;
+using Xcaciv.Command.Interface.Attributes;
 using Xcaciv.Command.Interface.Exceptions;
 using Xcaciv.Loader;
 
@@ -62,13 +64,20 @@ public class Crawler : ICrawler
                 {
                     if (commandType == null) continue; // not sure why it could be null, but the compiler says so
 
-                    var command = context.CreateInstance<ICommandDelegate>(commandType);
-                    commands[command.BaseCommand] = new CommandDescription()
+                    // required to have BaseCommandAttribute, 
+                    if (Attribute.GetCustomAttribute(commandType, typeof(BaseCommandAttribute)) is BaseCommandAttribute attributes)
                     {
-                        BaseCommand = command.BaseCommand,
-                        FullTypeName = command.GetType().FullName ?? String.Empty,
-                        PackageDescription = packagDesc
-                    };
+                        commands[attributes.Command] = new CommandDescription()
+                        {
+                            BaseCommand = attributes.Command,
+                            FullTypeName = commandType.FullName ?? String.Empty,
+                            PackageDescription = packagDesc
+                        };
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
+                    }
                 }
 
                 packagDesc.Commands = commands;

@@ -37,5 +37,5 @@ public interface ITextIoContext : IEnvironment, IInputContext, IOutputContext, I
     /// <param name="childArguments">arguments to pass to child context</param>
     /// <param name="pipeline">specify we are dealing with a pipeline</param>
     /// <returns></returns>
-    Task<ITextIoContext> GetChild(string[]? childArguments = null); 
+    Task<ITextIoContext> GetChild(string[]? childArguments = null);
 }

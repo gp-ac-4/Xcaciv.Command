@@ -37,12 +37,18 @@ namespace Xcaciv.Command.Tests.TestImpementations
 
         public override Task<ITextIoContext> GetChild(string[]? childArguments = null)
         {
-            var envVarsCopy = this.EnvironmentVariables.ToDictionary() ;
-            var child = new TestTextIo(childArguments, envVarsCopy)
+            var envCopy = this.GetEnvinronment();
+            var child = new TestTextIo(childArguments, envCopy)
             {
                 Parent = Id
             };
+
             Children.Add(child);
+
+            if (this.HasPipedInput && this.inputPipe != null) child.SetInputPipe(this.inputPipe);
+            
+            if (this.outputPipe != null) child.SetOutputPipe(this.outputPipe);
+            
             return Task.FromResult<ITextIoContext>(child);
         }
 

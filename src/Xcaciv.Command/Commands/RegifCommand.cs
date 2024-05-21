@@ -5,18 +5,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
+using Xcaciv.Command.Interface.Attributes;
 
 namespace Xcaciv.Command.Commands
 {
+    [BaseCommand("REGIF", "Regular expression filter. Outputs the string if it matches", Prototype = @"<some command> | regif ""<regex expression>"" ""<string to check>""")]
+    [CommandParameter("Regex")]
+    [CommandParameter("String to match")]
     public class RegifCommand : AbstractCommand
     {
-        public override string BaseCommand { get; } = "REGIF";
-
-
-        public override string FriendlyName { get; } = "regular expression filter";
-
-
-        public override string HelpString { get; } = "<some command> | regif '<regex expression>'";
         /// <summary>
         /// regex object for reuse
         /// </summary>

@@ -5,19 +5,16 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
+using Xcaciv.Command.Interface.Attributes;
 
 namespace Xcaciv.Command.Commands
 {
+    [BaseCommand("Say", "Like echo but more valley.", Prototype ="SAY <thing to print>")]
+    [CommandParameter("thing to output")]
+    [CommandHelpRemarks("Use double quotes to include environment variables in the format %var%.")]
+    [CommandHelpRemarks("Piped input will be evalueated for env vars before being passed out.")]
     public class SayCommand : AbstractCommand
     {
-        public override string BaseCommand { get; } = "SAY";
-
-
-        public override string FriendlyName { get; } = "say something";
-
-
-        public override string HelpString { get; } = @"SAY <thing to print> \n\tUse double quotes and %<env var name>% to embed values from the environment.";
-
         public override string HandleExecution(string[] parameters, IEnvironment env)
         {
             var builder = new StringBuilder();

@@ -143,13 +143,15 @@ namespace Xcaciv.Command
         /// MUST be set when creating a child!
         /// </summary>
         protected ConcurrentDictionary<string, string> EnvironmentVariables { get; set; } = new ConcurrentDictionary<string, string>();
+        public bool ValuesChanged { get; private set; }
+
         /// <summary>
         /// <see cref="Xcaciv.Command.Interface.IEnvironment"/>
         /// </summary>
         /// <param name="key"></param>
         /// <param name="addValue"></param>
         /// <returns></returns>
-        public void SetValue(string key, string addValue)
+        public virtual void SetValue(string key, string addValue)
         {
             // make case insensitive var names
             key = key.ToUpper();
@@ -158,13 +160,15 @@ namespace Xcaciv.Command
                 AddTraceMessage($"Environment value {key} changed from {value} to {addValue}.").Wait();
                 return addValue;
             });
+
+            this.ValuesChanged = true;
         }
         /// <summary>
         /// <see cref="Xcaciv.Command.Interface.IEnvironment"/>
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public string GetValue(string key)
+        public virtual string GetValue(string key)
         {
             // make case insensitive var names
             key = key.ToUpper();
@@ -172,6 +176,19 @@ namespace Xcaciv.Command
             string? returnValue;
             EnvironmentVariables.TryGetValue(key, out returnValue);
             return returnValue ?? String.Empty;
+        }
+
+        public Dictionary<string, string> GetEnvinronment()
+        {
+            return EnvironmentVariables.ToDictionary();
+        }
+
+        public void UpdateEnvironment(Dictionary<string, string> dictionary)
+        {
+            foreach (var pair in dictionary)
+            {
+                SetValue(pair.Key, pair.Value);
+            }
         }
     }
 }

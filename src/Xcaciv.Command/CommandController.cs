@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Xcaciv.Command.Commands;
 using Xcaciv.Command.FileLoader;
 using Xcaciv.Command.Interface;
+using Xcaciv.Command.Interface.Attributes;
 using Xcaciv.Command.Interface.Exceptions;
 using Xcaciv.Loader;
 
@@ -96,49 +97,47 @@ public class CommandController : Interface.ICommandController
     public void EnableDefaultCommands()
     {
         // This is the package action
-        var key = "Default";
-        var packagDescription = new PackageDescription()
-        {
-            Name = key,
-            FullPath = "",
-        };
+        var packageKey = "Default";
 
-        var regif = new RegifCommand();
-        AddCommand(new CommandDescription()
-        {
-            BaseCommand = regif.BaseCommand,
-            FullTypeName = regif.GetType().FullName ?? String.Empty,
-            PackageDescription = new PackageDescription()
-            {
-                Name = key,
-                FullPath = ""
-            }
-        });
+        AddCommand(packageKey, new RegifCommand());
 
-        var say = new SayCommand();
-        AddCommand(new CommandDescription()
-        {
-            BaseCommand = say.BaseCommand,
-            FullTypeName = say.GetType().FullName ?? String.Empty,
-            PackageDescription = new PackageDescription()
-            {
-                Name = key,
-                FullPath = ""
-            }
-        });
+        AddCommand(packageKey, new SayCommand());
 
-        var set = new SetCommand();
-        AddCommand(new CommandDescription()
-        {
-            BaseCommand = set.BaseCommand,
-            FullTypeName = set.GetType().FullName ?? String.Empty,
-            PackageDescription = new PackageDescription()
-            {
-                Name = key,
-                FullPath = ""
-            }
-        });
+        AddCommand(packageKey, new SetCommand(), true);
+        
+        AddCommand(packageKey, new EnvCommand());
     }
+    /// <summary>
+    /// add a command from an instance of the command
+    /// good for commands from internal or linked dlls
+    /// </summary>
+    /// <param name="packageKey"></param>
+    /// <param name="command"></param>
+    /// <param name="modifiesEnvironment">only special commands can modify the environment</param>
+    private void AddCommand(string packageKey, ICommandDelegate command, bool modifiesEnvironment = false)
+    {
+        var commandType = command.GetType();
+        if (Attribute.GetCustomAttribute(commandType, typeof(BaseCommandAttribute)) is BaseCommandAttribute attributes)
+        {
+            AddCommand(new CommandDescription()
+            {
+                BaseCommand = attributes.Command,
+                FullTypeName = command.GetType().FullName ?? String.Empty,
+                PackageDescription = new PackageDescription()
+                {
+                    Name = packageKey,
+                    FullPath = ""
+                },
+                ModifiesEnvironment = modifiesEnvironment
+            });
+            return;
+        }
+        
+        Debug.WriteLine($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
+        return;
+        
+    }
+
     /// <summary>
     /// install a single command into the index
     /// </summary>
@@ -165,9 +164,9 @@ public class CommandController : Interface.ICommandController
         {
             var commandName = GetCommand(commandLine);
             var args = PrepareArgs(commandLine);
-            await using (var childContext = await ioContext.GetChild(args))
-                await ExecuteCommand(commandName, childContext);
             
+            await ExecuteCommand(commandName, args, ioContext);
+
         }        
     }
 
@@ -187,12 +186,13 @@ public class CommandController : Interface.ICommandController
             {
                 childContext.SetInputPipe(pipeChannel.Reader);
             }
-
             // set the write pipe
             pipeChannel = Channel.CreateUnbounded<string>();
             childContext.SetOutputPipe(pipeChannel.Writer);
 
-            tasks.Add(ExecuteCommand(commandName, childContext));
+            tasks.Add(ExecuteCommand(commandName, args, childContext));
+            
+            if (childContext.ValuesChanged) ioContext.UpdateEnvironment(childContext.GetEnvinronment());
         }
 
         await Task.WhenAll(tasks);
@@ -209,7 +209,7 @@ public class CommandController : Interface.ICommandController
     /// <param name="commandKey"></param>
     /// <param name="args"></param>
     /// <param name="ioContext"></param>
-    protected async Task ExecuteCommand(string commandKey, ITextIoContext ioContext)
+    protected async Task ExecuteCommand(string commandKey, string[] args, ITextIoContext ioContext)
     {
         if (Commands.TryGetValue(commandKey, out CommandDescription? commandDiscription))
         {
@@ -218,8 +218,11 @@ public class CommandController : Interface.ICommandController
                 await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Start.");
 
                 var commandInstance = GetCommandInstance(commandDiscription);
-
-                await ExecuteCommand(ioContext, commandInstance);
+                await using var childContext = await ioContext.GetChild(args);
+                {
+                    await ExecuteCommand(childContext, commandInstance);
+                    if (commandDiscription.ModifiesEnvironment) ioContext.UpdateEnvironment(childContext.GetEnvinronment());
+                }
             }
             catch (Exception ex)
             {
@@ -240,7 +243,7 @@ public class CommandController : Interface.ICommandController
             }
             else
             {
-                var message = $"Command[{commandKey}] not found.";
+                var message = $"Command [{commandKey}] not found.";
                 await ioContext.OutputChunk($"{message} Try '{this.HelpCommand}'");
                 await ioContext.AddTraceMessage(message);
             }
