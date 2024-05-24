@@ -65,7 +65,7 @@ public class VerfiedSourceDirectories : IVerfiedSourceDirectories
     /// <returns></returns>
     public bool VerifyDirectory(string filePath, bool shouldThrow = false)
     {
-        if (VerifyRestrictedPath(filePath, shouldThrow) && Directory.Exists(filePath))
+        if (VerifyRestrictedPath(filePath, shouldThrow) && FileSystem.Directory.Exists(filePath))
         {
             return FileSystem.File.GetAttributes(filePath)
                 .HasFlag(FileAttributes.Directory);

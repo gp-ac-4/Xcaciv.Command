@@ -96,6 +96,8 @@ public class Crawler : ICrawler
     /// <param name="basePath"></param>
     /// <param name="subDirectory"></param>
     /// <param name="packageAction">Action(name, path) THREAD SAFE</param>
+    /// <exception cref="DirectoryNotFoundException">Thrown if the basePath directory does not exist.</exception>
+    /// <exception cref="NoPackageDirectoryFoundException">Thrown if no packages are found in the basePath directory.</exception>
     public void CrawlPackagePaths(string basePath, string subDirectory, Action<string, string> packageAction)
     {
         basePath = fileSystem.Path.GetFullPath(basePath);

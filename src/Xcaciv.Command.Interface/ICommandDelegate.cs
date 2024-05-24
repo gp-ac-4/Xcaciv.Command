@@ -24,6 +24,11 @@ namespace Xcaciv.Command.Interface
         /// <param name="messageContext"></param>
         /// <returns></returns>
         void Help(IOutputContext outputContext);
+        /// <summary>
+        /// output single line help, used when listing all commands
+        /// </summary>
+        /// <param name="context"></param>
+        void OneLineHelp(IOutputContext context);
     }
 }
  

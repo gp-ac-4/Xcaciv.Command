@@ -49,5 +49,10 @@ namespace zTestCommandPackage
             // nothing to dispose
             return ValueTask.CompletedTask;
         }
+
+        public void OneLineHelp(IOutputContext context)
+        {
+            context.OutputChunk($"{BaseCommand} - {FriendlyName}");
+        }
     }
 }

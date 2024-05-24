@@ -10,7 +10,7 @@ using Xcaciv.Command.Interface.Attributes;
 namespace Xcaciv.Command.Commands
 {
     [BaseCommand("Say", "Like echo but more valley.", Prototype ="SAY <thing to print>")]
-    [CommandParameter("thing to output")]
+    [CommandParameter("text", "Text to output")]
     [CommandHelpRemarks("Use double quotes to include environment variables in the format %var%.")]
     [CommandHelpRemarks("Piped input will be evalueated for env vars before being passed out.")]
     public class SayCommand : AbstractCommand

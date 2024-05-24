@@ -11,18 +11,18 @@ namespace Xcaciv.Command.Interface.Attributes
     {
         private string _valueName = "TODO";
 
-        public CommandParameterAttribute(string name, string description = "") 
+        public CommandParameterAttribute(string name, string description) 
         { 
             this.ValueName = name;
         }
 
-        public CommandParameterAttribute(string flagname, string name, string description = "")
+        public CommandParameterAttribute(string flagname, string name, string description)
         {
             this.FlagName = flagname;
             this.ValueName = name;
         }
 
-        public CommandParameterAttribute(string abbrFlag, string flagname, string name, string description = "")
+        public CommandParameterAttribute(string abbrFlag, string flagname, string name, string description)
         {
             this.AbbrFlagName = abbrFlag;
             this.FlagName = flagname;

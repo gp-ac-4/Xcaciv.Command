@@ -74,7 +74,7 @@ namespace Xcaciv.Command.Tests.Commands
             var attributes = Attribute.GetCustomAttribute(typeof(SayCommand), typeof(CommandParameterAttribute)) as CommandParameterAttribute;
 
             Assert.NotNull(attributes);
-            Assert.Equal("<thing to output>", attributes.ValueName);
+            Assert.Equal("<text>", attributes.ValueName);
         }
 
         [Fact()]
@@ -86,6 +86,17 @@ namespace Xcaciv.Command.Tests.Commands
             Assert.NotNull(attributes);
             Assert.NotEmpty(attributes);
             Assert.Equal(2, attributes.Length);
+        }
+
+        // test the one line help string
+        [Fact()]
+        public void OneLineHelpTest()
+        {
+            var textio = new TestImpementations.TestTextIo();
+            var command = new SayCommand();
+            command.OneLineHelp(textio);
+
+            Assert.Equal("SAY          Like echo but more valley.", textio.ToString());
         }
     }
 }
