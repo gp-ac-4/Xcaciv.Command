@@ -49,24 +49,13 @@ public class CrawlerTests
                 {$@"{basePath}Root\Hello\{subDirectory}\zTestInterfaces.dll", new MockFileData(Resource1.zTestInterfaces) },
                 {$@"{basePath}Xc.Hello\{subDirectory}\Xc.Hello.dll", new MockFileData(Resource1.zTestAssembly) },
             });
-        filesSystem.AddDirectory(@"C:\Program\Commands\Hello");
-        filesSystem.AddDirectory(@"C:\Program\Commands\Say");
-        filesSystem.AddDirectory(@"C:\Program\Commands\Do");
-        filesSystem.AddDirectory(@"C:\Program\Commands\Stuff");
+        filesSystem.AddDirectory($@"{basePath}Hello");
+        filesSystem.AddDirectory($@"{basePath}Say");
+        filesSystem.AddDirectory($@"{basePath}Do");
+        filesSystem.AddDirectory($@"{basePath}Stuff");
 
         return filesSystem;
     }
-    /*
-            [Fact()]
-            public void WalkPackagePathsTest()
-            {
-                var fileSystem = this.getFileSystem();
-                var crawler = new Crawler(fileSystem);
-
-                var firstBin = crawler.LoadCommandDescriptions(basePath, "bin").FirstOrDefault();
-                Assert.Equal("C:\\Program\\Commands\\Hello\\bin\\Hello.dll", firstBin.Value.AssemblyPath);
-            }
-    */
 
     [Fact()]
     public void WalkPackagePathsTest1()
@@ -89,4 +78,25 @@ public class CrawlerTests
 
         Assert.True(packages.Where(p => p.Value.Commands.ContainsKey("ECHO")).Any());
     }
+
+    [Fact()]
+    public void CrawlPackagePaths_ThrowsDirectoryNotFoundException()
+    {
+        var fileSystem = new MockFileSystem();
+        var crawler = new Crawler(fileSystem);
+
+        Assert.Throws<DirectoryNotFoundException>(() => crawler.CrawlPackagePaths(basePath, subDirectory, (name, binPath) => { }));
+    }
+
+    [Fact()]
+    public void CrawlPackagePaths_ThrowsNoPackageDirectoryFoundException()
+    {
+        var fileSystem = new MockFileSystem();
+        var crawler = new Crawler(fileSystem);
+
+        fileSystem.AddDirectory(basePath);
+
+        Assert.Throws<Interface.Exceptions.NoPackageDirectoryFoundException>(() => crawler.CrawlPackagePaths(basePath, subDirectory, (name, binPath) => { }));
+    }
+
 }

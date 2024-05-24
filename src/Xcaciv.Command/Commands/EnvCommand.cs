@@ -8,7 +8,7 @@ using Xcaciv.Command.Interface.Attributes;
 
 namespace Xcaciv.Command.Commands
 {
-    [BaseCommand("ENV", "output all environment variables", Prototype = "ENV")]
+    [BaseCommand("ENV", "Output all environment variables", Prototype = "ENV")]
     internal class EnvCommand : AbstractCommand
     {
         public override string HandleExecution(string[] parameters, IEnvironment env)

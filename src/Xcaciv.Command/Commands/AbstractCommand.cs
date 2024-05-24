@@ -19,10 +19,23 @@ namespace Xcaciv.Command.Commands
         {
             return ValueTask.CompletedTask;
         }
-
+        /// <summary>
+        /// output full help
+        /// </summary>
+        /// <param name="outputContext"></param>
         public virtual void Help(IOutputContext outputContext)
         {
             outputContext.OutputChunk(this.BuildHelpString());
+        }
+        /// <summary>
+        /// single line help command description, used for listing all commands
+        /// </summary>
+        /// <param name="outputContext"></param>
+        public virtual void OneLineHelp(IOutputContext outputContext)
+        {
+            var baseCommand = Attribute.GetCustomAttribute(this.GetType(), typeof(BaseCommandAttribute)) as BaseCommandAttribute;
+            if (baseCommand != null)
+                outputContext.OutputChunk($"{baseCommand.Command,-12} {baseCommand.Description}"); 
         }
         /// <summary>
         /// create a nicely formated

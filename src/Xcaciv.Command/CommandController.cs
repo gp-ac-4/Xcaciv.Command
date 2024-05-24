@@ -317,7 +317,7 @@ public class CommandController : Interface.ICommandController
             foreach(var description in Commands)
             {
                 var cmdInsance = GetCommandInstance(description.Value);
-                cmdInsance.Help(context);
+                cmdInsance.OneLineHelp(context);
             }
         else
         {
