@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Xcaciv.Command.Interface.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-    public class BaseCommandAttribute : Attribute
+    public class CommandRegisterAttribute : Attribute
     {
         private string _command;
         /// <summary>
@@ -15,7 +15,7 @@ namespace Xcaciv.Command.Interface.Attributes
         /// </summary>
         /// <param name="command"></param>
         /// <param name="description"></param>
-        public BaseCommandAttribute(string command = "", string description = "") 
+        public CommandRegisterAttribute(string command = "", string description = "") 
         { 
             this._command = command.ToUpper();
             this.Description = description;
@@ -39,5 +39,10 @@ namespace Xcaciv.Command.Interface.Attributes
         /// </summary>
         /// <example>CMD [-A | -U] [-Q] [-D] [-E ON | OFF]</example>
         public string Prototype { get; set; } = "TODO";
+        /// <summary>
+        /// a short name for the command
+        /// eg. "ls" for "list"
+        /// </summary>
+        public string Alias { get; set; } = "";
     }
 }

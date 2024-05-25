@@ -9,7 +9,7 @@ using Xcaciv.Command.Interface.Attributes;
 
 namespace zTestCommandPackage
 {
-    [BaseCommand("ECHOE", "ECHO Encoded")]
+    [CommandRegister("ECHOE", "ECHO Encoded")]
     public class EchoEncodeCommand : EchoCommand, ICommandDelegate
     {
         public EchoEncodeCommand()

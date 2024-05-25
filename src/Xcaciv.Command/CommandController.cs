@@ -117,7 +117,7 @@ public class CommandController : Interface.ICommandController
     private void AddCommand(string packageKey, ICommandDelegate command, bool modifiesEnvironment = false)
     {
         var commandType = command.GetType();
-        if (Attribute.GetCustomAttribute(commandType, typeof(BaseCommandAttribute)) is BaseCommandAttribute attributes)
+        if (Attribute.GetCustomAttribute(commandType, typeof(CommandRegisterAttribute)) is CommandRegisterAttribute attributes)
         {
             AddCommand(new CommandDescription()
             {

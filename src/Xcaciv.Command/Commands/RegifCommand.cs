@@ -9,9 +9,9 @@ using Xcaciv.Command.Interface.Attributes;
 
 namespace Xcaciv.Command.Commands
 {
-    [BaseCommand("REGIF", "Regular expression filter. Outputs the string if it matches", Prototype = @"<some command> | regif ""<regex expression>"" ""<string to check>""")]
-    [CommandParameter("Regex", "Regular Expression")]
-    [CommandParameter("String", "String to match")]
+    [CommandRegister("REGIF", "Regular expression filter. Outputs the string if it matches", Prototype = @"<some command> | regif ""<regex expression>"" ""<string to check>""")]
+    [CommandParameterOrdered("Regex", "Regular Expression")]
+    [CommandParameterOrdered("String", "String to match")]
     public class RegifCommand : AbstractCommand
     {
         /// <summary>

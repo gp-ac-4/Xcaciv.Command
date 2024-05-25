@@ -65,7 +65,7 @@ public class Crawler : ICrawler
                     if (commandType == null) continue; // not sure why it could be null, but the compiler says so
 
                     // required to have BaseCommandAttribute, 
-                    if (Attribute.GetCustomAttribute(commandType, typeof(BaseCommandAttribute)) is BaseCommandAttribute attributes)
+                    if (Attribute.GetCustomAttribute(commandType, typeof(CommandRegisterAttribute)) is CommandRegisterAttribute attributes)
                     {
                         commands[attributes.Command] = new CommandDescription()
                         {

@@ -33,7 +33,7 @@ namespace Xcaciv.Command.Commands
         /// <param name="outputContext"></param>
         public virtual void OneLineHelp(IIoContext outputContext)
         {
-            var baseCommand = Attribute.GetCustomAttribute(this.GetType(), typeof(BaseCommandAttribute)) as BaseCommandAttribute;
+            var baseCommand = Attribute.GetCustomAttribute(this.GetType(), typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
             if (baseCommand != null)
                 outputContext.OutputChunk($"{baseCommand.Command,-12} {baseCommand.Description}"); 
         }
@@ -42,32 +42,32 @@ namespace Xcaciv.Command.Commands
         /// </summary>
         /// <returns></returns>
         protected virtual string BuildHelpString()
-        {            
+        {
             var thisType = this.GetType();
-            var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(BaseCommandAttribute)) as BaseCommandAttribute;
-            var commandParameters = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterAttribute)) as CommandParameterAttribute[];
+            var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
+            var commandParameters = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterNamedAttribute)) as CommandParameterNamedAttribute[];
             var helpRemarks = Attribute.GetCustomAttributes(thisType, typeof(CommandHelpRemarksAttribute)) as CommandHelpRemarksAttribute[];
 
             // TODO: extract a help formatter so it can be customized
             var builder = new StringBuilder();
-            builder.AppendLine($"- {baseCommand?.Command} HELP ------------------------------");
-            builder.AppendLine(baseCommand?.Description);
-            builder.AppendLine();
-            builder.AppendLine(baseCommand?.Prototype);
+            builder.AppendLine($"{baseCommand?.Command}:");
+            builder.AppendLine($"  {baseCommand?.Description}");
+            builder.AppendLine("Usage:");
+            builder.AppendLine($"  {baseCommand?.Prototype}");
             builder.AppendLine();
 
             if (commandParameters != null && commandParameters.Length > 0)
             {
-                builder.AppendLine("---- PARAMETERS");
+                builder.AppendLine("Options:");
                 foreach (var parameter in commandParameters)
                 {
-                    builder.AppendLine(parameter.ToString());
+                    builder.AppendLine($"  {parameter.ToString()}");
                 }
             }
 
             if (helpRemarks != null && helpRemarks.Length > 0)
             {
-                builder.AppendLine("---- REMARKS");
+                builder.AppendLine("Remarks:");
                 foreach (var rem in helpRemarks)
                 {
                     builder.AppendLine();
@@ -75,9 +75,7 @@ namespace Xcaciv.Command.Commands
                 }
             }
 
-            builder.AppendLine($"----------------------------------------");
-            builder.AppendLine($"----------------------------------------");
-
+            builder.AppendLine();
             return builder.ToString();
         }
         /// <summary>

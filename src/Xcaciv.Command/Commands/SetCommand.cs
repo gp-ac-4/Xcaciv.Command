@@ -8,9 +8,9 @@ using Xcaciv.Command.Interface.Attributes;
 
 namespace Xcaciv.Command.Commands
 {
-    [BaseCommand("Set", "Set environment values", Prototype = "SET <varname> = <value>")]
-    [CommandParameter("Key", "Key used to access value")]
-    [CommandParameter("Value", "Value stored for accessing")]
+    [CommandRegister("Set", "Set environment values", Prototype = "SET <varname> = <value>")]
+    [CommandParameterOrdered("Key", "Key used to access value")]
+    [CommandParameterOrdered("Value", "Value stored for accessing")]
     [CommandHelpRemarks("This is a special command that is able to modify the Env outside its own context.")]
     internal class SetCommand : AbstractCommand
     {

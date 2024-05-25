@@ -9,7 +9,7 @@ using Xcaciv.Command.Interface.Attributes;
 
 namespace zTestCommandPackage
 {
-    [BaseCommand("ECHO", "ECHO")]
+    [CommandRegister("ECHO", "ECHO")]
     public class EchoCommand : ICommandDelegate
     {
         public string BaseCommand { get; protected set; } = "ECHO";
