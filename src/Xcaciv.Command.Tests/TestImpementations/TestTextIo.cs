@@ -27,18 +27,15 @@ namespace Xcaciv.Command.Tests.TestImpementations
 
         public Dictionary<string, string> PromptAnswers { get; private set; } = new Dictionary<string, string>();
 
-        public TestTextIo(string[]? arguments = null, Dictionary<string, string>? envVars = default) : base("TestTextIo", null)
+        public TestTextIo(string[]? arguments = null) : base("TestTextIo", null)
         {
             this.Parameters = arguments ?? string.Empty.Split(' ');
             this.Verbose = true;
-            if (envVars != null)
-                this.EnvironmentVariables = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(envVars);
         }
 
-        public override Task<ITextIoContext> GetChild(string[]? childArguments = null)
+        public override Task<IIoContext> GetChild(string[]? childArguments = null)
         {
-            var envCopy = this.GetEnvinronment();
-            var child = new TestTextIo(childArguments, envCopy)
+            var child = new TestTextIo(childArguments)
             {
                 Parent = Id
             };
@@ -49,7 +46,7 @@ namespace Xcaciv.Command.Tests.TestImpementations
             
             if (this.outputPipe != null) child.SetOutputPipe(this.outputPipe);
             
-            return Task.FromResult<ITextIoContext>(child);
+            return Task.FromResult<IIoContext>(child);
         }
 
         public override Task<string> PromptForCommand(string prompt)

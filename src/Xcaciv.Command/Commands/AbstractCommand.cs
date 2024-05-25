@@ -23,7 +23,7 @@ namespace Xcaciv.Command.Commands
         /// output full help
         /// </summary>
         /// <param name="outputContext"></param>
-        public virtual void Help(IOutputContext outputContext)
+        public virtual void Help(IIoContext outputContext)
         {
             outputContext.OutputChunk(this.BuildHelpString());
         }
@@ -31,7 +31,7 @@ namespace Xcaciv.Command.Commands
         /// single line help command description, used for listing all commands
         /// </summary>
         /// <param name="outputContext"></param>
-        public virtual void OneLineHelp(IOutputContext outputContext)
+        public virtual void OneLineHelp(IIoContext outputContext)
         {
             var baseCommand = Attribute.GetCustomAttribute(this.GetType(), typeof(BaseCommandAttribute)) as BaseCommandAttribute;
             if (baseCommand != null)
@@ -86,7 +86,7 @@ namespace Xcaciv.Command.Commands
         /// <param name="input"></param>
         /// <param name="environment"></param>
         /// <returns></returns>
-        public async IAsyncEnumerable<string> Main(IInputContext input, IEnvironment environment)
+        public async IAsyncEnumerable<string> Main(IIoContext input, IEnvironmentContext environment)
         {
             if (input.HasPipedInput)
             {
@@ -105,9 +105,9 @@ namespace Xcaciv.Command.Commands
             }
         }
 
-        public abstract string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironment env);
+        public abstract string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env);
 
-        public abstract string HandleExecution(string[] parameters, IEnvironment env);
+        public abstract string HandleExecution(string[] parameters, IEnvironmentContext env);
 
     }
 }

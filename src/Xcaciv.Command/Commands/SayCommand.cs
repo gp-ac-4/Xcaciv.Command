@@ -15,7 +15,7 @@ namespace Xcaciv.Command.Commands
     [CommandHelpRemarks("Piped input will be evalueated for env vars before being passed out.")]
     public class SayCommand : AbstractCommand
     {
-        public override string HandleExecution(string[] parameters, IEnvironment env)
+        public override string HandleExecution(string[] parameters, IEnvironmentContext env)
         {
             var builder = new StringBuilder();
             foreach (var parameter in parameters) // zero position contains command
@@ -29,7 +29,7 @@ namespace Xcaciv.Command.Commands
             return result[..^1];
         }
 
-        public static string ProcessEnvValues(string value, IEnvironment env)
+        public static string ProcessEnvValues(string value, IEnvironmentContext env)
         {
             Regex regex = new Regex(@"%(.\w*?)%");
             return regex.Replace(value, match =>
@@ -47,7 +47,7 @@ namespace Xcaciv.Command.Commands
             });
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironment env)
+        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
         {
             return ProcessEnvValues(pipedChunk, env);
         }

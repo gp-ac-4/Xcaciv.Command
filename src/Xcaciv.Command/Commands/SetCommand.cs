@@ -14,7 +14,7 @@ namespace Xcaciv.Command.Commands
     [CommandHelpRemarks("This is a special command that is able to modify the Env outside its own context.")]
     internal class SetCommand : AbstractCommand
     {
-        public override string HandleExecution(string[] parameters, IEnvironment env)
+        public override string HandleExecution(string[] parameters, IEnvironmentContext env)
         {
             var varName = String.Empty;
             var varValue = String.Empty;
@@ -46,7 +46,7 @@ namespace Xcaciv.Command.Commands
             return String.Empty;
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironment status)
+        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext status)
         {
             throw new NotImplementedException();
         }

@@ -19,7 +19,7 @@ namespace Xcaciv.Command
     /// </remarks>
     /// <param name="name"></param>
     /// <param name="parentId"></param>
-    public abstract class AbstractTextIo(string name, Guid? parentId = default) : ITextIoContext
+    public abstract class AbstractTextIo(string name, Guid? parentId = default) : IIoContext
     {
         public bool Verbose { get; set; } = false;
 
@@ -40,7 +40,7 @@ namespace Xcaciv.Command
         /// </summary>
         /// <param name="childArguments"></param>
         /// <returns></returns>
-        public abstract Task<ITextIoContext> GetChild(string[]? childArguments = null);
+        public abstract Task<IIoContext> GetChild(string[]? childArguments = null);
         /// <summary>
         /// handles the Channel output and allows the implementation to handle 
         /// the final output
@@ -138,57 +138,6 @@ namespace Xcaciv.Command
             System.Diagnostics.Debug.WriteLine(message);
             return Task.CompletedTask;
         }
-        /// <summary>
-        /// Thread safe collection of env vars
-        /// MUST be set when creating a child!
-        /// </summary>
-        protected ConcurrentDictionary<string, string> EnvironmentVariables { get; set; } = new ConcurrentDictionary<string, string>();
-        public bool ValuesChanged { get; private set; }
-
-        /// <summary>
-        /// <see cref="Xcaciv.Command.Interface.IEnvironment"/>
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="addValue"></param>
-        /// <returns></returns>
-        public virtual void SetValue(string key, string addValue)
-        {
-            // make case insensitive var names
-            key = key.ToUpper();
-            EnvironmentVariables.AddOrUpdate(key, addValue, (key, value) =>
-            {
-                AddTraceMessage($"Environment value {key} changed from {value} to {addValue}.").Wait();
-                return addValue;
-            });
-
-            this.ValuesChanged = true;
-        }
-        /// <summary>
-        /// <see cref="Xcaciv.Command.Interface.IEnvironment"/>
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        public virtual string GetValue(string key)
-        {
-            // make case insensitive var names
-            key = key.ToUpper();
-
-            string? returnValue;
-            EnvironmentVariables.TryGetValue(key, out returnValue);
-            return returnValue ?? String.Empty;
-        }
-
-        public Dictionary<string, string> GetEnvinronment()
-        {
-            return EnvironmentVariables.ToDictionary();
-        }
-
-        public void UpdateEnvironment(Dictionary<string, string> dictionary)
-        {
-            foreach (var pair in dictionary)
-            {
-                SetValue(pair.Key, pair.Value);
-            }
-        }
+        
     }
 }

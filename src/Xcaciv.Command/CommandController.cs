@@ -152,25 +152,25 @@ public class CommandController : Interface.ICommandController
     /// parse a command line, find and execute the command passing in the arguments
     /// </summary>
     /// <param name="commandLine"></param>
-    public async Task Run(string commandLine, ITextIoContext ioContext)
+    public async Task Run(string commandLine, IIoContext ioContext, IEnvironmentContext env)
     {
         // parse the command line before processing the context
         // check to see if it is a pipeline
         if (commandLine.Contains(PIPELINE_CHAR))
         {
-            await PipelineTheBitch(commandLine, ioContext);
+            await PipelineTheBitch(commandLine, ioContext, env);
         }
         else
         {
             var commandName = GetCommand(commandLine);
             var args = PrepareArgs(commandLine);
             
-            await ExecuteCommand(commandName, args, ioContext);
+            await ExecuteCommand(commandName, args, ioContext, env);
 
         }        
     }
 
-    protected async Task PipelineTheBitch(string commandLine, ITextIoContext ioContext)
+    protected async Task PipelineTheBitch(string commandLine, IIoContext ioContext, IEnvironmentContext env)
     {
         var tasks = new List<Task>();
         var pipeChannel = null as Channel<string>;
@@ -178,9 +178,11 @@ public class CommandController : Interface.ICommandController
         // split the command line into commands by the pipeline character
         foreach(var command in commandLine.Split(PIPELINE_CHAR))
         {
-            var commandName = GetCommand(command);
+            var commandName = GetCommand(command).ToString();
             var args = PrepareArgs(command);
+            // creating a additional layer of IO to manage the pipes
             await using var childContext = await ioContext.GetChild(args);
+            // we are not creating a child environment for simplified syncronization
             // if not the first command in the pipeline, set the read pipe
             if (pipeChannel != null)
             {
@@ -190,13 +192,14 @@ public class CommandController : Interface.ICommandController
             pipeChannel = Channel.CreateUnbounded<string>();
             childContext.SetOutputPipe(pipeChannel.Writer);
 
-            tasks.Add(ExecuteCommand(commandName, args, childContext));
-            
-            if (childContext.ValuesChanged) ioContext.UpdateEnvironment(childContext.GetEnvinronment());
+            // add the task to the collection
+            tasks.Add(ExecuteCommand(commandName, args, childContext, env));
         }
 
+        // wait for the pipeline to finish
         await Task.WhenAll(tasks);
 
+        // handle the final output
         await foreach (var output in (pipeChannel ?? Channel.CreateBounded<string>(0)).Reader.ReadAllAsync())
         {
             await ioContext.OutputChunk(output);
@@ -209,7 +212,7 @@ public class CommandController : Interface.ICommandController
     /// <param name="commandKey"></param>
     /// <param name="args"></param>
     /// <param name="ioContext"></param>
-    protected async Task ExecuteCommand(string commandKey, string[] args, ITextIoContext ioContext)
+    protected async Task ExecuteCommand(string commandKey, string[] args, IIoContext ioContext, IEnvironmentContext env)
     {
         if (Commands.TryGetValue(commandKey, out CommandDescription? commandDiscription))
         {
@@ -218,10 +221,13 @@ public class CommandController : Interface.ICommandController
                 await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Start.");
 
                 var commandInstance = GetCommandInstance(commandDiscription);
-                await using var childContext = await ioContext.GetChild(args);
+                await using (var childContext = await ioContext.GetChild(args))
                 {
-                    await ExecuteCommand(childContext, commandInstance);
-                    if (commandDiscription.ModifiesEnvironment) ioContext.UpdateEnvironment(childContext.GetEnvinronment());
+                    await using (var childEnv = await env.GetChild(args))
+                    {
+                        await ExecuteCommand(childContext, commandInstance, childEnv);
+                        if (commandDiscription.ModifiesEnvironment && childEnv.HasChanged) env.UpdateEnvironment(childEnv.GetEnvinronment());
+                    }
                 }
             }
             catch (Exception ex)
@@ -269,9 +275,9 @@ public class CommandController : Interface.ICommandController
         return commandInstance;
     }
 
-    protected static async Task ExecuteCommand(ITextIoContext ioContext, ICommandDelegate commandInstance)
+    protected static async Task ExecuteCommand(IIoContext ioContext, ICommandDelegate commandInstance, IEnvironmentContext env)
     {
-        await foreach (var resultMessage in commandInstance.Main(ioContext, ioContext))
+        await foreach (var resultMessage in commandInstance.Main(ioContext, env))
         {
             await ioContext.OutputChunk(resultMessage);
         }
@@ -311,7 +317,7 @@ public class CommandController : Interface.ICommandController
     /// output all the help strings
     /// </summary>
     /// <param name="context"></param>
-    public void GetHelp(string command, IOutputContext context)
+    public void GetHelp(string command, IIoContext context)
     {
         if (String.IsNullOrEmpty(command))
             foreach(var description in Commands)
