@@ -11,7 +11,7 @@ namespace Xcaciv.Command.Commands
 {
     [CommandRegister("REGIF", "Regular expression filter. Outputs the string if it matches", Prototype = @"<some command> | regif ""<regex expression>"" ""<string to check>""")]
     [CommandParameterOrdered("Regex", "Regular Expression")]
-    [CommandParameterOrdered("String", "String to match")]
+    [CommandParameterOrdered("String", "String to match", UsePipe=true)]
     public class RegifCommand : AbstractCommand
     {
         /// <summary>
@@ -23,6 +23,8 @@ namespace Xcaciv.Command.Commands
 
         public override string HandleExecution(string[] parameters, IEnvironmentContext status)
         {
+            
+
             var output = new StringBuilder();
             setRegexExpression(parameters);
             foreach (var stringToCheck in parameters.Skip(1))
@@ -38,6 +40,8 @@ namespace Xcaciv.Command.Commands
 
         public override string HandlePipedChunk(string stringToCheck, string[] parameters, IEnvironmentContext status)
         {
+            var arguments = this.ProcessParameters(parameters, true);
+
             if (parameters.Length > 0)
             {
                 setRegexExpression(parameters);

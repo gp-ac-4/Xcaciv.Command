@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
 
@@ -46,10 +47,10 @@ namespace Xcaciv.Command.Commands
         {
             var thisType = this.GetType();
             var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
-            var commandParametersOrdered = GetOrderedParameters();
-            var commandParametersNamed = GetNamedParameters();
-            var commandParametersSuffix = GetSuffixParameters();
+            var commandParametersOrdered = GetOrderedParameters(false);
             var commandParametersFlag = GetFlagParameters();
+            var commandParametersNamed = GetNamedParameters(false);
+            var commandParametersSuffix = GetSuffixParameters(false);
             var helpRemarks = Attribute.GetCustomAttributes(thisType, typeof(CommandHelpRemarksAttribute)) as CommandHelpRemarksAttribute[];
 
             // TODO: extract a help formatter so it can be customized
@@ -99,32 +100,32 @@ namespace Xcaciv.Command.Commands
         /// <summary>
         /// execute pipe and single input the same
         /// </summary>
-        /// <param name="input"></param>
+        /// <param name="io"></param>
         /// <param name="environment"></param>
         /// <returns></returns>
-        public async IAsyncEnumerable<string> Main(IIoContext input, IEnvironmentContext environment)
+        public async IAsyncEnumerable<string> Main(IIoContext io, IEnvironmentContext environment)
         {
-            if (input.HasPipedInput)
+            if (io.HasPipedInput)
             {
-                await foreach (var p in input.ReadInputPipeChunks())
+                await foreach (var p in io.ReadInputPipeChunks())
                 {
                     if (string.IsNullOrEmpty(p)) continue;
-                    yield return this.HandlePipedChunk(p, input.Parameters, environment);
+                    yield return this.HandlePipedChunk(p, io.Parameters, environment);
                 }
             }
             else
             {
-                if (input.Parameters.Length > 0 && input.Parameters[0].ToUpper() == "--HELP")
+                if (io.Parameters.Length > 0 && io.Parameters[0].ToUpper() == "--HELP")
                     yield return BuildHelpString();
                 else
-                    yield return HandleExecution(input.Parameters, environment);
+                    yield return HandleExecution(io.Parameters, environment);
             }
         }
         /// <summary>
         /// Use the parameter attributest to process the parameters into a dictionary
         /// </summary>
         /// <param name="parameters"></param>
-        protected Dictionary<string, string> ProcessParameters(string[] parameters)
+        protected Dictionary<string, string> ProcessParameters(string[] parameters, bool hasPipedInput = false)
         {
             if (parameters.Length == 0) return new Dictionary<string, string>();
             var parameterList = parameters.ToList();
@@ -132,10 +133,10 @@ namespace Xcaciv.Command.Commands
             var parameterLookup = new Dictionary<string, string>();
             Type thisType = this.GetType();
             CommandParameters.
-                        ProcessOrderedParameters(parameterList, parameterLookup, GetOrderedParameters());
+                        ProcessOrderedParameters(parameterList, parameterLookup, GetOrderedParameters(hasPipedInput));
             CommandParameters.ProcessFlags(parameterList, parameterLookup, GetFlagParameters());
-            CommandParameters.ProcessNamedParameters(parameterList, parameterLookup, GetNamedParameters());
-            CommandParameters.ProcessSuffixParameters(parameterList, parameterLookup, GetSuffixParameters());
+            CommandParameters.ProcessNamedParameters(parameterList, parameterLookup, GetNamedParameters(hasPipedInput));
+            CommandParameters.ProcessSuffixParameters(parameterList, parameterLookup, GetSuffixParameters(hasPipedInput));
 
             return parameterLookup;
         }
@@ -144,21 +145,30 @@ namespace Xcaciv.Command.Commands
         /// reads parameter description from the instance
         /// </summary>
         /// <returns></returns>
-        protected CommandParameterOrderedAttribute[] GetOrderedParameters()
+        protected CommandParameterOrderedAttribute[] GetOrderedParameters(bool hasPipedInput)
         {
             var thisType = this.GetType();
-            var ordered = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterOrderedAttribute)) as CommandParameterOrderedAttribute[];
-            return ordered ?? ([]);
+            var ordered = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterOrderedAttribute)) as CommandParameterOrderedAttribute[] ?? ([]);
+            if (hasPipedInput)
+            {
+                ordered = ordered.Where(x => !x.UsePipe).ToArray();
+            }
+            
+            return ordered;
         }
         /// <summary>
         /// reads parameter description from the instance
         /// </summary>
         /// <returns></returns>
-        protected CommandParameterNamedAttribute[] GetNamedParameters()
+        protected CommandParameterNamedAttribute[] GetNamedParameters(bool hasPipedInput)
         {
             var thisType = this.GetType();
-            var named = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterNamedAttribute)) as CommandParameterNamedAttribute[];
-            return named ?? ([]);
+            var named = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterNamedAttribute)) as CommandParameterNamedAttribute[] ?? ([]);
+            if (hasPipedInput)
+            {
+                named = named.Where(x => !x.UsePipe).ToArray();
+            }
+            return named;
         }
         /// <summary>
         /// reads parameter description from the instance
@@ -167,18 +177,22 @@ namespace Xcaciv.Command.Commands
         protected CommandFlagAttribute[] GetFlagParameters()
         {
             var thisType = this.GetType();
-            var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandFlagAttribute)) as CommandFlagAttribute[];
-            return flags ?? ([]);
+            var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandFlagAttribute)) as CommandFlagAttribute[] ?? ([]);
+            return flags;
         }
         /// <summary>
         /// reads parameter description from the instance
         /// </summary>
         /// <returns></returns>
-        protected CommandParameterSuffixAttribute[] GetSuffixParameters()
+        protected CommandParameterSuffixAttribute[] GetSuffixParameters(bool hasPipedInput)
         {
             var thisType = this.GetType();
-            var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterSuffixAttribute)) as CommandParameterSuffixAttribute[];
-            return flags ?? ([]);
+            var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterSuffixAttribute)) as CommandParameterSuffixAttribute[] ?? ([]);
+            if (hasPipedInput)
+            {
+                flags = flags.Where(x => !x.UsePipe).ToArray();
+            }
+            return flags;
         }
 
         public abstract string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env);

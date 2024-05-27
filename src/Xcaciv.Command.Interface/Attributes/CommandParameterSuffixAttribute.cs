@@ -26,7 +26,11 @@ namespace Xcaciv.Command.Interface.Attributes
 
         public string ValueDescription { get; set; } = "";
         public bool IsRquired { get; set; } = true;
-
+        /// <summary>
+        /// indicates this value is what is populated when a pipe is used
+        /// only the first parameter specified for pipeline population will be used
+        /// </summary>
+        public bool UsePipe { get; set; } = false;
         public override string ToString()
         {
             var placeholder = $"<{_helpName}>";

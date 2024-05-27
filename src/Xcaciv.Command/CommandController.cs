@@ -164,7 +164,7 @@ public class CommandController : Interface.ICommandController
             var commandName = CommandDescription.GetValidCommandName(commandLine);
             var args = CommandDescription.GetArgumentsFromCommandline(commandLine);
             
-            await ExecuteCommand(commandName, args, ioContext, env);
+            await ExecuteIsolatedCommand(commandName, args, ioContext, env);
 
         }        
     }
@@ -205,6 +205,14 @@ public class CommandController : Interface.ICommandController
         }
     }
 
+    protected async Task ExecuteIsolatedCommand(string commandKey, string[] args, IIoContext ioContext, IEnvironmentContext env)
+    {
+        await using (var childContext = await ioContext.GetChild(args))
+        {
+            await this.ExecuteCommand(commandKey, args, childContext, env);
+        }
+    }
+
     /// <summary>
     /// execute command event
     /// </summary>
@@ -220,14 +228,13 @@ public class CommandController : Interface.ICommandController
                 await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Start.");
 
                 var commandInstance = GetCommandInstance(commandDiscription);
-                await using (var childContext = await ioContext.GetChild(args))
-                {
+                
                     await using (var childEnv = await env.GetChild(args))
                     {
-                        await ExecuteCommand(childContext, commandInstance, childEnv);
+                        await ExecuteCommand(ioContext, commandInstance, childEnv);
                         if (commandDiscription.ModifiesEnvironment && childEnv.HasChanged) env.UpdateEnvironment(childEnv.GetEnvinronment());
                     }
-                }
+                
             }
             catch (Exception ex)
             {
