@@ -29,7 +29,7 @@ namespace Xcaciv.Command.Tests.TestImpementations
 
         public TestTextIo(string[]? arguments = null) : base("TestTextIo", null)
         {
-            this.Parameters = arguments ?? string.Empty.Split(' ');
+            this.Parameters = arguments ?? [];
             this.Verbose = true;
         }
 
@@ -98,8 +98,7 @@ namespace Xcaciv.Command.Tests.TestImpementations
 
         public override Task AddTraceMessage(string message)
         {
-            Trace.Add(message);  
-            // if we are not verbose, send the output to DEBUG
+            Trace.Add(message);
             System.Diagnostics.Debug.WriteLine(message);
             return Task.CompletedTask;
         }
