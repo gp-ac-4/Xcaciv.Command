@@ -6,12 +6,21 @@ using System.Threading.Tasks;
 
 namespace Xcaciv.Command.Interface.Attributes
 {
+    /// <summary>
+    /// this attribute indicates a toggle flag for a command
+    /// if the flag is present the value is true
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public class CommandParameterNamedAttribute : Attribute
+    public class CommandFlagAttribute : Attribute
     {
         private string _parameterName = "TODO";
-
-        public CommandParameterNamedAttribute(string name, string description) 
+        /// <summary>
+        /// this attribute indicates a toggle flag for a command
+        /// if the flag is present the value is true
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="description"></param>
+        public CommandFlagAttribute(string name, string description) 
         { 
             this.Name = name;
             this.ValueDescription = description;

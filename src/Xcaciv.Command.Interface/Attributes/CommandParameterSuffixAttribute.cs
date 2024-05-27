@@ -13,22 +13,24 @@ namespace Xcaciv.Command.Interface.Attributes
 
         public CommandParameterSuffixAttribute(string name, string description) 
         { 
-            this.HelpName = name;
+            this.Name = name;
             this.ValueDescription = description;
         }
 
 
-        public string HelpName
+        public string Name
         {
             get { return _helpName; }
-            set { _helpName = String.Format(@"<{0}>", value.Trim('>').Trim(']').ToLower()); }
+            set { _helpName = CommandDescription.GetValidCommandName(value, false); }
         }
 
         public string ValueDescription { get; set; } = "";
+        public bool IsRquired { get; set; } = true;
 
         public override string ToString()
         {
-            return $"{_helpName,12} {ValueDescription}".Trim();
+            var placeholder = $"<{_helpName}>";
+            return $"{placeholder,18} {ValueDescription}".Trim();
         }
     }
 }

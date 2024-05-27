@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
@@ -45,7 +46,10 @@ namespace Xcaciv.Command.Commands
         {
             var thisType = this.GetType();
             var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
-            var commandParameters = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterNamedAttribute)) as CommandParameterNamedAttribute[];
+            var commandParametersOrdered = GetOrderedParameters();
+            var commandParametersNamed = GetNamedParameters();
+            var commandParametersSuffix = GetSuffixParameters();
+            var commandParametersFlag = GetFlagParameters();
             var helpRemarks = Attribute.GetCustomAttributes(thisType, typeof(CommandHelpRemarksAttribute)) as CommandHelpRemarksAttribute[];
 
             // TODO: extract a help formatter so it can be customized
@@ -56,13 +60,27 @@ namespace Xcaciv.Command.Commands
             builder.AppendLine($"  {baseCommand?.Prototype}");
             builder.AppendLine();
 
-            if (commandParameters != null && commandParameters.Length > 0)
-            {
+            if (commandParametersOrdered.Length + commandParametersNamed.Length + commandParametersSuffix.Length + commandParametersFlag.Length > 0)
                 builder.AppendLine("Options:");
-                foreach (var parameter in commandParameters)
-                {
-                    builder.AppendLine($"  {parameter.ToString()}");
-                }
+
+            foreach (var parameter in commandParametersOrdered)
+            {
+                builder.AppendLine($"  {parameter.ToString()}");
+            }
+
+            foreach (var parameter in commandParametersFlag)
+            {
+                builder.AppendLine($"  {parameter.ToString()}");
+            }
+
+            foreach (var parameter in commandParametersNamed)
+            {
+                builder.AppendLine($"  {parameter.ToString()}");
+            }
+
+            foreach (var parameter in commandParametersSuffix)
+            {
+                builder.AppendLine($"  {parameter.ToString()}");
             }
 
             if (helpRemarks != null && helpRemarks.Length > 0)
@@ -102,8 +120,69 @@ namespace Xcaciv.Command.Commands
                     yield return HandleExecution(input.Parameters, environment);
             }
         }
+        /// <summary>
+        /// Use the parameter attributest to process the parameters into a dictionary
+        /// </summary>
+        /// <param name="parameters"></param>
+        protected Dictionary<string, string> ProcessParameters(string[] parameters)
+        {
+            if (parameters.Length == 0) return new Dictionary<string, string>();
+            var parameterList = parameters.ToList();
+
+            var parameterLookup = new Dictionary<string, string>();
+            Type thisType = this.GetType();
+            CommandParameters.
+                        ProcessOrderedParameters(parameterList, parameterLookup, GetOrderedParameters());
+            CommandParameters.ProcessFlags(parameterList, parameterLookup, GetFlagParameters());
+            CommandParameters.ProcessNamedParameters(parameterList, parameterLookup, GetNamedParameters());
+            CommandParameters.ProcessSuffixParameters(parameterList, parameterLookup, GetSuffixParameters());
+
+            return parameterLookup;
+        }
+
+        /// <summary>
+        /// reads parameter description from the instance
+        /// </summary>
+        /// <returns></returns>
+        protected CommandParameterOrderedAttribute[] GetOrderedParameters()
+        {
+            var thisType = this.GetType();
+            var ordered = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterOrderedAttribute)) as CommandParameterOrderedAttribute[];
+            return ordered ?? ([]);
+        }
+        /// <summary>
+        /// reads parameter description from the instance
+        /// </summary>
+        /// <returns></returns>
+        protected CommandParameterNamedAttribute[] GetNamedParameters()
+        {
+            var thisType = this.GetType();
+            var named = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterNamedAttribute)) as CommandParameterNamedAttribute[];
+            return named ?? ([]);
+        }
+        /// <summary>
+        /// reads parameter description from the instance
+        /// </summary>
+        /// <returns></returns>
+        protected CommandFlagAttribute[] GetFlagParameters()
+        {
+            var thisType = this.GetType();
+            var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandFlagAttribute)) as CommandFlagAttribute[];
+            return flags ?? ([]);
+        }
+        /// <summary>
+        /// reads parameter description from the instance
+        /// </summary>
+        /// <returns></returns>
+        protected CommandParameterSuffixAttribute[] GetSuffixParameters()
+        {
+            var thisType = this.GetType();
+            var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterSuffixAttribute)) as CommandParameterSuffixAttribute[];
+            return flags ?? ([]);
+        }
 
         public abstract string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env);
+
 
         public abstract string HandleExecution(string[] parameters, IEnvironmentContext env);
 

@@ -57,7 +57,7 @@ public class Crawler : ICrawler
 
             using (var context = new AssemblyContext(binPath, basePathRestriction:"*"))
             {
-                var commands = new Dictionary<string, CommandDescription>();
+                var commands = new Dictionary<string, ICommandDescription>();
                 packagDesc.Version = context.GetVersion();
 
                 foreach (var commandType in context.GetTypes<ICommandDelegate>())

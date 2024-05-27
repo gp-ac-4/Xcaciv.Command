@@ -9,7 +9,7 @@ namespace Xcaciv.Command.Interface.Attributes
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public class CommandRegisterAttribute : Attribute
     {
-        private string _command;
+        private string _command = "";
         /// <summary>
         /// define how this command is to be called
         /// </summary>
@@ -17,7 +17,7 @@ namespace Xcaciv.Command.Interface.Attributes
         /// <param name="description"></param>
         public CommandRegisterAttribute(string command = "", string description = "") 
         { 
-            this._command = command.ToUpper();
+            this.Command = command;
             this.Description = description;
         }
         /// <summary>
@@ -28,7 +28,7 @@ namespace Xcaciv.Command.Interface.Attributes
             get
             { return this._command; }
             set
-            { this._command = value.ToUpper(); }
+            { this._command = CommandDescription.GetValidCommandName(value); }
         }
         /// <summary>
         /// What does this command do

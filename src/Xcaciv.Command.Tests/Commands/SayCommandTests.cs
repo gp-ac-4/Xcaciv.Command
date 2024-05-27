@@ -75,7 +75,7 @@ namespace Xcaciv.Command.Tests.Commands
 
             Assert.NotNull(attributes);
             Assert.NotEmpty(attributes);
-            Assert.Equal("<text>", attributes.First().HelpName);
+            Assert.Equal("text", attributes.First().Name);
         }
 
         [Fact()]

@@ -29,7 +29,7 @@ public class CommandController : Interface.ICommandController
     /// <summary>
     /// registered command
     /// </summary>
-    protected Dictionary<string, CommandDescription> Commands { get; set; } = new Dictionary<string, CommandDescription>();
+    protected Dictionary<string, ICommandDescription> Commands { get; set; } = new Dictionary<string, ICommandDescription>();
     /// <summary>
     /// restricted directories containing command packages
     /// if no restrictedDirectory is specified the current running directory will be used
@@ -142,10 +142,9 @@ public class CommandController : Interface.ICommandController
     /// install a single command into the index
     /// </summary>
     /// <param name="command"></param>
-    public void AddCommand(CommandDescription command)
+    public void AddCommand(ICommandDescription command)
     {
-        var key = command.BaseCommand.ToUpper();
-        this.Commands[key] = command;
+        this.Commands[command.BaseCommand] = command;
     }
 
     /// <summary>
@@ -162,8 +161,8 @@ public class CommandController : Interface.ICommandController
         }
         else
         {
-            var commandName = GetCommand(commandLine);
-            var args = PrepareArgs(commandLine);
+            var commandName = CommandDescription.GetValidCommandName(commandLine);
+            var args = CommandDescription.GetArgumentsFromCommandline(commandLine);
             
             await ExecuteCommand(commandName, args, ioContext, env);
 
@@ -178,8 +177,8 @@ public class CommandController : Interface.ICommandController
         // split the command line into commands by the pipeline character
         foreach(var command in commandLine.Split(PIPELINE_CHAR))
         {
-            var commandName = GetCommand(command).ToString();
-            var args = PrepareArgs(command);
+            var commandName = CommandDescription.GetValidCommandName(command).ToString();
+            var args = CommandDescription.GetArgumentsFromCommandline(command);
             // creating a additional layer of IO to manage the pipes
             await using var childContext = await ioContext.GetChild(args);
             // we are not creating a child environment for simplified syncronization
@@ -214,7 +213,7 @@ public class CommandController : Interface.ICommandController
     /// <param name="ioContext"></param>
     protected async Task ExecuteCommand(string commandKey, string[] args, IIoContext ioContext, IEnvironmentContext env)
     {
-        if (Commands.TryGetValue(commandKey, out CommandDescription? commandDiscription))
+        if (Commands.TryGetValue(commandKey, out ICommandDescription? commandDiscription))
         {
             try
             {
@@ -256,7 +255,7 @@ public class CommandController : Interface.ICommandController
         }
     }
 
-    protected static ICommandDelegate GetCommandInstance(CommandDescription commandDiscription)
+    protected static ICommandDelegate GetCommandInstance(ICommandDescription commandDiscription)
     {
         var executeDeligateType = Type.GetType(commandDiscription.FullTypeName);
         ICommandDelegate commandInstance;
@@ -283,36 +282,7 @@ public class CommandController : Interface.ICommandController
         }
     }
 
-    /// <summary>
-    /// parse primary command from a command line
-    /// </summary>
-    /// <param name="commandLine">full command line</param>
-    /// <returns></returns>
-    public static string GetCommand(string commandLine)
-    {
-        commandLine= commandLine.Trim();
-        var commandText = ((commandLine.Contains(' ')) ?
-                commandLine.Substring(0, commandLine.Trim().IndexOf(' '))
-                 : commandLine).ToUpper();
-
-        // remove invalid characters
-        return CommandDescription.InvalidCommandChars.Replace(commandText.Trim(), "");
-    }
-    /// <summary>
-    /// parses arguments from a command line
-    /// </summary>
-    /// <param name="commandLine">full command line</param>
-    /// <returns></returns>
-    public static string[] PrepareArgs(string commandLine)
-    {
-        var args = System.Text.RegularExpressions.Regex.Matches(commandLine, @"[\""].*?[\""]|[\w-]+")
-            .Cast<System.Text.RegularExpressions.Match>()
-            .Select(o => CommandDescription.InvalidParameterChars.Replace(o.Value, "").Trim('"'))
-            .ToArray();
-
-        // the first item in the array is the command
-        return args.Skip(1).ToArray();
-    }
+    
     /// <summary>
     /// output all the help strings
     /// </summary>
@@ -329,8 +299,8 @@ public class CommandController : Interface.ICommandController
         {
             try
             {
-                var commandKey = GetCommand(command);
-                if (Commands.TryGetValue(commandKey, out CommandDescription? value))
+                var commandKey = CommandDescription.GetValidCommandName(command);
+                if (Commands.TryGetValue(commandKey, out ICommandDescription? value))
                 {
                     var description = value;
 
