@@ -2,7 +2,7 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.4.14</Version>
+    <Version>1.4.16</Version>
     <AssemblyName>Xcaciv.Command</AssemblyName>
     <RootNamespace>Xcaciv.Command</RootNamespace>
     <IsPublishable>True</IsPublishable>
@@ -28,7 +28,8 @@
 	  <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj">
 		  <IncludeAssets>Xcaciv.Command.FileLoader.dll</IncludeAssets>
 	  </ProjectReference>
-	  <ProjectReference Packge="True" Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />  
+	  <ProjectReference Packge="True" Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
+	  <ProjectReference Packge="True" Include="..\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj" />
   </ItemGroup>
   
   <ItemGroup>

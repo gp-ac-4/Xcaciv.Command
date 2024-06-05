@@ -6,7 +6,7 @@ using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Xcaciv.Command;
+using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 
 namespace Xcaciv.Command.Tests.TestImpementations
