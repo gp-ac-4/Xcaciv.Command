@@ -64,7 +64,7 @@ public static class CommandParameters
             // unsatisfied named parameters
             if (parameterList[0].StartsWith("-"))
             {
-                if (parameter.IsRquired)
+                if (parameter.IsRequired)
                     throw new ArgumentException($"Missing required parameter {parameter.Name}");
 
                 continue;
@@ -83,7 +83,7 @@ public static class CommandParameters
             // unsatisfied named parameters
             if (parameterList[0].StartsWith("-"))
             {
-                if (parameter.IsRquired)
+                if (parameter.IsRequired)
                     throw new ArgumentException($"Missing required parameter {parameter.Name}");
 
                 continue;

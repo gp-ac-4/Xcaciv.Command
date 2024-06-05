@@ -228,13 +228,13 @@ public class CommandController : Interface.ICommandController
             {
                 await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Start.");
 
-                var commandInstance = GetCommandInstance(commandDiscription);
+                var commandInstance = GetCommandInstance(commandDiscription, ioContext.Parameters);
                 
-                    await using (var childEnv = await env.GetChild(ioContext.Parameters))
-                    {
-                        await ExecuteCommand(ioContext, commandInstance, childEnv);
-                        if (commandDiscription.ModifiesEnvironment && childEnv.HasChanged) env.UpdateEnvironment(childEnv.GetEnvinronment());
-                    }
+                await using (var childEnv = await env.GetChild(ioContext.Parameters))
+                {
+                    await ExecuteCommand(ioContext, commandInstance, childEnv);
+                    if (commandDiscription.ModifiesEnvironment && childEnv.HasChanged) env.UpdateEnvironment(childEnv.GetEnvinronment());
+                }
                 
             }
             catch (Exception ex)
@@ -263,15 +263,28 @@ public class CommandController : Interface.ICommandController
         }
     }
 
-    protected static ICommandDelegate GetCommandInstance(ICommandDescription commandDiscription)
+    protected static ICommandDelegate GetCommandInstance(ICommandDescription commandDiscription, string[]? parameters = default)
     {
-        var executeDeligateType = Type.GetType(commandDiscription.FullTypeName);
+        if (commandDiscription.SubCommands.Count > 0 && 
+            parameters != null && parameters.Length > 0 &&
+            commandDiscription.SubCommands.TryGetValue(parameters[0].ToUpper(), out ICommandDescription? subCommandDescription) &&
+            subCommandDescription != null)
+        {
+            return GetCommandInstance(subCommandDescription.FullTypeName, commandDiscription.PackageDescription.FullPath);
+        }
+
+        return GetCommandInstance(commandDiscription.FullTypeName, commandDiscription.PackageDescription.FullPath);        
+    }
+
+    protected static ICommandDelegate GetCommandInstance(string fullTypeName, string packagePath)
+    {
+        Type? executeDeligateType = Type.GetType(fullTypeName);
         ICommandDelegate commandInstance;
         if (executeDeligateType == null)
         {
-            using (var context = new AssemblyContext(commandDiscription.PackageDescription.FullPath, basePathRestriction:"*"))
+            using (var context = new AssemblyContext(packagePath, basePathRestriction:"*")) // TODO: restrict the path
             {
-                commandInstance = context.CreateInstance<ICommandDelegate>(commandDiscription.FullTypeName);
+                commandInstance = context.CreateInstance<ICommandDelegate>(fullTypeName);
             }
         }
         else

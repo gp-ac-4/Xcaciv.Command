@@ -26,6 +26,11 @@ public class CommandDescription : ICommandDescription
     /// </summary>
     public string BaseCommand { get => command; set => command = GetValidCommandName(value); }
     /// <summary>
+    /// sub command text
+    /// used to limit the secondary command text
+    /// </summary>
+    public Dictionary<string, ICommandDescription> SubCommands { get; set; } = [];
+    /// <summary>
     /// Fully Namespaced Type Name
     /// </summary>
     public string FullTypeName { get; set; } = "";
@@ -37,6 +42,7 @@ public class CommandDescription : ICommandDescription
     /// explicitly indicates if a command modifes the environment
     /// </summary>
     public bool ModifiesEnvironment { get; set; }
+
     /// <summary>
     /// parse primary command from a command line
     /// </summary>

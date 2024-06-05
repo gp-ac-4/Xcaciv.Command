@@ -37,7 +37,6 @@ namespace Xcaciv.Command.Interface.Attributes
         }
 
         public string ValueDescription { get; set; } = "";
-        public bool IsRquired { get; set; } = false;
 
         public override string ToString()
         {

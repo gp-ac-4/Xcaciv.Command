@@ -45,6 +45,22 @@ namespace Xcaciv.Command.Tests
             Assert.Equal("is", textio.Children.First().Output[1]);
         }
         [Fact()]
+        public async Task RunSubCommandsTestAsync()
+        {
+            var controller = new CommandController(new Crawler(), @"..\..\..\..\..\");
+            controller.AddPackageDirectory(commandPackageDir);
+
+            controller.LoadCommands(string.Empty);
+            var env = new EnvironmentContext();
+            var textio = new TestImpementations.TestTextIo();
+            // simulate user input
+            await controller.Run("do echo what is up", textio, env);
+
+            // verify the output of the first run
+            // by looking at the output of the second output line
+            Assert.Equal("what is up", textio.Children.First().Output.First());
+        }
+        [Fact()]
         public async Task PipeCommandsTestAsync()
         {
             var controller = new CommandController(new Crawler(), @"..\..\..\..\..\");

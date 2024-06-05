@@ -41,7 +41,7 @@ namespace Xcaciv.Command.Interface.Attributes
         /// <summary>
         /// indicates if the parameter is required
         /// </summary>
-        public bool IsRquired { get; set; } = true;
+        public bool IsRequired { get; set; } = true;
         /// <summary>
         /// indicates this value is what is populated when a pipe is used
         /// only the first parameter specified for pipeline population will be used
