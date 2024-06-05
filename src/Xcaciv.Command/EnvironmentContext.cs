@@ -57,7 +57,7 @@ namespace Xcaciv.Command
             key = key.ToUpper();
             EnvironmentVariables.AddOrUpdate(key, addValue, (key, value) =>
             {
-                Debug.WriteLine($"Environment value {key} changed from {value} to {addValue}.");
+                Trace.WriteLine($"Environment value {key} changed from {value} to {addValue}.");
                 return addValue;
             });
 

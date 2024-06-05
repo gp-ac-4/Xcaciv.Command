@@ -76,7 +76,7 @@ public class Crawler : ICrawler
                     }
                     else
                     {
-                        Debug.WriteLine($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
+                        Trace.WriteLine($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
                     }
                 }
 

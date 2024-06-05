@@ -133,7 +133,7 @@ public class CommandController : Interface.ICommandController
             return;
         }
         
-        Debug.WriteLine($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
+        Trace.WriteLine($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
         return;
         
     }
@@ -163,8 +163,9 @@ public class CommandController : Interface.ICommandController
         {
             var commandName = CommandDescription.GetValidCommandName(commandLine);
             var args = CommandDescription.GetArgumentsFromCommandline(commandLine);
-            
-            await ExecuteIsolatedCommand(commandName, args, ioContext, env);
+            await ioContext.SetParameters([.. args]);
+
+            await ExecuteIsolatedCommand(commandName, ioContext, env);
 
         }        
     }
@@ -192,7 +193,7 @@ public class CommandController : Interface.ICommandController
             childContext.SetOutputPipe(pipeChannel.Writer);
 
             // add the task to the collection
-            tasks.Add(ExecuteCommand(commandName, args, childContext, env));
+            tasks.Add(ExecuteCommand(commandName, childContext, env));
         }
 
         // wait for the pipeline to finish
@@ -205,11 +206,11 @@ public class CommandController : Interface.ICommandController
         }
     }
 
-    protected async Task ExecuteIsolatedCommand(string commandKey, string[] args, IIoContext ioContext, IEnvironmentContext env)
+    protected async Task ExecuteIsolatedCommand(string commandKey, IIoContext ioContext, IEnvironmentContext env)
     {
-        await using (var childContext = await ioContext.GetChild(args))
+        await using (var childContext = await ioContext.GetChild(ioContext.Parameters))
         {
-            await this.ExecuteCommand(commandKey, args, childContext, env);
+            await this.ExecuteCommand(commandKey, childContext, env);
         }
     }
 
@@ -219,7 +220,7 @@ public class CommandController : Interface.ICommandController
     /// <param name="commandKey"></param>
     /// <param name="args"></param>
     /// <param name="ioContext"></param>
-    protected async Task ExecuteCommand(string commandKey, string[] args, IIoContext ioContext, IEnvironmentContext env)
+    protected async Task ExecuteCommand(string commandKey, IIoContext ioContext, IEnvironmentContext env)
     {
         if (Commands.TryGetValue(commandKey, out ICommandDescription? commandDiscription))
         {
@@ -229,7 +230,7 @@ public class CommandController : Interface.ICommandController
 
                 var commandInstance = GetCommandInstance(commandDiscription);
                 
-                    await using (var childEnv = await env.GetChild(args))
+                    await using (var childEnv = await env.GetChild(ioContext.Parameters))
                     {
                         await ExecuteCommand(ioContext, commandInstance, childEnv);
                         if (commandDiscription.ModifiesEnvironment && childEnv.HasChanged) env.UpdateEnvironment(childEnv.GetEnvinronment());
@@ -239,7 +240,7 @@ public class CommandController : Interface.ICommandController
             catch (Exception ex)
             {
                 await ioContext.OutputChunk($"Error executing {commandKey} (see trace for more info)");
-                await ioContext.SetStatusMessage("Error");
+                await ioContext.SetStatusMessage("**Error: " + ex.Message);
                 await ioContext.AddTraceMessage(ex.ToString());
             }
             finally

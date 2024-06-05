@@ -84,11 +84,10 @@ namespace Xcaciv.Command.Interface
         /// <returns></returns>
         Task Complete(string? message);
         /// <summary>
-        /// add a value to the environment, across commands
-        /// the storage mechanism should be apropriate to the running environment
-        /// probably a ConcurrentDictionary<TKey,TValue>
+        /// overwrite the current parameters with a new array
         /// </summary>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        Task SetParameters(string[] parameters);
     }
 }

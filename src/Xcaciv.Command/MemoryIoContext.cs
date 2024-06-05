@@ -8,19 +8,15 @@ using Xcaciv.Command.Interface;
 
 namespace Xcaciv.Command
 {
-    public class MemoryIoContext : AbstractTextIo
+    public class MemoryIoContext(string name = "MemoryIo", string[]? parameters = default, Guid parentId = default) : AbstractTextIo(name, [.. parameters], parentId)
     {
-        public MemoryIoContext(string name = "MemoryIo", Guid? parentId = default) : base(name, parentId)
-        {
-        }
-
         public ConcurrentBag<MemoryIoContext> Children { get; private set; } = new ConcurrentBag<MemoryIoContext>();
         public ConcurrentBag<string> Output { get; private set; } = new ConcurrentBag<string>();
         public ConcurrentDictionary<string, string> PromptAnswers { get; private set; } = new ConcurrentDictionary<string, string>();
 
         public override Task<IIoContext> GetChild(string[]? childArguments = null)
         {
-            var child = new MemoryIoContext(this.Name + "Child", Id);
+            var child = new MemoryIoContext(this.Name + "Child", childArguments, Id);
 
             Children.Add(child);
 

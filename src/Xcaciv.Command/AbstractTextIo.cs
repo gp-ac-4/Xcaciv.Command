@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Text;
@@ -19,7 +20,7 @@ namespace Xcaciv.Command
     /// </remarks>
     /// <param name="name"></param>
     /// <param name="parentId"></param>
-    public abstract class AbstractTextIo(string name, Guid? parentId = default) : IIoContext
+    public abstract class AbstractTextIo(string name, string[] parameters, Guid? parentId = default) : IIoContext
     {
         public bool Verbose { get; set; } = false;
 
@@ -29,9 +30,15 @@ namespace Xcaciv.Command
 
         public Guid? Parent { get; protected set; } = parentId;
 
-        public bool HasPipedInput { get; private set; } = false;
+        public bool HasPipedInput { get; protected set; } = false;
 
-        public string[] Parameters { get; set; } = Array.Empty<string>();
+        public string[] Parameters { get; protected set; } = parameters;
+
+        public Task SetParameters(string[] parameters)
+        {
+            this.Parameters = parameters;
+            return Task.CompletedTask;
+        }
 
         protected ChannelReader<string>? inputPipe;
         protected ChannelWriter<string>? outputPipe;
@@ -128,16 +135,26 @@ namespace Xcaciv.Command
             return Task.CompletedTask;
         }
 
+        public void SetTraceLog(string logName)
+        {
+            Trace.Listeners.Add(new TextWriterTraceListener(logName));
+            Trace.AutoFlush = true;
+            Trace.Indent();
+            // TODO: listen to trace messages
+            // if verbose send them to output
+            // if not log to file 
+        }
+
         public virtual Task AddTraceMessage(string message)
         {
             if (this.Verbose)
             {
-                return this.OutputChunk("\tTRACE" + message);
+                return this.OutputChunk("\tTRACE: " + message);
             }
             // if we are not verbose, send the output to DEBUG
-            System.Diagnostics.Debug.WriteLine(message);
+            System.Diagnostics.Trace.WriteLine(message);
             return Task.CompletedTask;
         }
-        
+
     }
 }

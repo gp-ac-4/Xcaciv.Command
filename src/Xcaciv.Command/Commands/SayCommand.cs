@@ -18,7 +18,7 @@ namespace Xcaciv.Command.Commands
         public override string HandleExecution(string[] parameters, IEnvironmentContext env)
         {
             var builder = new StringBuilder();
-            foreach (var parameter in parameters) // zero position contains command
+            foreach (var parameter in parameters)
             {
                 var value = parameter.ToString();
                 if (value.Contains('%')) value = ProcessEnvValues(value, env);
@@ -26,7 +26,7 @@ namespace Xcaciv.Command.Commands
                 builder.Append(' ');
             }
             var result = builder.ToString();
-            return result[..^1];
+            return (result.Length > 1) ? result[..^1] : String.Empty;
         }
 
         public static string ProcessEnvValues(string value, IEnvironmentContext env)

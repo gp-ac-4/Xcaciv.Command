@@ -27,15 +27,14 @@ namespace Xcaciv.Command.Tests.TestImpementations
 
         public Dictionary<string, string> PromptAnswers { get; private set; } = new Dictionary<string, string>();
 
-        public TestTextIo(string[]? arguments = null) : base("TestTextIo", null)
+        public TestTextIo(string[]? parameters = null) : base("TestTextIo", [.. parameters])
         {
-            this.Parameters = arguments ?? [];
             this.Verbose = true;
         }
 
-        public override Task<IIoContext> GetChild(string[]? childArguments = null)
+        public override Task<IIoContext> GetChild(string[]? childParameters = null)
         {
-            var child = new TestTextIo(childArguments)
+            var child = new TestTextIo(childParameters)
             {
                 Parent = Id
             };
