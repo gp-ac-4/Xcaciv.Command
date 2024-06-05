@@ -8,10 +8,10 @@ using System.Xml.Linq;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
 
-namespace Xcaciv.Command.Commands
+namespace Xcaciv.Command.Core
 {
-    public abstract class AbstractCommand : Xcaciv.Command.Interface.ICommandDelegate
-    { 
+    public abstract class AbstractCommand : ICommandDelegate
+    {
 
         /// <summary>
         /// this should be overwritten to dispose of any unmanaged items
@@ -27,7 +27,7 @@ namespace Xcaciv.Command.Commands
         /// <param name="outputContext"></param>
         public virtual void Help(IIoContext outputContext)
         {
-            outputContext.OutputChunk(this.BuildHelpString());
+            outputContext.OutputChunk(BuildHelpString());
         }
         /// <summary>
         /// single line help command description, used for listing all commands
@@ -35,9 +35,9 @@ namespace Xcaciv.Command.Commands
         /// <param name="outputContext"></param>
         public virtual void OneLineHelp(IIoContext outputContext)
         {
-            var baseCommand = Attribute.GetCustomAttribute(this.GetType(), typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
+            var baseCommand = Attribute.GetCustomAttribute(GetType(), typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
             if (baseCommand != null)
-                outputContext.OutputChunk($"{baseCommand.Command,-12} {baseCommand.Description}"); 
+                outputContext.OutputChunk($"{baseCommand.Command,-12} {baseCommand.Description}");
         }
         /// <summary>
         /// create a nicely formated
@@ -45,7 +45,7 @@ namespace Xcaciv.Command.Commands
         /// <returns></returns>
         protected virtual string BuildHelpString()
         {
-            var thisType = this.GetType();
+            var thisType = GetType();
             var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
             var commandParametersOrdered = GetOrderedParameters(false);
             var commandParametersFlag = GetFlagParameters();
@@ -110,7 +110,7 @@ namespace Xcaciv.Command.Commands
                 await foreach (var p in io.ReadInputPipeChunks())
                 {
                     if (string.IsNullOrEmpty(p)) continue;
-                    yield return this.HandlePipedChunk(p, io.Parameters, environment);
+                    yield return HandlePipedChunk(p, io.Parameters, environment);
                 }
             }
             else
@@ -131,7 +131,7 @@ namespace Xcaciv.Command.Commands
             var parameterList = parameters.ToList();
 
             var parameterLookup = new Dictionary<string, string>();
-            Type thisType = this.GetType();
+            Type thisType = GetType();
             CommandParameters.
                         ProcessOrderedParameters(parameterList, parameterLookup, GetOrderedParameters(hasPipedInput));
             CommandParameters.ProcessFlags(parameterList, parameterLookup, GetFlagParameters());
@@ -147,13 +147,13 @@ namespace Xcaciv.Command.Commands
         /// <returns></returns>
         protected CommandParameterOrderedAttribute[] GetOrderedParameters(bool hasPipedInput)
         {
-            var thisType = this.GetType();
+            var thisType = GetType();
             var ordered = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterOrderedAttribute)) as CommandParameterOrderedAttribute[] ?? ([]);
             if (hasPipedInput)
             {
                 ordered = ordered.Where(x => !x.UsePipe).ToArray();
             }
-            
+
             return ordered;
         }
         /// <summary>
@@ -162,7 +162,7 @@ namespace Xcaciv.Command.Commands
         /// <returns></returns>
         protected CommandParameterNamedAttribute[] GetNamedParameters(bool hasPipedInput)
         {
-            var thisType = this.GetType();
+            var thisType = GetType();
             var named = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterNamedAttribute)) as CommandParameterNamedAttribute[] ?? ([]);
             if (hasPipedInput)
             {
@@ -176,7 +176,7 @@ namespace Xcaciv.Command.Commands
         /// <returns></returns>
         protected CommandFlagAttribute[] GetFlagParameters()
         {
-            var thisType = this.GetType();
+            var thisType = GetType();
             var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandFlagAttribute)) as CommandFlagAttribute[] ?? ([]);
             return flags;
         }
@@ -186,7 +186,7 @@ namespace Xcaciv.Command.Commands
         /// <returns></returns>
         protected CommandParameterSuffixAttribute[] GetSuffixParameters(bool hasPipedInput)
         {
-            var thisType = this.GetType();
+            var thisType = GetType();
             var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterSuffixAttribute)) as CommandParameterSuffixAttribute[] ?? ([]);
             if (hasPipedInput)
             {

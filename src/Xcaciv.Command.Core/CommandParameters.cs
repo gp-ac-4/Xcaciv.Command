@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using Xcaciv.Command.Interface.Attributes;
 
-namespace Xcaciv.Command.Commands;
+namespace Xcaciv.Command.Core;
 
 public static class CommandParameters
 {
@@ -12,7 +12,7 @@ public static class CommandParameters
         {
             var index = 0;
             Regex fullName = new Regex("-{1,2}" + parameter.Name);
-            Regex abbrName = (String.IsNullOrEmpty(parameter.ShortAlias)) ? new Regex("^$") :
+            Regex abbrName = string.IsNullOrEmpty(parameter.ShortAlias) ? new Regex("^$") :
                 new Regex("-{1,2}" + parameter.ShortAlias);
 
             var found = false;
@@ -38,7 +38,7 @@ public static class CommandParameters
         {
             var index = 0;
             Regex fullName = new Regex("-{1,2}" + parameter.Name);
-            Regex abbrName = (String.IsNullOrEmpty(parameter.ShortAlias)) ? new Regex("^$") :
+            Regex abbrName = string.IsNullOrEmpty(parameter.ShortAlias) ? new Regex("^$") :
                 new Regex("-{1,2}" + parameter.ShortAlias);
 
             foreach (var value in parameterList)

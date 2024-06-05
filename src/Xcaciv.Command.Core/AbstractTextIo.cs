@@ -9,7 +9,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
 
-namespace Xcaciv.Command
+namespace Xcaciv.Command.Core
 {
     /// <summary>
     /// Implements the more generic parts of the ITextIoContext
@@ -36,7 +36,7 @@ namespace Xcaciv.Command
 
         public Task SetParameters(string[] parameters)
         {
-            this.Parameters = parameters;
+            Parameters = parameters;
             return Task.CompletedTask;
         }
 
@@ -56,9 +56,9 @@ namespace Xcaciv.Command
         /// <returns></returns>
         public virtual Task OutputChunk(string message)
         {
-            if (this.outputPipe == null)
+            if (outputPipe == null)
             {
-                return this.HandleOutputChunk(message);
+                return HandleOutputChunk(message);
             }
             return outputPipe.WriteAsync(message).AsTask();
         }
@@ -93,8 +93,8 @@ namespace Xcaciv.Command
         /// <param name="reader"></param>
         public void SetInputPipe(ChannelReader<string> reader)
         {
-            this.HasPipedInput = true;
-            this.inputPipe = reader;
+            HasPipedInput = true;
+            inputPipe = reader;
         }
         /// <summary>
         /// set channel writer for pipeline
@@ -102,7 +102,7 @@ namespace Xcaciv.Command
         /// <param name="writer"></param>
         public void SetOutputPipe(ChannelWriter<string> writer)
         {
-            this.outputPipe = writer;
+            outputPipe = writer;
         }
         /// <summary>
         /// display progress
@@ -123,15 +123,15 @@ namespace Xcaciv.Command
         /// <returns></returns>
         public ValueTask DisposeAsync()
         {
-            this.Complete().Wait();
+            Complete().Wait();
             return ValueTask.CompletedTask;
         }
 
         public Task Complete(string? message = null)
         {
-            if (!String.IsNullOrEmpty(message)) this.SetStatusMessage(message).Wait();
+            if (!string.IsNullOrEmpty(message)) SetStatusMessage(message).Wait();
 
-            this.outputPipe?.TryComplete();
+            outputPipe?.TryComplete();
             return Task.CompletedTask;
         }
 
@@ -147,12 +147,12 @@ namespace Xcaciv.Command
 
         public virtual Task AddTraceMessage(string message)
         {
-            if (this.Verbose)
+            if (Verbose)
             {
-                return this.OutputChunk("\tTRACE: " + message);
+                return OutputChunk("\tTRACE: " + message);
             }
             // if we are not verbose, send the output to DEBUG
-            System.Diagnostics.Trace.WriteLine(message);
+            Trace.WriteLine(message);
             return Task.CompletedTask;
         }
 

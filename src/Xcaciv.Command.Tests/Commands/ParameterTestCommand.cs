@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Xcaciv.Command.Commands;
+using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
 

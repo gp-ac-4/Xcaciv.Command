@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "zTestCommandPackage", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xcaciv.Command.Tests", "src\Xcaciv.Command.Tests\Xcaciv.Command.Tests.csproj", "{1AA7D848-7F82-4190-8CB8-FDE32B74B0E7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xcaciv.Command.Core", "src\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj", "{7BE3D0B8-651A-4C44-A46F-04345DFDE3EC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,10 @@ Global
 		{1AA7D848-7F82-4190-8CB8-FDE32B74B0E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1AA7D848-7F82-4190-8CB8-FDE32B74B0E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1AA7D848-7F82-4190-8CB8-FDE32B74B0E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BE3D0B8-651A-4C44-A46F-04345DFDE3EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BE3D0B8-651A-4C44-A46F-04345DFDE3EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BE3D0B8-651A-4C44-A46F-04345DFDE3EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BE3D0B8-651A-4C44-A46F-04345DFDE3EC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
