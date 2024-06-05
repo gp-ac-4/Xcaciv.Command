@@ -9,16 +9,16 @@ using Xcaciv.Command.Interface.Attributes;
 
 namespace Xcaciv.Command.Commands
 {
-    [BaseCommand("Say", "Like echo but more valley.", Prototype ="SAY <thing to print>")]
-    [CommandParameter("text", "Text to output")]
+    [CommandRegister("Say", "Like echo but more valley.", Prototype ="SAY <thing to print>")]
+    [CommandParameterOrdered("text", "Text to output")]
     [CommandHelpRemarks("Use double quotes to include environment variables in the format %var%.")]
     [CommandHelpRemarks("Piped input will be evalueated for env vars before being passed out.")]
     public class SayCommand : AbstractCommand
     {
-        public override string HandleExecution(string[] parameters, IEnvironment env)
+        public override string HandleExecution(string[] parameters, IEnvironmentContext env)
         {
             var builder = new StringBuilder();
-            foreach (var parameter in parameters) // zero position contains command
+            foreach (var parameter in parameters)
             {
                 var value = parameter.ToString();
                 if (value.Contains('%')) value = ProcessEnvValues(value, env);
@@ -26,10 +26,10 @@ namespace Xcaciv.Command.Commands
                 builder.Append(' ');
             }
             var result = builder.ToString();
-            return result[..^1];
+            return (result.Length > 1) ? result[..^1] : String.Empty;
         }
 
-        public static string ProcessEnvValues(string value, IEnvironment env)
+        public static string ProcessEnvValues(string value, IEnvironmentContext env)
         {
             Regex regex = new Regex(@"%(.\w*?)%");
             return regex.Replace(value, match =>
@@ -47,7 +47,7 @@ namespace Xcaciv.Command.Commands
             });
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironment env)
+        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
         {
             return ProcessEnvValues(pipedChunk, env);
         }

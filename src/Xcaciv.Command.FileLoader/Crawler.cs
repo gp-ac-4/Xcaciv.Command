@@ -57,7 +57,7 @@ public class Crawler : ICrawler
 
             using (var context = new AssemblyContext(binPath, basePathRestriction:"*"))
             {
-                var commands = new Dictionary<string, CommandDescription>();
+                var commands = new Dictionary<string, ICommandDescription>();
                 packagDesc.Version = context.GetVersion();
 
                 foreach (var commandType in context.GetTypes<ICommandDelegate>())
@@ -65,7 +65,7 @@ public class Crawler : ICrawler
                     if (commandType == null) continue; // not sure why it could be null, but the compiler says so
 
                     // required to have BaseCommandAttribute, 
-                    if (Attribute.GetCustomAttribute(commandType, typeof(BaseCommandAttribute)) is BaseCommandAttribute attributes)
+                    if (Attribute.GetCustomAttribute(commandType, typeof(CommandRegisterAttribute)) is CommandRegisterAttribute attributes)
                     {
                         commands[attributes.Command] = new CommandDescription()
                         {
@@ -76,7 +76,7 @@ public class Crawler : ICrawler
                     }
                     else
                     {
-                        Debug.WriteLine($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
+                        Trace.WriteLine($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
                     }
                 }
 

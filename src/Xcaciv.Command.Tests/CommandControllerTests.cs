@@ -35,13 +35,14 @@ namespace Xcaciv.Command.Tests
             controller.AddPackageDirectory(commandPackageDir);
 
             controller.LoadCommands(string.Empty);
+            var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
             // simulate user input
-            await controller.Run("echo what is up", textio);
+            await controller.Run("echo what is up", textio, env);
 
             // verify the output of the first run
             // by looking at the output of the second output line
-            Assert.Equal("what", textio.Children.First().Output[1]);
+            Assert.Equal("is", textio.Children.First().Output[1]);
         }
         [Fact()]
         public async Task PipeCommandsTestAsync()
@@ -50,9 +51,10 @@ namespace Xcaciv.Command.Tests
             controller.AddPackageDirectory(commandPackageDir);
 
             controller.LoadCommands(string.Empty);
+            var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
             // simulate user input
-            await controller.Run("echo what is up | echo2 | echoe ", textio);
+            await controller.Run("echo what is up | echo2 | echoe ", textio, env);
 
             // verify the output of the first run
             // by looking at the output of the second output line

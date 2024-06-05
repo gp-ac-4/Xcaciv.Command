@@ -32,11 +32,11 @@ namespace Xcaciv.Command.Tests.Commands
             commands.AddPackageDirectory(commandPackageDir);
             commands.EnableDefaultCommands();
             commands.LoadCommands(string.Empty);
-                       
 
+            var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
             // simulate user input
-            await commands.Run("echo what is up | regif is", textio);
+            await commands.Run("echo what is up | regif is", textio, env);
 
             // verify the output of the first run
             // by looking at the output of the second output line

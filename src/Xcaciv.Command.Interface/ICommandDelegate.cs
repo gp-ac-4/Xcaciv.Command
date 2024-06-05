@@ -17,18 +17,18 @@ namespace Xcaciv.Command.Interface
         /// <param name="parameters"></param>
         /// <param name="messageContext">used for progress and status messages</param>
         /// <returns></returns>
-        IAsyncEnumerable<string> Main(IInputContext input, IEnvironment statusContext);
+        IAsyncEnumerable<string> Main(IIoContext input, IEnvironmentContext env);
         /// <summary>
         /// output usage instructions via message context
         /// </summary>
         /// <param name="messageContext"></param>
         /// <returns></returns>
-        void Help(IOutputContext outputContext);
+        void Help(IIoContext outputContext);
         /// <summary>
         /// output single line help, used when listing all commands
         /// </summary>
         /// <param name="context"></param>
-        void OneLineHelp(IOutputContext context);
+        void OneLineHelp(IIoContext context);
     }
 }
  

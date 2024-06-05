@@ -23,12 +23,12 @@ namespace Xcaciv.Command.Interface
         /// <param name="commandLine"></param>
         /// <param name="output"></param>
         /// <returns></returns>
-        Task Run(string commandLine, ITextIoContext output);
+        Task Run(string commandLine, IIoContext output, IEnvironmentContext env);
         /// <summary>
         /// get provided help string for a command or list all commands if the command is empty
         /// </summary>
         /// <param name="command"></param>
         /// <param name="output"></param>
-        void GetHelp(string command, IOutputContext output);
+        void GetHelp(string command, IIoContext output);
     }
 }

@@ -19,9 +19,10 @@ namespace Xcaciv.Command.Tests.Commands
             var commands = new CommandController(new Crawler(), "");
             commands.EnableDefaultCommands();
 
+            var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
             // simulate user input
-            await commands.Run("say what is up", textio);
+            await commands.Run("say what is up", textio, env);
 
             // verify the output of the first run
             // by looking at the output of the second output line
@@ -31,10 +32,11 @@ namespace Xcaciv.Command.Tests.Commands
         [Fact()]
         public void ProcessEnvValuesTest()
         {
+            var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
-            textio.SetValue("direction", "up");
+            env.SetValue("direction", "up");
 
-            var actual = SayCommand.ProcessEnvValues("what is %direction%!", textio);
+            var actual = SayCommand.ProcessEnvValues("what is %direction%!", env);
 
             Assert.Equal("what is up!", actual);
         }
@@ -45,10 +47,11 @@ namespace Xcaciv.Command.Tests.Commands
             var commands = new CommandController(new Crawler(), "");
             commands.EnableDefaultCommands();
 
+            var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
-            textio.SetValue("direction", "up");
+            env.SetValue("direction", "up");
             // simulate user input
-            await commands.Run(@"say ""what is %direction%!""", textio);
+            await commands.Run(@"say ""what is %direction%!""", textio, env);
 
             // verify the output of the first run
             // by looking at the output of the second output line
@@ -58,10 +61,7 @@ namespace Xcaciv.Command.Tests.Commands
         [Fact()]
         public void BaseAttributeTest()
         {
-
-            //var actual = SayCommand.ProcessEnvValues("what is %direction%!", textio);
-
-            var attributes = Attribute.GetCustomAttribute(typeof(SayCommand), typeof(BaseCommandAttribute)) as BaseCommandAttribute;
+            var attributes = Attribute.GetCustomAttribute(typeof(SayCommand), typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
 
             Assert.NotNull(attributes);
             Assert.Equal("Like echo but more valley.", attributes.Description);
@@ -71,10 +71,11 @@ namespace Xcaciv.Command.Tests.Commands
         public void ParameterAttributeTest()
         {
 
-            var attributes = Attribute.GetCustomAttribute(typeof(SayCommand), typeof(CommandParameterAttribute)) as CommandParameterAttribute;
+            var attributes = Attribute.GetCustomAttributes(typeof(SayCommand), typeof(CommandParameterOrderedAttribute)) as CommandParameterOrderedAttribute[];
 
             Assert.NotNull(attributes);
-            Assert.Equal("<text>", attributes.ValueName);
+            Assert.NotEmpty(attributes);
+            Assert.Equal("text", attributes.First().Name);
         }
 
         [Fact()]

@@ -7,9 +7,9 @@ namespace Xcaciv.Command
     {
         void AddPackageDirectory(string directory);
         void LoadCommands(string subDirectory = "bin");
-        Task Run(string commandLine, ITextIoContext output);
+        Task Run(string commandLine, IIoContext output);
         void LoadDefaultCommands();
         void AddCommand(CommandDescription command);
-        void GetHelp(string command, IOutputContext context);
+        void GetHelp(string command, IIoContext context);
     }
 }

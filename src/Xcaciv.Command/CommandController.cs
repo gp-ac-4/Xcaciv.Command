@@ -29,7 +29,7 @@ public class CommandController : Interface.ICommandController
     /// <summary>
     /// registered command
     /// </summary>
-    protected Dictionary<string, CommandDescription> Commands { get; set; } = new Dictionary<string, CommandDescription>();
+    protected Dictionary<string, ICommandDescription> Commands { get; set; } = new Dictionary<string, ICommandDescription>();
     /// <summary>
     /// restricted directories containing command packages
     /// if no restrictedDirectory is specified the current running directory will be used
@@ -117,7 +117,7 @@ public class CommandController : Interface.ICommandController
     private void AddCommand(string packageKey, ICommandDelegate command, bool modifiesEnvironment = false)
     {
         var commandType = command.GetType();
-        if (Attribute.GetCustomAttribute(commandType, typeof(BaseCommandAttribute)) is BaseCommandAttribute attributes)
+        if (Attribute.GetCustomAttribute(commandType, typeof(CommandRegisterAttribute)) is CommandRegisterAttribute attributes)
         {
             AddCommand(new CommandDescription()
             {
@@ -133,7 +133,7 @@ public class CommandController : Interface.ICommandController
             return;
         }
         
-        Debug.WriteLine($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
+        Trace.WriteLine($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
         return;
         
     }
@@ -142,35 +142,35 @@ public class CommandController : Interface.ICommandController
     /// install a single command into the index
     /// </summary>
     /// <param name="command"></param>
-    public void AddCommand(CommandDescription command)
+    public void AddCommand(ICommandDescription command)
     {
-        var key = command.BaseCommand.ToUpper();
-        this.Commands[key] = command;
+        this.Commands[command.BaseCommand] = command;
     }
 
     /// <summary>
     /// parse a command line, find and execute the command passing in the arguments
     /// </summary>
     /// <param name="commandLine"></param>
-    public async Task Run(string commandLine, ITextIoContext ioContext)
+    public async Task Run(string commandLine, IIoContext ioContext, IEnvironmentContext env)
     {
         // parse the command line before processing the context
         // check to see if it is a pipeline
         if (commandLine.Contains(PIPELINE_CHAR))
         {
-            await PipelineTheBitch(commandLine, ioContext);
+            await PipelineTheBitch(commandLine, ioContext, env);
         }
         else
         {
-            var commandName = GetCommand(commandLine);
-            var args = PrepareArgs(commandLine);
-            
-            await ExecuteCommand(commandName, args, ioContext);
+            var commandName = CommandDescription.GetValidCommandName(commandLine);
+            var args = CommandDescription.GetArgumentsFromCommandline(commandLine);
+            await ioContext.SetParameters([.. args]);
+
+            await ExecuteIsolatedCommand(commandName, ioContext, env);
 
         }        
     }
 
-    protected async Task PipelineTheBitch(string commandLine, ITextIoContext ioContext)
+    protected async Task PipelineTheBitch(string commandLine, IIoContext ioContext, IEnvironmentContext env)
     {
         var tasks = new List<Task>();
         var pipeChannel = null as Channel<string>;
@@ -178,9 +178,11 @@ public class CommandController : Interface.ICommandController
         // split the command line into commands by the pipeline character
         foreach(var command in commandLine.Split(PIPELINE_CHAR))
         {
-            var commandName = GetCommand(command);
-            var args = PrepareArgs(command);
+            var commandName = CommandDescription.GetValidCommandName(command).ToString();
+            var args = CommandDescription.GetArgumentsFromCommandline(command);
+            // creating a additional layer of IO to manage the pipes
             await using var childContext = await ioContext.GetChild(args);
+            // we are not creating a child environment for simplified syncronization
             // if not the first command in the pipeline, set the read pipe
             if (pipeChannel != null)
             {
@@ -190,16 +192,25 @@ public class CommandController : Interface.ICommandController
             pipeChannel = Channel.CreateUnbounded<string>();
             childContext.SetOutputPipe(pipeChannel.Writer);
 
-            tasks.Add(ExecuteCommand(commandName, args, childContext));
-            
-            if (childContext.ValuesChanged) ioContext.UpdateEnvironment(childContext.GetEnvinronment());
+            // add the task to the collection
+            tasks.Add(ExecuteCommand(commandName, childContext, env));
         }
 
+        // wait for the pipeline to finish
         await Task.WhenAll(tasks);
 
+        // handle the final output
         await foreach (var output in (pipeChannel ?? Channel.CreateBounded<string>(0)).Reader.ReadAllAsync())
         {
             await ioContext.OutputChunk(output);
+        }
+    }
+
+    protected async Task ExecuteIsolatedCommand(string commandKey, IIoContext ioContext, IEnvironmentContext env)
+    {
+        await using (var childContext = await ioContext.GetChild(ioContext.Parameters))
+        {
+            await this.ExecuteCommand(commandKey, childContext, env);
         }
     }
 
@@ -209,25 +220,27 @@ public class CommandController : Interface.ICommandController
     /// <param name="commandKey"></param>
     /// <param name="args"></param>
     /// <param name="ioContext"></param>
-    protected async Task ExecuteCommand(string commandKey, string[] args, ITextIoContext ioContext)
+    protected async Task ExecuteCommand(string commandKey, IIoContext ioContext, IEnvironmentContext env)
     {
-        if (Commands.TryGetValue(commandKey, out CommandDescription? commandDiscription))
+        if (Commands.TryGetValue(commandKey, out ICommandDescription? commandDiscription))
         {
             try
             {
                 await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Start.");
 
                 var commandInstance = GetCommandInstance(commandDiscription);
-                await using var childContext = await ioContext.GetChild(args);
-                {
-                    await ExecuteCommand(childContext, commandInstance);
-                    if (commandDiscription.ModifiesEnvironment) ioContext.UpdateEnvironment(childContext.GetEnvinronment());
-                }
+                
+                    await using (var childEnv = await env.GetChild(ioContext.Parameters))
+                    {
+                        await ExecuteCommand(ioContext, commandInstance, childEnv);
+                        if (commandDiscription.ModifiesEnvironment && childEnv.HasChanged) env.UpdateEnvironment(childEnv.GetEnvinronment());
+                    }
+                
             }
             catch (Exception ex)
             {
                 await ioContext.OutputChunk($"Error executing {commandKey} (see trace for more info)");
-                await ioContext.SetStatusMessage("Error");
+                await ioContext.SetStatusMessage("**Error: " + ex.Message);
                 await ioContext.AddTraceMessage(ex.ToString());
             }
             finally
@@ -250,7 +263,7 @@ public class CommandController : Interface.ICommandController
         }
     }
 
-    protected static ICommandDelegate GetCommandInstance(CommandDescription commandDiscription)
+    protected static ICommandDelegate GetCommandInstance(ICommandDescription commandDiscription)
     {
         var executeDeligateType = Type.GetType(commandDiscription.FullTypeName);
         ICommandDelegate commandInstance;
@@ -269,49 +282,20 @@ public class CommandController : Interface.ICommandController
         return commandInstance;
     }
 
-    protected static async Task ExecuteCommand(ITextIoContext ioContext, ICommandDelegate commandInstance)
+    protected static async Task ExecuteCommand(IIoContext ioContext, ICommandDelegate commandInstance, IEnvironmentContext env)
     {
-        await foreach (var resultMessage in commandInstance.Main(ioContext, ioContext))
+        await foreach (var resultMessage in commandInstance.Main(ioContext, env))
         {
             await ioContext.OutputChunk(resultMessage);
         }
     }
 
-    /// <summary>
-    /// parse primary command from a command line
-    /// </summary>
-    /// <param name="commandLine">full command line</param>
-    /// <returns></returns>
-    public static string GetCommand(string commandLine)
-    {
-        commandLine= commandLine.Trim();
-        var commandText = ((commandLine.Contains(' ')) ?
-                commandLine.Substring(0, commandLine.Trim().IndexOf(' '))
-                 : commandLine).ToUpper();
-
-        // remove invalid characters
-        return CommandDescription.InvalidCommandChars.Replace(commandText.Trim(), "");
-    }
-    /// <summary>
-    /// parses arguments from a command line
-    /// </summary>
-    /// <param name="commandLine">full command line</param>
-    /// <returns></returns>
-    public static string[] PrepareArgs(string commandLine)
-    {
-        var args = System.Text.RegularExpressions.Regex.Matches(commandLine, @"[\""].*?[\""]|[\w-]+")
-            .Cast<System.Text.RegularExpressions.Match>()
-            .Select(o => CommandDescription.InvalidParameterChars.Replace(o.Value, "").Trim('"'))
-            .ToArray();
-
-        // the first item in the array is the command
-        return args.Skip(1).ToArray();
-    }
+    
     /// <summary>
     /// output all the help strings
     /// </summary>
     /// <param name="context"></param>
-    public void GetHelp(string command, IOutputContext context)
+    public void GetHelp(string command, IIoContext context)
     {
         if (String.IsNullOrEmpty(command))
             foreach(var description in Commands)
@@ -323,8 +307,8 @@ public class CommandController : Interface.ICommandController
         {
             try
             {
-                var commandKey = GetCommand(command);
-                if (Commands.TryGetValue(commandKey, out CommandDescription? value))
+                var commandKey = CommandDescription.GetValidCommandName(command);
+                if (Commands.TryGetValue(commandKey, out ICommandDescription? value))
                 {
                     var description = value;
 

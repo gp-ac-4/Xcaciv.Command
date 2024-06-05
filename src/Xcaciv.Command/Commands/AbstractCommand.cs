@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
 
@@ -23,7 +25,7 @@ namespace Xcaciv.Command.Commands
         /// output full help
         /// </summary>
         /// <param name="outputContext"></param>
-        public virtual void Help(IOutputContext outputContext)
+        public virtual void Help(IIoContext outputContext)
         {
             outputContext.OutputChunk(this.BuildHelpString());
         }
@@ -31,9 +33,9 @@ namespace Xcaciv.Command.Commands
         /// single line help command description, used for listing all commands
         /// </summary>
         /// <param name="outputContext"></param>
-        public virtual void OneLineHelp(IOutputContext outputContext)
+        public virtual void OneLineHelp(IIoContext outputContext)
         {
-            var baseCommand = Attribute.GetCustomAttribute(this.GetType(), typeof(BaseCommandAttribute)) as BaseCommandAttribute;
+            var baseCommand = Attribute.GetCustomAttribute(this.GetType(), typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
             if (baseCommand != null)
                 outputContext.OutputChunk($"{baseCommand.Command,-12} {baseCommand.Description}"); 
         }
@@ -42,32 +44,49 @@ namespace Xcaciv.Command.Commands
         /// </summary>
         /// <returns></returns>
         protected virtual string BuildHelpString()
-        {            
+        {
             var thisType = this.GetType();
-            var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(BaseCommandAttribute)) as BaseCommandAttribute;
-            var commandParameters = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterAttribute)) as CommandParameterAttribute[];
+            var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
+            var commandParametersOrdered = GetOrderedParameters(false);
+            var commandParametersFlag = GetFlagParameters();
+            var commandParametersNamed = GetNamedParameters(false);
+            var commandParametersSuffix = GetSuffixParameters(false);
             var helpRemarks = Attribute.GetCustomAttributes(thisType, typeof(CommandHelpRemarksAttribute)) as CommandHelpRemarksAttribute[];
 
             // TODO: extract a help formatter so it can be customized
             var builder = new StringBuilder();
-            builder.AppendLine($"- {baseCommand?.Command} HELP ------------------------------");
-            builder.AppendLine(baseCommand?.Description);
-            builder.AppendLine();
-            builder.AppendLine(baseCommand?.Prototype);
+            builder.AppendLine($"{baseCommand?.Command}:");
+            builder.AppendLine($"  {baseCommand?.Description}");
+            builder.AppendLine("Usage:");
+            builder.AppendLine($"  {baseCommand?.Prototype}");
             builder.AppendLine();
 
-            if (commandParameters != null && commandParameters.Length > 0)
+            if (commandParametersOrdered.Length + commandParametersNamed.Length + commandParametersSuffix.Length + commandParametersFlag.Length > 0)
+                builder.AppendLine("Options:");
+
+            foreach (var parameter in commandParametersOrdered)
             {
-                builder.AppendLine("---- PARAMETERS");
-                foreach (var parameter in commandParameters)
-                {
-                    builder.AppendLine(parameter.ToString());
-                }
+                builder.AppendLine($"  {parameter.ToString()}");
+            }
+
+            foreach (var parameter in commandParametersFlag)
+            {
+                builder.AppendLine($"  {parameter.ToString()}");
+            }
+
+            foreach (var parameter in commandParametersNamed)
+            {
+                builder.AppendLine($"  {parameter.ToString()}");
+            }
+
+            foreach (var parameter in commandParametersSuffix)
+            {
+                builder.AppendLine($"  {parameter.ToString()}");
             }
 
             if (helpRemarks != null && helpRemarks.Length > 0)
             {
-                builder.AppendLine("---- REMARKS");
+                builder.AppendLine("Remarks:");
                 foreach (var rem in helpRemarks)
                 {
                     builder.AppendLine();
@@ -75,39 +94,111 @@ namespace Xcaciv.Command.Commands
                 }
             }
 
-            builder.AppendLine($"----------------------------------------");
-            builder.AppendLine($"----------------------------------------");
-
+            builder.AppendLine();
             return builder.ToString();
         }
         /// <summary>
         /// execute pipe and single input the same
         /// </summary>
-        /// <param name="input"></param>
+        /// <param name="io"></param>
         /// <param name="environment"></param>
         /// <returns></returns>
-        public async IAsyncEnumerable<string> Main(IInputContext input, IEnvironment environment)
+        public async IAsyncEnumerable<string> Main(IIoContext io, IEnvironmentContext environment)
         {
-            if (input.HasPipedInput)
+            if (io.HasPipedInput)
             {
-                await foreach (var p in input.ReadInputPipeChunks())
+                await foreach (var p in io.ReadInputPipeChunks())
                 {
                     if (string.IsNullOrEmpty(p)) continue;
-                    yield return this.HandlePipedChunk(p, input.Parameters, environment);
+                    yield return this.HandlePipedChunk(p, io.Parameters, environment);
                 }
             }
             else
             {
-                if (input.Parameters.Length > 0 && input.Parameters[0].ToUpper() == "--HELP")
+                if (io.Parameters.Length > 0 && io.Parameters[0].ToUpper() == "--HELP")
                     yield return BuildHelpString();
                 else
-                    yield return HandleExecution(input.Parameters, environment);
+                    yield return HandleExecution(io.Parameters, environment);
             }
         }
+        /// <summary>
+        /// Use the parameter attributest to process the parameters into a dictionary
+        /// </summary>
+        /// <param name="parameters"></param>
+        protected Dictionary<string, string> ProcessParameters(string[] parameters, bool hasPipedInput = false)
+        {
+            if (parameters.Length == 0) return new Dictionary<string, string>();
+            var parameterList = parameters.ToList();
 
-        public abstract string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironment env);
+            var parameterLookup = new Dictionary<string, string>();
+            Type thisType = this.GetType();
+            CommandParameters.
+                        ProcessOrderedParameters(parameterList, parameterLookup, GetOrderedParameters(hasPipedInput));
+            CommandParameters.ProcessFlags(parameterList, parameterLookup, GetFlagParameters());
+            CommandParameters.ProcessNamedParameters(parameterList, parameterLookup, GetNamedParameters(hasPipedInput));
+            CommandParameters.ProcessSuffixParameters(parameterList, parameterLookup, GetSuffixParameters(hasPipedInput));
 
-        public abstract string HandleExecution(string[] parameters, IEnvironment env);
+            return parameterLookup;
+        }
+
+        /// <summary>
+        /// reads parameter description from the instance
+        /// </summary>
+        /// <returns></returns>
+        protected CommandParameterOrderedAttribute[] GetOrderedParameters(bool hasPipedInput)
+        {
+            var thisType = this.GetType();
+            var ordered = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterOrderedAttribute)) as CommandParameterOrderedAttribute[] ?? ([]);
+            if (hasPipedInput)
+            {
+                ordered = ordered.Where(x => !x.UsePipe).ToArray();
+            }
+            
+            return ordered;
+        }
+        /// <summary>
+        /// reads parameter description from the instance
+        /// </summary>
+        /// <returns></returns>
+        protected CommandParameterNamedAttribute[] GetNamedParameters(bool hasPipedInput)
+        {
+            var thisType = this.GetType();
+            var named = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterNamedAttribute)) as CommandParameterNamedAttribute[] ?? ([]);
+            if (hasPipedInput)
+            {
+                named = named.Where(x => !x.UsePipe).ToArray();
+            }
+            return named;
+        }
+        /// <summary>
+        /// reads parameter description from the instance
+        /// </summary>
+        /// <returns></returns>
+        protected CommandFlagAttribute[] GetFlagParameters()
+        {
+            var thisType = this.GetType();
+            var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandFlagAttribute)) as CommandFlagAttribute[] ?? ([]);
+            return flags;
+        }
+        /// <summary>
+        /// reads parameter description from the instance
+        /// </summary>
+        /// <returns></returns>
+        protected CommandParameterSuffixAttribute[] GetSuffixParameters(bool hasPipedInput)
+        {
+            var thisType = this.GetType();
+            var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterSuffixAttribute)) as CommandParameterSuffixAttribute[] ?? ([]);
+            if (hasPipedInput)
+            {
+                flags = flags.Where(x => !x.UsePipe).ToArray();
+            }
+            return flags;
+        }
+
+        public abstract string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env);
+
+
+        public abstract string HandleExecution(string[] parameters, IEnvironmentContext env);
 
     }
 }

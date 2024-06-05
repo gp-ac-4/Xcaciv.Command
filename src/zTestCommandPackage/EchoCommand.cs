@@ -9,34 +9,34 @@ using Xcaciv.Command.Interface.Attributes;
 
 namespace zTestCommandPackage
 {
-    [BaseCommand("ECHO", "ECHO")]
+    [CommandRegister("ECHO", "ECHO")]
     public class EchoCommand : ICommandDelegate
     {
         public string BaseCommand { get; protected set; } = "ECHO";
 
         public string FriendlyName { get; protected set; } = "echo";
 
-        public void Help(IOutputContext outputContext)
+        public void Help(IIoContext outputContext)
         {
             outputContext.OutputChunk($"[{BaseCommand}] ({FriendlyName}) - test command to output each parameter as a chunk");
         }
 
-        public async IAsyncEnumerable<string> Main(IInputContext input, IEnvironment statusContext)
+        public async IAsyncEnumerable<string> Main(IIoContext io, IEnvironmentContext statusContext)
         {
-            await statusContext.SetStatusMessage($"{this.BaseCommand} test start");
-            if (input.HasPipedInput)
+            await io.AddTraceMessage($"{this.BaseCommand} test start");
+            if (io.HasPipedInput)
             {
-                await foreach (var p in input.ReadInputPipeChunks())
+                await foreach (var p in io.ReadInputPipeChunks())
                     yield return this.FormatEcho(p);
             }
             else
             {
-                foreach (var p in input.Parameters)
+                foreach (var p in io.Parameters)
                 {
                     yield return this.FormatEcho(p);
                 }
             }
-            await statusContext.SetStatusMessage($"{this.BaseCommand} test end");
+            await io.AddTraceMessage($"{this.BaseCommand} test end");
         }
 
         public virtual string FormatEcho(string p)
@@ -50,7 +50,7 @@ namespace zTestCommandPackage
             return ValueTask.CompletedTask;
         }
 
-        public void OneLineHelp(IOutputContext context)
+        public void OneLineHelp(IIoContext context)
         {
             context.OutputChunk($"{BaseCommand} - {FriendlyName}");
         }

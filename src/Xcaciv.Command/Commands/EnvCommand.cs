@@ -8,10 +8,10 @@ using Xcaciv.Command.Interface.Attributes;
 
 namespace Xcaciv.Command.Commands
 {
-    [BaseCommand("ENV", "Output all environment variables", Prototype = "ENV")]
+    [CommandRegister("ENV", "Output all environment variables", Prototype = "ENV")]
     internal class EnvCommand : AbstractCommand
     {
-        public override string HandleExecution(string[] parameters, IEnvironment env)
+        public override string HandleExecution(string[] parameters, IEnvironmentContext env)
         {
             var values = String.Empty;
             foreach (var valuePair in env.GetEnvinronment())
@@ -21,7 +21,7 @@ namespace Xcaciv.Command.Commands
             return values;
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironment env)
+        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
         {
             var values = String.Empty;
             foreach (var valuePair in env.GetEnvinronment())
