@@ -67,12 +67,48 @@ public class Crawler : ICrawler
                     // required to have BaseCommandAttribute, 
                     if (Attribute.GetCustomAttribute(commandType, typeof(CommandRegisterAttribute)) is CommandRegisterAttribute attributes)
                     {
-                        commands[attributes.Command] = new CommandDescription()
+                        if (Attribute.GetCustomAttribute(commandType, typeof(CommandRootAttribute)) is CommandRootAttribute rootAttribute)
                         {
-                            BaseCommand = attributes.Command,
-                            FullTypeName = commandType.FullName ?? String.Empty,
-                            PackageDescription = packagDesc
-                        };
+                            // this command is a sub command, add it to the parent
+                            if (commands.TryGetValue(rootAttribute.Command, out ICommandDescription? description) && description != null)
+                            {
+                                description.SubCommands[attributes.Command] = new CommandDescription()
+                                {
+                                    BaseCommand = attributes.Command,
+                                    FullTypeName = commandType.FullName ?? String.Empty,
+                                    PackageDescription = packagDesc
+                                };
+                            }
+                            else
+                            {
+                                commands[rootAttribute.Command] = new CommandDescription()
+                                {
+                                    BaseCommand = rootAttribute.Command,
+                                    PackageDescription = packagDesc,
+                                    SubCommands = new Dictionary<string, ICommandDescription>()
+                                    {
+                                        { attributes.Command,
+                                        new CommandDescription()
+                                        {
+                                            BaseCommand = attributes.Command,
+                                            FullTypeName = commandType.FullName ?? String.Empty,
+                                            PackageDescription = packagDesc
+                                        } }
+                                    }
+                                };
+                            }
+                        }
+                        else
+                        {
+                            // this is a root command
+                            commands[attributes.Command] = new CommandDescription()
+                            {
+                                BaseCommand = attributes.Command,
+                                FullTypeName = commandType.FullName ?? String.Empty,
+                                PackageDescription = packagDesc
+                            };
+                        }
+                        
                     }
                     else
                     {
