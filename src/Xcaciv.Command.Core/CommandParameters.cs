@@ -1,4 +1,7 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Data;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
 
 namespace Xcaciv.Command.Core;
@@ -92,5 +95,59 @@ public static class CommandParameters
             parameterLookup.Add(parameter.Name, parameterList[0]);
             parameterList.RemoveAt(0);
         }
+    }
+
+    public static ICommandDescription CreatePackageDescription(Type commandType, PackageDescription packagDesc, ICommandDescription? description = null)
+    {
+        // required to have BaseCommandAttribute, 
+        if (Attribute.GetCustomAttribute(commandType, typeof(CommandRegisterAttribute)) is CommandRegisterAttribute attributes)
+        {
+            if (Attribute.GetCustomAttribute(commandType, typeof(CommandRootAttribute)) is CommandRootAttribute rootAttribute)
+            {
+                // this command is a sub command, add it to the parent
+                if (description == null)
+                {
+                    return new CommandDescription()
+                    {
+                        BaseCommand = rootAttribute.Command,
+                        PackageDescription = packagDesc,
+                        SubCommands = new Dictionary<string, ICommandDescription>()
+                                    {
+                                        { attributes.Command,
+                                        new CommandDescription()
+                                        {
+                                            BaseCommand = attributes.Command,
+                                            FullTypeName = commandType.FullName ?? String.Empty,
+                                            PackageDescription = packagDesc
+                                        } }
+                                    }
+                    };
+                }
+                else
+                {
+                    description.SubCommands[attributes.Command] = new CommandDescription()
+                    {
+                        BaseCommand = attributes.Command,
+                        FullTypeName = commandType.FullName ?? String.Empty,
+                        PackageDescription = packagDesc
+                    };
+                    return description;
+                }
+            }
+            
+            // this is a root command
+            return new CommandDescription()
+            {
+                BaseCommand = attributes.Command,
+                FullTypeName = commandType.FullName ?? String.Empty,
+                PackageDescription = packagDesc
+            };          
+
+        }
+        else
+        {
+            throw new InvalidOperationException($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
+        }
+
     }
 }

@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Xcaciv.Command.Commands;
+using Xcaciv.Command.Core;
 using Xcaciv.Command.FileLoader;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
@@ -114,15 +115,26 @@ public class CommandController : Interface.ICommandController
     /// <param name="packageKey"></param>
     /// <param name="command"></param>
     /// <param name="modifiesEnvironment">only special commands can modify the environment</param>
-    private void AddCommand(string packageKey, ICommandDelegate command, bool modifiesEnvironment = false)
+    public void AddCommand(string packageKey, ICommandDelegate command, bool modifiesEnvironment = false)
     {
         var commandType = command.GetType();
+        AddCommand(packageKey, commandType, modifiesEnvironment);
+    }
+    /// <summary>
+    /// add a command from a loaded type
+    /// good for  commands from internal or linked dlls
+    /// </summary>
+    /// <param name="packageKey"></param>
+    /// <param name="commandType"></param>
+    /// <param name="modifiesEnvironment"></param>
+    public void AddCommand(string packageKey, Type commandType, bool modifiesEnvironment)
+    {
         if (Attribute.GetCustomAttribute(commandType, typeof(CommandRegisterAttribute)) is CommandRegisterAttribute attributes)
         {
             AddCommand(new CommandDescription()
             {
                 BaseCommand = attributes.Command,
-                FullTypeName = command.GetType().FullName ?? String.Empty,
+                FullTypeName = commandType.FullName ?? String.Empty,
                 PackageDescription = new PackageDescription()
                 {
                     Name = packageKey,
@@ -132,10 +144,8 @@ public class CommandController : Interface.ICommandController
             });
             return;
         }
-        
+
         Trace.WriteLine($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
-        return;
-        
     }
 
     /// <summary>
@@ -144,7 +154,18 @@ public class CommandController : Interface.ICommandController
     /// <param name="command"></param>
     public void AddCommand(ICommandDescription command)
     {
-        this.Commands[command.BaseCommand] = command;
+        // handle sub commands
+        if (command.SubCommands.Count > 0 && this.Commands.TryGetValue(command.BaseCommand, out ICommandDescription? description))
+        {
+            foreach(var subCommand in command.SubCommands)
+            {
+                description.SubCommands[subCommand.Key] = subCommand.Value;
+            }
+        }
+        else
+        {
+            this.Commands[command.BaseCommand] = command;
+        }
     }
 
     /// <summary>

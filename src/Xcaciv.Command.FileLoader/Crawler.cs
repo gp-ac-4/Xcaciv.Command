@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Abstractions;
+using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
 using Xcaciv.Command.Interface.Exceptions;
@@ -64,55 +65,22 @@ public class Crawler : ICrawler
                 {
                     if (commandType == null) continue; // not sure why it could be null, but the compiler says so
 
-                    // required to have BaseCommandAttribute, 
-                    if (Attribute.GetCustomAttribute(commandType, typeof(CommandRegisterAttribute)) is CommandRegisterAttribute attributes)
+                    try
                     {
-                        if (Attribute.GetCustomAttribute(commandType, typeof(CommandRootAttribute)) is CommandRootAttribute rootAttribute)
+                        var newDescription = CommandParameters.CreatePackageDescription(commandType, packagDesc);
+                        if (newDescription.SubCommands.Count > 0 && commands.TryGetValue(commandType.Name, out ICommandDescription? description))
                         {
-                            // this command is a sub command, add it to the parent
-                            if (commands.TryGetValue(rootAttribute.Command, out ICommandDescription? description) && description != null)
-                            {
-                                description.SubCommands[attributes.Command] = new CommandDescription()
-                                {
-                                    BaseCommand = attributes.Command,
-                                    FullTypeName = commandType.FullName ?? String.Empty,
-                                    PackageDescription = packagDesc
-                                };
-                            }
-                            else
-                            {
-                                commands[rootAttribute.Command] = new CommandDescription()
-                                {
-                                    BaseCommand = rootAttribute.Command,
-                                    PackageDescription = packagDesc,
-                                    SubCommands = new Dictionary<string, ICommandDescription>()
-                                    {
-                                        { attributes.Command,
-                                        new CommandDescription()
-                                        {
-                                            BaseCommand = attributes.Command,
-                                            FullTypeName = commandType.FullName ?? String.Empty,
-                                            PackageDescription = packagDesc
-                                        } }
-                                    }
-                                };
-                            }
+                            var subCommand = description.SubCommands.First().Value;
+                            description.SubCommands.Add(subCommand.BaseCommand, subCommand);
                         }
                         else
                         {
-                            // this is a root command
-                            commands[attributes.Command] = new CommandDescription()
-                            {
-                                BaseCommand = attributes.Command,
-                                FullTypeName = commandType.FullName ?? String.Empty,
-                                PackageDescription = packagDesc
-                            };
+                            commands[newDescription.BaseCommand] = newDescription;
                         }
-                        
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        Trace.WriteLine($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
+                        Trace.WriteLine($"{ex.Message}");
                     }
                 }
 
