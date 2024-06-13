@@ -11,6 +11,7 @@ using Xcaciv.Command.FileLoader;
 using System.IO.Abstractions.TestingHelpers;
 using Moq;
 using Xcaciv.Command.Tests.TestImpementations;
+using Xcaciv.Command.Packages;
 
 namespace Xcaciv.Command.Tests
 {
@@ -90,6 +91,22 @@ namespace Xcaciv.Command.Tests
             Assert.Equal(2, commands["DO"]?.SubCommands.Count);
         }
 
+        [Fact()]
+        public void LoadInternalSubCommandsTest()
+        {
+            var controller = new CommandController(new Crawler(), @"..\..\..\..\..\") as Interface.ICommandController;
+            controller.AddCommand("internal", new InstallCommand());
+            controller.EnableDefaultCommands();
+
+            var textio = new TestImpementations.TestTextIo();
+            controller.GetHelp(string.Empty, textio);
+
+            var output = textio.ToString();
+
+            // Note: currently Loader is not unloading assemblies for performance reasons
+            Assert.Contains("REGIF", output);
+        }
+
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
         [Fact()]
         public void LoadDefaultCommandsTest()
@@ -99,9 +116,11 @@ namespace Xcaciv.Command.Tests
 
             var textio = new TestImpementations.TestTextIo();
             controller.GetHelp(string.Empty, textio);
-            
+
+            var output = textio.ToString();
+
             // Note: currently Loader is not unloading assemblies for performance reasons
-            Assert.Contains("REGIF", textio.ToString());
+            Assert.Contains("REGIF", output);
         }
         [Fact()]
         public void HelpCommandsTestAsync()
@@ -116,8 +135,6 @@ namespace Xcaciv.Command.Tests
             //var env = new EnvironmentContext();
             controller.GetHelp(string.Empty, textio);
             var output = textio.ToString();
-
-            //BROKEN
 
             // Note: currently Loader is not unloading assemblies for performance reasons
             Assert.Contains("SUB DO say", output);

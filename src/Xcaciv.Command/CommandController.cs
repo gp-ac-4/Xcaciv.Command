@@ -131,17 +131,16 @@ public class CommandController : Interface.ICommandController
     {
         if (Attribute.GetCustomAttribute(commandType, typeof(CommandRegisterAttribute)) is CommandRegisterAttribute attributes)
         {
-            AddCommand(new CommandDescription()
+            var packageDesc = new PackageDescription()
             {
-                BaseCommand = attributes.Command,
-                FullTypeName = commandType.FullName ?? String.Empty,
-                PackageDescription = new PackageDescription()
-                {
-                    Name = packageKey,
-                    FullPath = commandType.Assembly.Location
-                },
-                ModifiesEnvironment = modifiesEnvironment
-            });
+                Name = packageKey,
+                FullPath = commandType.Assembly.Location
+            };
+
+            var commandDesc = CommandParameters.CreatePackageDescription(commandType, packageDesc);
+
+            AddCommand(commandDesc);
+
             return;
         }
 
