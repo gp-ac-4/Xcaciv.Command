@@ -30,5 +30,26 @@ namespace Xcaciv.Command.Interface
         /// <param name="command"></param>
         /// <param name="output"></param>
         void GetHelp(string command, IIoContext output);
+        /// <summary>
+        /// install a single command into the index
+        /// </summary>
+        /// <param name="command"></param>
+        void AddCommand(ICommandDescription command);
+        /// <summary>
+        /// add a command from a loaded type
+        /// good for  commands from internal or linked dlls
+        /// </summary>
+        /// <param name="packageKey"></param>
+        /// <param name="commandType"></param>
+        /// <param name="modifiesEnvironment"></param>
+        void AddCommand(string packageKey, Type commandType, bool modifiesEnvironment = false);
+        /// <summary>
+        /// add a command from an instance of the command
+        /// good for commands from internal or linked dlls
+        /// </summary>
+        /// <param name="packageKey"></param>
+        /// <param name="command"></param>
+        /// <param name="modifiesEnvironment"></param>
+        void AddCommand(string packageKey, ICommandDelegate command, bool modifiesEnvironment = false);
     }
 }

@@ -10,6 +10,7 @@ using System.IO.Abstractions;
 using Xcaciv.Command.FileLoader;
 using System.IO.Abstractions.TestingHelpers;
 using Moq;
+using Xcaciv.Command.Tests.TestImpementations;
 
 namespace Xcaciv.Command.Tests
 {
@@ -74,8 +75,21 @@ namespace Xcaciv.Command.Tests
 
             // verify the output of the first run
             // by looking at the output of the second output line
-            Assert.Equal(":d2hhdC13aGF0:-:aXMtaXM=:-:dXAtdXA=:", textio.ToString());
+            Assert.Equal(":d2hhdC13aGF0:\r\n:aXMtaXM=:\r\n:dXAtdXA=:", textio.ToString());
         }
+        [Fact()]
+        public void LoadCommandsTest()
+        {
+            var controller = new CommandControllerTestHarness(new Crawler(), @"..\..\..\..\..\");
+            controller.AddPackageDirectory(commandPackageDir);
+            controller.EnableDefaultCommands();
+            controller.LoadCommands(string.Empty);
+
+            var commands = controller.GetCommands();
+
+            Assert.Equal(2, commands["DO"]?.SubCommands.Count);
+        }
+
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
         [Fact()]
         public void LoadDefaultCommandsTest()
@@ -88,6 +102,25 @@ namespace Xcaciv.Command.Tests
             
             // Note: currently Loader is not unloading assemblies for performance reasons
             Assert.Contains("REGIF", textio.ToString());
+        }
+        [Fact()]
+        public void HelpCommandsTestAsync()
+        {
+            var controller = new CommandControllerTestHarness(new Crawler(), @"..\..\..\..\..\") as Interface.ICommandController;
+            controller.EnableDefaultCommands();
+
+            controller.AddPackageDirectory(commandPackageDir);
+            controller.LoadCommands(string.Empty);
+
+            var textio = new TestImpementations.TestTextIo();
+            //var env = new EnvironmentContext();
+            controller.GetHelp(string.Empty, textio);
+            var output = textio.ToString();
+
+            //BROKEN
+
+            // Note: currently Loader is not unloading assemblies for performance reasons
+            Assert.Contains("SUB DO say", output);
         }
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
     }

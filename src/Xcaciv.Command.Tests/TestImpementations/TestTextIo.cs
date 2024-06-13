@@ -90,7 +90,7 @@ namespace Xcaciv.Command.Tests.TestImpementations
                 }
             }
 
-            output += string.Join('-', Output);
+            output += string.Join(Environment.NewLine, Output);
 
             return output;
         }

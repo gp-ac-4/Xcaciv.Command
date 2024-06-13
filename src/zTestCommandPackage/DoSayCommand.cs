@@ -10,17 +10,17 @@ using Xcaciv.Command.Interface.Attributes;
 namespace zTestCommandPackage
 {
     [CommandRoot("do", "does stuff")]
-    [CommandRegister("ECHO", "echoes stuff to test subcommands")]
-    public class EchoDoCommand : AbstractCommand, ICommandDelegate
+    [CommandRegister("SAY", "SUB DO say")]
+    public class DoSayCommand : AbstractCommand
     {
         public override string HandleExecution(string[] parameters, IEnvironmentContext env)
         {
-            return String.Join(' ', parameters.Skip(1));
+            return String.Join(' ', parameters);
         }
 
         public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
         {
-            return pipedChunk;
+            return pipedChunk + String.Join(' ', parameters);
         }
     }
 }
