@@ -68,13 +68,16 @@ public class Crawler : ICrawler
                     try
                     {
                         var newDescription = CommandParameters.CreatePackageDescription(commandType, packagDesc);
-                        if (newDescription.SubCommands.Count > 0 && commands.TryGetValue(commandType.Name, out ICommandDescription? description))
+
+                        // when it is a sub command, we need to add it to a parent if it already exists
+                        if (newDescription.SubCommands.Count > 0 && commands.TryGetValue(newDescription.BaseCommand, out ICommandDescription? description))
                         {
-                            var subCommand = description.SubCommands.First().Value;
-                            description.SubCommands.Add(subCommand.BaseCommand, subCommand);
+                            var newSubCommand = newDescription.SubCommands.First().Value;
+                            description.SubCommands[newSubCommand.BaseCommand] = newSubCommand; 
                         }
                         else
                         {
+                            // when the parent command does not exist, add it to the list
                             commands[newDescription.BaseCommand] = newDescription;
                         }
                     }
@@ -87,6 +90,7 @@ public class Crawler : ICrawler
                 packagDesc.Commands = commands;
             }
 
+            // dont add packages without valid commands
             if (packagDesc.Commands.Count > 0) packages.TryAdd(key, packagDesc);
         });
 

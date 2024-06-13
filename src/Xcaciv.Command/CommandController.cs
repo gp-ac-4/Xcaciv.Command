@@ -127,7 +127,7 @@ public class CommandController : Interface.ICommandController
     /// <param name="packageKey"></param>
     /// <param name="commandType"></param>
     /// <param name="modifiesEnvironment"></param>
-    public void AddCommand(string packageKey, Type commandType, bool modifiesEnvironment)
+    public void AddCommand(string packageKey, Type commandType, bool modifiesEnvironment = false)
     {
         if (Attribute.GetCustomAttribute(commandType, typeof(CommandRegisterAttribute)) is CommandRegisterAttribute attributes)
         {
@@ -138,7 +138,7 @@ public class CommandController : Interface.ICommandController
                 PackageDescription = new PackageDescription()
                 {
                     Name = packageKey,
-                    FullPath = ""
+                    FullPath = commandType.Assembly.Location
                 },
                 ModifiesEnvironment = modifiesEnvironment
             });
@@ -299,14 +299,15 @@ public class CommandController : Interface.ICommandController
 
     protected static ICommandDelegate GetCommandInstance(string fullTypeName, string packagePath)
     {
+        if (String.IsNullOrEmpty(fullTypeName)) throw new InvalidOperationException("Command type name is empty.");
         Type? executeDeligateType = Type.GetType(fullTypeName);
         ICommandDelegate commandInstance;
         if (executeDeligateType == null)
         {
-            using (var context = new AssemblyContext(packagePath, basePathRestriction:"*")) // TODO: restrict the path
-            {
-                commandInstance = context.CreateInstance<ICommandDelegate>(fullTypeName);
-            }
+            if (String.IsNullOrEmpty(packagePath)) throw new InvalidOperationException($"Command [{fullTypeName}] is not loaded and no assembly was defined.");
+
+            using var context = new AssemblyContext(packagePath, basePathRestriction: "*"); // TODO: restrict the path
+            commandInstance = context.CreateInstance<ICommandDelegate>(fullTypeName);
         }
         else
         {
@@ -332,11 +333,37 @@ public class CommandController : Interface.ICommandController
     public void GetHelp(string command, IIoContext context)
     {
         if (String.IsNullOrEmpty(command))
-            foreach(var description in Commands)
+        {
+            foreach (var description in Commands)
             {
-                var cmdInsance = GetCommandInstance(description.Value);
-                cmdInsance.OneLineHelp(context);
+                if (String.IsNullOrEmpty(description.Value.FullTypeName))
+                {
+                    if (description.Value.SubCommands.Count > 0)
+                    {
+                        // get the first sub command to get the type to get the root command
+                        var subCmd = GetCommandInstance(description.Value.SubCommands.First().Value);
+
+                        if (subCmd != null && Attribute.GetCustomAttribute(subCmd.GetType(), typeof(CommandRootAttribute)) is CommandRootAttribute rootAttribute)
+                        {
+                            context.OutputChunk($"{rootAttribute.Command,-12} {rootAttribute.Description}");
+                        }
+
+                        foreach (var subCommand in description.Value.SubCommands)
+                        {
+                            outputOneLineHelp(context, subCommand.Value);
+                        }
+                    }
+                    else
+                    {
+                        context.AddTraceMessage($"No type name registered for command: {description.Key}");
+                    }
+                }
+                else
+                {
+                    outputOneLineHelp(context, description.Value);
+                }
             }
+        }
         else
         {
             try
@@ -361,4 +388,9 @@ public class CommandController : Interface.ICommandController
         }
     }
 
+    protected static void outputOneLineHelp(IIoContext context, ICommandDescription description)
+    {
+        var cmdInsance = GetCommandInstance(description);
+        cmdInsance.OneLineHelp(context);
+    }
 }

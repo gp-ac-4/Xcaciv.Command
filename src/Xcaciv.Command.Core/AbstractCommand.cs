@@ -35,9 +35,24 @@ namespace Xcaciv.Command.Core
         /// <param name="outputContext"></param>
         public virtual void OneLineHelp(IIoContext outputContext)
         {
-            var baseCommand = Attribute.GetCustomAttribute(GetType(), typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
-            if (baseCommand != null)
+            var thisType = GetType();
+            var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
+            if (baseCommand == null)
+            {
+                outputContext.AddTraceMessage($"no base command for {outputContext.Name}");
+                return;
+            }
+
+            if (Attribute.GetCustomAttribute(thisType, typeof(CommandRootAttribute)) is CommandRootAttribute)
+            {
+                outputContext.OutputChunk($"\t{baseCommand.Command,-12} {baseCommand.Description}");
+            }
+            else
+            {
                 outputContext.OutputChunk($"{baseCommand.Command,-12} {baseCommand.Description}");
+            }
+
+
         }
         /// <summary>
         /// create a nicely formated
@@ -55,6 +70,8 @@ namespace Xcaciv.Command.Core
 
             // TODO: extract a help formatter so it can be customized
             var builder = new StringBuilder();
+            if (Attribute.GetCustomAttribute(thisType, typeof(CommandRootAttribute)) is CommandRootAttribute rootCommand)
+                builder.Append($"{rootCommand.Command} {Environment.NewLine}\t");            
             builder.AppendLine($"{baseCommand?.Command}:");
             builder.AppendLine($"  {baseCommand?.Description}");
             builder.AppendLine("Usage:");
