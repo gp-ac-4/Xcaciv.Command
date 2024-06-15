@@ -76,10 +76,17 @@ namespace Xcaciv.Command.Tests.TestImpementations
             return Task.CompletedTask;
         }
 
+        public override Task AddTraceMessage(string message)
+        {
+            Trace.Add(message);
+            System.Diagnostics.Debug.WriteLine(message);
+            return Task.CompletedTask;
+        }
+
         public override string ToString()
         {
             string output = string.Empty;
-            if (HasPipedInput)
+            if (Children.Count > 0)
             {
                 // combine output into one string seperated by new lines
                 // and then add the children output
@@ -93,13 +100,6 @@ namespace Xcaciv.Command.Tests.TestImpementations
             output += string.Join(Environment.NewLine, Output);
 
             return output;
-        }
-
-        public override Task AddTraceMessage(string message)
-        {
-            Trace.Add(message);
-            System.Diagnostics.Debug.WriteLine(message);
-            return Task.CompletedTask;
         }
 
     }

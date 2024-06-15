@@ -45,7 +45,7 @@ namespace Xcaciv.Command.Core
 
             if (Attribute.GetCustomAttribute(thisType, typeof(CommandRootAttribute)) is CommandRootAttribute)
             {
-                outputContext.OutputChunk($"\t{baseCommand.Command,-12} {baseCommand.Description}");
+                outputContext.OutputChunk($"-\t{baseCommand.Command,-12} {baseCommand.Description}");
             }
             else
             {
@@ -71,11 +71,12 @@ namespace Xcaciv.Command.Core
             // TODO: extract a help formatter so it can be customized
             var builder = new StringBuilder();
             if (Attribute.GetCustomAttribute(thisType, typeof(CommandRootAttribute)) is CommandRootAttribute rootCommand)
-                builder.Append($"{rootCommand.Command} {Environment.NewLine}\t");            
+                builder.Append($"{rootCommand.Command} ");            
             builder.AppendLine($"{baseCommand?.Command}:");
             builder.AppendLine($"  {baseCommand?.Description}");
-            builder.AppendLine("Usage:");
-            builder.AppendLine($"  {baseCommand?.Prototype}");
+            builder.AppendLine();
+            builder.AppendLine($"Usage:");
+            builder.AppendLine($"  {baseCommand?.Prototype}"); // TODO: when prototype is 'todo' generate a prototype from the parameters
             builder.AppendLine();
 
             if (commandParametersOrdered.Length + commandParametersNamed.Length + commandParametersSuffix.Length + commandParametersFlag.Length > 0)

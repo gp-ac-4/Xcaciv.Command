@@ -2,7 +2,7 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.4.24</Version>
+    <Version>1.5.1</Version>
     <AssemblyName>Xcaciv.Command</AssemblyName>
     <RootNamespace>Xcaciv.Command</RootNamespace>
     <IsPublishable>True</IsPublishable>

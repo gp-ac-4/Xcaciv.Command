@@ -248,11 +248,14 @@ public class CommandController : Interface.ICommandController
             {
                 await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Start.");
 
-                var commandInstance = GetCommandInstance(commandDiscription, ioContext.Parameters);
+                var commandInstance = GetCommandInstance(commandDiscription, ioContext);
                 
                 await using (var childEnv = await env.GetChild(ioContext.Parameters))
                 {
-                    await ExecuteCommand(ioContext, commandInstance, childEnv);
+                    await foreach (var resultMessage in commandInstance.Main(ioContext, env))
+                    {
+                        await ioContext.OutputChunk(resultMessage);
+                    }
                     if (commandDiscription.ModifiesEnvironment && childEnv.HasChanged) env.UpdateEnvironment(childEnv.GetEnvinronment());
                 }
                 
@@ -283,14 +286,15 @@ public class CommandController : Interface.ICommandController
         }
     }
 
-    protected static ICommandDelegate GetCommandInstance(ICommandDescription commandDiscription, string[]? parameters = default)
+    protected static ICommandDelegate GetCommandInstance(ICommandDescription commandDiscription, IIoContext context)
     {
-        if (commandDiscription.SubCommands.Count > 0 && 
-            parameters != null && parameters.Length > 0 &&
-            commandDiscription.SubCommands.TryGetValue(parameters[0].ToUpper(), out ICommandDescription? subCommandDescription) &&
+        if (commandDiscription.SubCommands.Count > 0 &&
+            context.Parameters != null && context.Parameters.Length > 0 &&
+            commandDiscription.SubCommands.TryGetValue(context.Parameters[0].ToUpper(), out ICommandDescription? subCommandDescription) &&
             subCommandDescription != null)
         {
-            return GetCommandInstance(subCommandDescription.FullTypeName, commandDiscription.PackageDescription.FullPath);
+            context.Parameters = context.Parameters[1..]; // remove the sub command from the parameters
+            return GetCommandInstance(subCommandDescription.FullTypeName, commandDiscription.PackageDescription.FullPath);            
         }
 
         return GetCommandInstance(commandDiscription.FullTypeName, commandDiscription.PackageDescription.FullPath);        
@@ -315,16 +319,7 @@ public class CommandController : Interface.ICommandController
 
         return commandInstance;
     }
-
-    protected static async Task ExecuteCommand(IIoContext ioContext, ICommandDelegate commandInstance, IEnvironmentContext env)
-    {
-        await foreach (var resultMessage in commandInstance.Main(ioContext, env))
-        {
-            await ioContext.OutputChunk(resultMessage);
-        }
-    }
-
-    
+        
     /// <summary>
     /// output all the help strings
     /// </summary>
@@ -340,7 +335,7 @@ public class CommandController : Interface.ICommandController
                     if (description.Value.SubCommands.Count > 0)
                     {
                         // get the first sub command to get the type to get the root command
-                        var subCmd = GetCommandInstance(description.Value.SubCommands.First().Value);
+                        var subCmd = GetCommandInstance(description.Value.SubCommands.First().Value, context);
 
                         if (subCmd != null && Attribute.GetCustomAttribute(subCmd.GetType(), typeof(CommandRootAttribute)) is CommandRootAttribute rootAttribute)
                         {
@@ -372,7 +367,7 @@ public class CommandController : Interface.ICommandController
                 {
                     var description = value;
 
-                    var cmdInsance = GetCommandInstance(description);
+                    var cmdInsance = GetCommandInstance(description, context);
                     cmdInsance.Help(context);
                 }
                 else
@@ -389,7 +384,7 @@ public class CommandController : Interface.ICommandController
 
     protected static void outputOneLineHelp(IIoContext context, ICommandDescription description)
     {
-        var cmdInsance = GetCommandInstance(description);
+        var cmdInsance = GetCommandInstance(description, context);
         cmdInsance.OneLineHelp(context);
     }
 }

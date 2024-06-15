@@ -139,6 +139,38 @@ namespace Xcaciv.Command.Tests
             // Note: currently Loader is not unloading assemblies for performance reasons
             Assert.Contains("SUB DO say", output);
         }
+        [Fact()]
+        public async Task HelpSubCommandsTestAsync()
+        {
+            var controller = new CommandControllerTestHarness(new Crawler(), @"..\..\..\..\..\");
+            controller.AddPackageDirectory(commandPackageDir);
+            controller.EnableDefaultCommands();
+            controller.LoadCommands(string.Empty);
+
+            var textio = new TestImpementations.TestTextIo();
+            var env = new EnvironmentContext();
+            await controller.Run("do say --help", textio, env);
+            var output = textio.ToString();
+
+            // Note: currently Loader is not unloading assemblies for performance reasons
+            Assert.Contains("funny test sub command", output);
+        }
+        [Fact()]
+        public async Task HelpCommandWithSubCommandsTestAsync()
+        {
+            var controller = new CommandControllerTestHarness(new Crawler(), @"..\..\..\..\..\");
+            controller.AddPackageDirectory(commandPackageDir);
+            controller.EnableDefaultCommands();
+            controller.LoadCommands(string.Empty);
+
+            var textio = new TestImpementations.TestTextIo();
+            var env = new EnvironmentContext();
+            await controller.Run("do --help", textio, env);
+            var output = textio.ToString();
+
+            // Note: currently Loader is not unloading assemblies for performance reasons
+            Assert.Contains("funny test sub command", output);
+        }
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
     }
 }
