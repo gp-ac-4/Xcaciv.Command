@@ -95,9 +95,10 @@ namespace Xcaciv.Command.Tests.Commands
         {
             var textio = new TestImpementations.TestTextIo();
             var command = new SayCommand();
-            command.OneLineHelp(textio);
+            
+            var result = command.OneLineHelp(textio.Parameters);
 
-            Assert.Equal("SAY          Like echo but more valley.", textio.ToString());
+            Assert.Equal("SAY          Like echo but more valley.", result);
         }
     }
 }

@@ -24,7 +24,7 @@ namespace Xcaciv.Command.Interface
         /// <summary>
         /// command parameter list
         /// </summary>
-        string[] Parameters { get; set; }
+        string[] Parameters { get; }
         /// <summary>
         /// when running in a pipeline this will be the pipe that the command will read from
         /// </summary>

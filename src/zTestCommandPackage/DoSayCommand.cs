@@ -15,14 +15,14 @@ namespace zTestCommandPackage
     {
         public override string HandleExecution(string[] parameters, IEnvironmentContext env)
         {
-            var justParameters = parameters.Skip(1).ToArray();
-            return String.Join(' ', justParameters);
+            // var justParameters = parameters.Skip(1).ToArray();
+            return String.Join(' ', parameters);
         }
 
         public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
         {
-            var justParameters = parameters.Skip(1).ToArray();
-            return pipedChunk + String.Join(' ', justParameters);
+            // var justParameters = parameters.Skip(1).ToArray();
+            return pipedChunk + String.Join(' ', parameters);
         }
     }
 }

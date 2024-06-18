@@ -98,8 +98,9 @@ namespace Xcaciv.Command.Tests
             controller.AddCommand("internal", new InstallCommand());
             controller.EnableDefaultCommands();
 
+            var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
-            controller.GetHelp(string.Empty, textio);
+            controller.GetHelp(string.Empty, textio, env);
 
             var output = textio.ToString();
 
@@ -115,7 +116,8 @@ namespace Xcaciv.Command.Tests
             controller.EnableDefaultCommands();
 
             var textio = new TestImpementations.TestTextIo();
-            controller.GetHelp(string.Empty, textio);
+            var env = new EnvironmentContext();
+            controller.GetHelp(string.Empty, textio, env);
 
             var output = textio.ToString();
 
@@ -123,7 +125,7 @@ namespace Xcaciv.Command.Tests
             Assert.Contains("REGIF", output);
         }
         [Fact()]
-        public void HelpCommandsTestAsync()
+        public void AllHelpTestAsync()
         {
             var controller = new CommandControllerTestHarness(new Crawler(), @"..\..\..\..\..\") as Interface.ICommandController;
             controller.EnableDefaultCommands();
@@ -132,13 +134,28 @@ namespace Xcaciv.Command.Tests
             controller.LoadCommands(string.Empty);
 
             var textio = new TestImpementations.TestTextIo();
-            //var env = new EnvironmentContext();
-            controller.GetHelp(string.Empty, textio);
+            var env = new EnvironmentContext();
+            controller.GetHelp(string.Empty, textio, env);
             var output = textio.ToString();
 
-            // Note: currently Loader is not unloading assemblies for performance reasons
-            Assert.Contains("SUB DO say", output);
+            Assert.Contains("SUB DO echo", output);
         }
+        [Fact()]
+        public async Task HelpCommandsTestAsync()
+        {
+            var controller = new CommandControllerTestHarness(new Crawler(), @"..\..\..\..\..\");
+            controller.AddPackageDirectory(commandPackageDir);
+            controller.EnableDefaultCommands();
+            controller.LoadCommands(string.Empty);
+
+            var textio = new TestImpementations.TestTextIo();
+            var env = new EnvironmentContext();
+            await controller.Run("echo --help", textio, env);
+
+            var output = textio.GatherChildOutput();
+            Assert.Contains("test command to output", output);
+        }
+
         [Fact()]
         public async Task HelpSubCommandsTestAsync()
         {
@@ -150,7 +167,7 @@ namespace Xcaciv.Command.Tests
             var textio = new TestImpementations.TestTextIo();
             var env = new EnvironmentContext();
             await controller.Run("do say --help", textio, env);
-            var output = textio.ToString();
+            var output = textio.GatherChildOutput();
 
             // Note: currently Loader is not unloading assemblies for performance reasons
             Assert.Contains("funny test sub command", output);
@@ -166,9 +183,8 @@ namespace Xcaciv.Command.Tests
             var textio = new TestImpementations.TestTextIo();
             var env = new EnvironmentContext();
             await controller.Run("do --help", textio, env);
-            var output = textio.ToString();
+            var output = textio.GatherChildOutput();
 
-            // Note: currently Loader is not unloading assemblies for performance reasons
             Assert.Contains("funny test sub command", output);
         }
 #pragma warning restore CS8602 // Dereference of a possibly null reference.

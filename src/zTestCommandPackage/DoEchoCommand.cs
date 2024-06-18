@@ -15,7 +15,7 @@ namespace zTestCommandPackage
     {
         public override string HandleExecution(string[] parameters, IEnvironmentContext env)
         {
-            return String.Join(' ', parameters.Skip(1));
+            return String.Join(' ', parameters);
         }
 
         public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)

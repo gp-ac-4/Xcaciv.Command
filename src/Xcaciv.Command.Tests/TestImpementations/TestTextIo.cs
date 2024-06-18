@@ -86,15 +86,9 @@ namespace Xcaciv.Command.Tests.TestImpementations
         public override string ToString()
         {
             string output = string.Empty;
-            if (Children.Count > 0)
+            if (HasPipedInput)
             {
-                // combine output into one string seperated by new lines
-                // and then add the children output
-                output = string.Join(Environment.NewLine, Output);
-                foreach (var chidl in Children)
-                {
-                    output += chidl.ToString() + Environment.NewLine;
-                }
+                output = GatherChildOutput();
             }
 
             output += string.Join(Environment.NewLine, Output);
@@ -102,5 +96,17 @@ namespace Xcaciv.Command.Tests.TestImpementations
             return output;
         }
 
+        public string GatherChildOutput()
+        {
+            // combine output into one string seperated by new lines
+            // and then add the children output
+            string output = String.Empty;
+            foreach (var chidl in Children)
+            {
+                output += chidl.ToString() + Environment.NewLine;
+            }
+
+            return output;
+        }
     }
 }
