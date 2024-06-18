@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
@@ -16,9 +17,9 @@ namespace zTestCommandPackage
 
         public string FriendlyName { get; protected set; } = "echo";
 
-        public void Help(IIoContext outputContext)
+        public string Help(string[] parameters, IEnvironmentContext evn)
         {
-            outputContext.OutputChunk($"[{BaseCommand}] ({FriendlyName}) - test command to output each parameter as a chunk");
+            return $"[{BaseCommand}] ({FriendlyName}) - test command to output each parameter as a chunk";
         }
 
         public async IAsyncEnumerable<string> Main(IIoContext io, IEnvironmentContext statusContext)
@@ -28,6 +29,10 @@ namespace zTestCommandPackage
             {
                 await foreach (var p in io.ReadInputPipeChunks())
                     yield return this.FormatEcho(p);
+            }
+            else if (io.Parameters[0].Equals("--HELP", StringComparison.CurrentCultureIgnoreCase))
+            {
+                yield return this.Help(io.Parameters, statusContext);
             }
             else
             {
@@ -50,9 +55,9 @@ namespace zTestCommandPackage
             return ValueTask.CompletedTask;
         }
 
-        public void OneLineHelp(IIoContext context)
+        public string OneLineHelp(string[] paramseters)
         {
-            context.OutputChunk($"{BaseCommand} - {FriendlyName}");
+            return $"{BaseCommand} - {FriendlyName}";
         }
     }
 }

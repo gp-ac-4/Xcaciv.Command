@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -24,32 +25,31 @@ namespace Xcaciv.Command.Core
         /// <summary>
         /// output full help
         /// </summary>
-        /// <param name="outputContext"></param>
-        public virtual void Help(IIoContext outputContext)
+        /// <param name="parameters"></param>
+        public virtual string Help(string[] parameters, IEnvironmentContext env)
         {
-            outputContext.OutputChunk(BuildHelpString());
+            return BuildHelpString(parameters, env);
         }
         /// <summary>
         /// single line help command description, used for listing all commands
         /// </summary>
-        /// <param name="outputContext"></param>
-        public virtual void OneLineHelp(IIoContext outputContext)
+        /// <param name="parameters"></param>
+        public virtual string OneLineHelp(string[] parameters)
         {
             var thisType = GetType();
             var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
             if (baseCommand == null)
             {
-                outputContext.AddTraceMessage($"no base command for {outputContext.Name}");
-                return;
+                throw new Exception("CommandRegisterAttribute is required for all commands");
             }
 
             if (Attribute.GetCustomAttribute(thisType, typeof(CommandRootAttribute)) is CommandRootAttribute)
             {
-                outputContext.OutputChunk($"\t{baseCommand.Command,-12} {baseCommand.Description}");
+                return $"-\t{baseCommand.Command,-12} {baseCommand.Description}";
             }
             else
             {
-                outputContext.OutputChunk($"{baseCommand.Command,-12} {baseCommand.Description}");
+                return $"{baseCommand.Command,-12} {baseCommand.Description}";
             }
 
 
@@ -58,7 +58,7 @@ namespace Xcaciv.Command.Core
         /// create a nicely formated
         /// </summary>
         /// <returns></returns>
-        protected virtual string BuildHelpString()
+        protected virtual string BuildHelpString(string[] parameters, IEnvironmentContext environment)
         {
             var thisType = GetType();
             var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
@@ -71,11 +71,12 @@ namespace Xcaciv.Command.Core
             // TODO: extract a help formatter so it can be customized
             var builder = new StringBuilder();
             if (Attribute.GetCustomAttribute(thisType, typeof(CommandRootAttribute)) is CommandRootAttribute rootCommand)
-                builder.Append($"{rootCommand.Command} {Environment.NewLine}\t");            
+                builder.Append($"{rootCommand.Command} ");            
             builder.AppendLine($"{baseCommand?.Command}:");
             builder.AppendLine($"  {baseCommand?.Description}");
-            builder.AppendLine("Usage:");
-            builder.AppendLine($"  {baseCommand?.Prototype}");
+            builder.AppendLine();
+            builder.AppendLine($"Usage:");
+            builder.AppendLine($"  {baseCommand?.Prototype}"); // TODO: when prototype is 'todo' generate a prototype from the parameters
             builder.AppendLine();
 
             if (commandParametersOrdered.Length + commandParametersNamed.Length + commandParametersSuffix.Length + commandParametersFlag.Length > 0)
@@ -132,8 +133,8 @@ namespace Xcaciv.Command.Core
             }
             else
             {
-                if (io.Parameters.Length > 0 && io.Parameters[0].ToUpper() == "--HELP")
-                    yield return BuildHelpString();
+                if (io.Parameters.Length > 0 && io.Parameters[0].Equals("--HELP", StringComparison.CurrentCultureIgnoreCase))
+                    yield return BuildHelpString(io.Parameters, environment);
                 else
                     yield return HandleExecution(io.Parameters, environment);
             }

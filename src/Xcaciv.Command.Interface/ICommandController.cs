@@ -29,7 +29,7 @@ namespace Xcaciv.Command.Interface
         /// </summary>
         /// <param name="command"></param>
         /// <param name="output"></param>
-        void GetHelp(string command, IIoContext output);
+        void GetHelp(string command, IIoContext output, IEnvironmentContext env);
         /// <summary>
         /// install a single command into the index
         /// </summary>

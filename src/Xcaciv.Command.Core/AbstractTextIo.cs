@@ -32,7 +32,7 @@ namespace Xcaciv.Command.Core
 
         public bool HasPipedInput { get; protected set; } = false;
 
-        public string[] Parameters { get; protected set; } = parameters;
+        public string[] Parameters { get; set; } = parameters;
 
         public Task SetParameters(string[] parameters)
         {

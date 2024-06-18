@@ -76,25 +76,6 @@ namespace Xcaciv.Command.Tests.TestImpementations
             return Task.CompletedTask;
         }
 
-        public override string ToString()
-        {
-            string output = string.Empty;
-            if (HasPipedInput)
-            {
-                // combine output into one string seperated by new lines
-                // and then add the children output
-                output = string.Join(Environment.NewLine, Output);
-                foreach (var chidl in Children)
-                {
-                    output += chidl.ToString() + Environment.NewLine;
-                }
-            }
-
-            output += string.Join(Environment.NewLine, Output);
-
-            return output;
-        }
-
         public override Task AddTraceMessage(string message)
         {
             Trace.Add(message);
@@ -102,5 +83,30 @@ namespace Xcaciv.Command.Tests.TestImpementations
             return Task.CompletedTask;
         }
 
+        public override string ToString()
+        {
+            string output = string.Empty;
+            if (HasPipedInput)
+            {
+                output = GatherChildOutput();
+            }
+
+            output += string.Join(Environment.NewLine, Output);
+
+            return output;
+        }
+
+        public string GatherChildOutput()
+        {
+            // combine output into one string seperated by new lines
+            // and then add the children output
+            string output = String.Empty;
+            foreach (var chidl in Children)
+            {
+                output += chidl.ToString() + Environment.NewLine;
+            }
+
+            return output;
+        }
     }
 }
