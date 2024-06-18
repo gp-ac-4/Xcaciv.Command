@@ -1,7 +1,5 @@
 # Xcaciv.Command: Excessive Command Framework
 
-[![Build Status](https://dev.azure.com/xcaciv/Xcaciv.Command/_apis/build/status/xcaciv.Xcaciv.Command?branchName=master)](https://dev.azure.com/xcaciv/Xcaciv.Command/_build/latest?definitionId=1&branchName=master)
-
 Excessively modular, async pipeable, command framework.
 
 ```csharp
