@@ -39,6 +39,11 @@ namespace Xcaciv.Command.Interface.Attributes
         /// </summary>
         public string ValueDescription { get; set; } = "";
         /// <summary>
+        /// input values that are allowed, anything else will throw an error
+        /// case is ignored
+        /// </summary>
+        public string[] AllowedValues { get; set; } = [];
+        /// <summary>
         /// used when no value is provided
         /// this satisfies the IsRequired flag
         /// </summary>

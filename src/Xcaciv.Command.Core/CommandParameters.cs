@@ -87,24 +87,32 @@ public static class CommandParameters
     {
         foreach (var parameter in commandParametersOrdered)
         {
-            // if the current parameter is a named parameter, then need to check if we have any
-            // unsatisfied named parameters
-            if (parameterList[0].StartsWith("-"))
+            var foundValue = parameterList[0];
+            if (String.IsNullOrEmpty(foundValue) && !String.IsNullOrEmpty(parameter.DefaultValue))
             {
-                if (parameter.DefaultValue != string.Empty)
-                {
-                    parameterLookup.Add(parameter.Name, parameter.DefaultValue);
-                }
-                else if (parameter.IsRequired)
+                foundValue = parameter.DefaultValue;
+            }
+
+            // If the current parameter is a named parameter, then need to check if we have any unsatisfied
+            // named parameters. This does preclude any negative numbers as valid unnamed parameters.
+            if (foundValue.StartsWith('-')) 
+            {
+                if (String.IsNullOrEmpty(parameter.DefaultValue) && parameter.IsRequired)
                 {
                     throw new ArgumentException($"Missing required parameter {parameter.Name}");
                 }
-
-                continue;
             }
+            else
+            {
+                if (parameter.AllowedValues.Count() > 0 &&
+                    !parameter.AllowedValues.Contains(foundValue, StringComparer.OrdinalIgnoreCase))
+                {
+                    throw new ArgumentException($"Invalid value for parameter {parameter.Name}, this parameter has an allow list.");
+                }
 
-            parameterLookup.Add(parameter.Name, parameterList[0]);
-            parameterList.RemoveAt(0);
+                parameterLookup.Add(parameter.Name, foundValue);
+                parameterList.RemoveAt(0);
+            }
         }
     }
 
