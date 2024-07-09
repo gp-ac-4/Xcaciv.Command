@@ -73,7 +73,7 @@ public static class CommandParameters
                 }
             }
 
-            if (parameter.AllowedValues.Count > 0 &&
+            if (parameter.AllowedValues.Count() > 0 &&
                 !parameter.AllowedValues.Contains(foundValue, StringComparer.OrdinalIgnoreCase))
             {
                 throw new ArgumentException($"Invalid value for parameter {parameter.Name}, this parameter has an allow list.");

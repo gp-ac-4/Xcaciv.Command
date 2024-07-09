@@ -49,7 +49,7 @@ namespace Xcaciv.Command.Interface.Attributes
         /// input values that are allowed, anything else will throw an error
         /// case is ignored
         /// </summary>
-        public List<string> AllowedValues { get; set; } = [];
+        public string[] AllowedValues { get; set; } = [];
 
 
         public override string ToString()
