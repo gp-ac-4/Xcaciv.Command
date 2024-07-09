@@ -39,6 +39,11 @@ namespace Xcaciv.Command.Interface.Attributes
         /// </summary>
         public string ValueDescription { get; set; } = "";
         /// <summary>
+        /// used when no value is provided
+        /// this satisfies the IsRequired flag
+        /// </summary>
+        public string DefaultValue { get; set; } = "";
+        /// <summary>
         /// indicates if the parameter is required
         /// </summary>
         public bool IsRequired { get; set; } = true;

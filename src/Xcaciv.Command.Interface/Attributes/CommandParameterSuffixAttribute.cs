@@ -25,6 +25,14 @@ namespace Xcaciv.Command.Interface.Attributes
         }
 
         public string ValueDescription { get; set; } = "";
+        /// <summary>
+        /// used when no value is provided
+        /// this satisfies the IsRequired flag
+        /// </summary>
+        public string DefaultValue { get; set; } = "";
+        /// <summary>
+        /// specify if the value is required
+        /// </summary>
         public bool IsRequired { get; set; } = true;
         /// <summary>
         /// indicates this value is what is populated when a pipe is used

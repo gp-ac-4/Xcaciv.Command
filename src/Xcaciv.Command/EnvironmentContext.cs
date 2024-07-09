@@ -68,15 +68,25 @@ namespace Xcaciv.Command
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public virtual string GetValue(string key)
+        public virtual string GetValue(string key, string defaultValue = "", bool storeDefault = true)
         {
             // make case insensitive var names
             key = key.ToUpper();
 
             string? returnValue;
-            EnvironmentVariables.TryGetValue(key, out returnValue);
-            return returnValue ?? String.Empty;
+            if (!EnvironmentVariables.TryGetValue(key, out returnValue) &&
+                storeDefault)
+            {
+                // store the default value if instructed
+                this.SetValue(key, defaultValue);
+                return defaultValue;
+            }
+
+            // return the value or the default
+            return returnValue ?? defaultValue;
         }
+
+        // todo GetValue with default and optional set env var
 
         public Dictionary<string, string> GetEnvinronment()
         {
