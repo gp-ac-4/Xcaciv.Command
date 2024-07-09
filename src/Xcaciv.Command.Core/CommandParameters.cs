@@ -44,18 +44,42 @@ public static class CommandParameters
             Regex abbrName = string.IsNullOrEmpty(parameter.ShortAlias) ? new Regex("^$") :
                 new Regex("-{1,2}" + parameter.ShortAlias);
 
+            var found = false;
+            var foundValue = string.Empty;
+
             foreach (var value in parameterList)
             {
                 if (value.StartsWith("-") && (fullName.IsMatch(value) || abbrName.IsMatch(value)))
                 {
                     var valueIndex = index + 1;
-                    parameterLookup.Add(parameter.Name, parameterList[valueIndex]);
+                    foundValue = parameterList[valueIndex];
                     parameterList.RemoveAt(valueIndex);
                     parameterList.RemoveAt(index);
+                    found = true;
                     break;
                 }
                 index++;
             }
+
+            if (!found)
+            {
+                if (parameter.DefaultValue != string.Empty)
+                {
+                    foundValue = parameter.DefaultValue;
+                }
+                else if (parameter.IsRequired)
+                {
+                    throw new ArgumentException($"Missing required parameter {parameter.Name}");
+                }
+            }
+
+            if (parameter.AllowedValues.Count > 0 &&
+                !parameter.AllowedValues.Contains(foundValue, StringComparer.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException($"Invalid value for parameter {parameter.Name}, this parameter has an allow list.");
+            }            
+
+            parameterLookup.Add(parameter.Name, foundValue);
         }
     }
 
@@ -67,8 +91,14 @@ public static class CommandParameters
             // unsatisfied named parameters
             if (parameterList[0].StartsWith("-"))
             {
-                if (parameter.IsRequired)
+                if (parameter.DefaultValue != string.Empty)
+                {
+                    parameterLookup.Add(parameter.Name, parameter.DefaultValue);
+                }
+                else if (parameter.IsRequired)
+                {
                     throw new ArgumentException($"Missing required parameter {parameter.Name}");
+                }
 
                 continue;
             }
@@ -86,8 +116,14 @@ public static class CommandParameters
             // unsatisfied named parameters
             if (parameterList[0].StartsWith("-"))
             {
-                if (parameter.IsRequired)
+                if (parameter.DefaultValue != string.Empty)
+                {
+                    parameterLookup.Add(parameter.Name, parameter.DefaultValue);
+                }
+                else if (parameter.IsRequired)
+                {
                     throw new ArgumentException($"Missing required parameter {parameter.Name}");
+                }
 
                 continue;
             }

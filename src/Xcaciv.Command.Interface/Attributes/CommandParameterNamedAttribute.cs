@@ -16,9 +16,13 @@ namespace Xcaciv.Command.Interface.Attributes
             this.Name = name;
             this.ValueDescription = description;
         }
+        /// <summary>
+        /// used when no value is provided
+        /// this satisfies the IsRequired flag
+        /// </summary>
+        public string DefaultValue { get; set; } = "";
 
-
-        public string ShortAlias { get; } = "";
+        public string ShortAlias { get; set; } = "";
 
 
         public string Name
@@ -26,14 +30,28 @@ namespace Xcaciv.Command.Interface.Attributes
             get { return _parameterName; }
             set { _parameterName = CommandDescription.GetValidCommandName(value, false); }
         }
-
+        /// <summary>
+        /// used for help text
+        /// </summary>
         public string ValueDescription { get; set; } = "";
+        /// <summary>
+        /// throws an error if this value is not provided
+        /// </summary>
         public bool IsRequired { get; set; } = false;
         /// <summary>
         /// indicates this value is what is populated when a pipe is used
         /// only the first parameter specified for pipeline population will be used
+        /// when multiple are specified
         /// </summary>
         public bool UsePipe { get; set; } = false;
+
+        /// <summary>
+        /// input values that are allowed, anything else will throw an error
+        /// case is ignored
+        /// </summary>
+        public List<string> AllowedValues { get; set; } = [];
+
+
         public override string ToString()
         {
             var prameterName = $"{ShortAlias} {_parameterName}";

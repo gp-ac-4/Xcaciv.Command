@@ -14,7 +14,7 @@ namespace Xcaciv.Command.Interface
         /// </summary>
         /// <param name="key"></param>
         /// <returns>String.Empty if not found</returns>
-        string GetValue(string key);
+        string GetValue(string key, string defaultValue = "", bool storeDefault = true);
         /// <summary>
         /// captures the environment values and returns them
         /// </summary>

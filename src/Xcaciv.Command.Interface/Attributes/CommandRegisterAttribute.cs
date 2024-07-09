@@ -31,6 +31,10 @@ namespace Xcaciv.Command.Interface.Attributes
             { this._command = CommandDescription.GetValidCommandName(value); }
         }
         /// <summary>
+        /// version of the command
+        /// </summary>
+        public string Version { get; set; } = "0.0.0";
+        /// <summary>
         /// What does this command do
         /// </summary>
         public string Description { get; set; } = "TODO";
