@@ -7,24 +7,14 @@ using System.Threading.Tasks;
 namespace Xcaciv.Command.Interface.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public class CommandParameterSuffixAttribute : Attribute
+    public class CommandParameterSuffixAttribute : AbstractCommandParameter
     {
-        private string _helpName = "TODO";
 
         public CommandParameterSuffixAttribute(string name, string description) 
         { 
             this.Name = name;
             this.ValueDescription = description;
         }
-
-
-        public string Name
-        {
-            get { return _helpName; }
-            set { _helpName = CommandDescription.GetValidCommandName(value, false); }
-        }
-
-        public string ValueDescription { get; set; } = "";
         /// <summary>
         /// used when no value is provided
         /// this satisfies the IsRequired flag
@@ -39,10 +29,5 @@ namespace Xcaciv.Command.Interface.Attributes
         /// only the first parameter specified for pipeline population will be used
         /// </summary>
         public bool UsePipe { get; set; } = false;
-        public override string ToString()
-        {
-            var placeholder = $"<{_helpName}>";
-            return $"{placeholder,18} {ValueDescription}".Trim();
-        }
     }
 }

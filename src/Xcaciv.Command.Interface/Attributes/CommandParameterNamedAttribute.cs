@@ -7,10 +7,8 @@ using System.Threading.Tasks;
 namespace Xcaciv.Command.Interface.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public class CommandParameterNamedAttribute : Attribute
+    public class CommandParameterNamedAttribute : AbstractCommandParameter
     {
-        private string _parameterName = "TODO";
-
         public CommandParameterNamedAttribute(string name, string description) 
         { 
             this.Name = name;
@@ -23,17 +21,6 @@ namespace Xcaciv.Command.Interface.Attributes
         public string DefaultValue { get; set; } = "";
 
         public string ShortAlias { get; set; } = "";
-
-
-        public string Name
-        {
-            get { return _parameterName; }
-            set { _parameterName = CommandDescription.GetValidCommandName(value, false); }
-        }
-        /// <summary>
-        /// used for help text
-        /// </summary>
-        public string ValueDescription { get; set; } = "";
         /// <summary>
         /// throws an error if this value is not provided
         /// </summary>
@@ -50,12 +37,5 @@ namespace Xcaciv.Command.Interface.Attributes
         /// case is ignored
         /// </summary>
         public string[] AllowedValues { get; set; } = [];
-
-
-        public override string ToString()
-        {
-            var prameterName = $"{ShortAlias} {_parameterName}";
-            return $"{prameterName,18} {ValueDescription}".Trim();
-        }
     }
 }
