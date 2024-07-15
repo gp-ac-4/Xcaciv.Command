@@ -27,8 +27,20 @@ namespace Xcaciv.Command.Interface.Attributes
         /// <returns></returns>
         public override string ToString()
         {
-            var placeholder = $"<{_helpName}>";
-            return $"{placeholder,-18} {ValueDescription}".Trim();
+            string indicator = GetIndicator();
+            string valueDescription = GetValueDescription();
+
+            return $"{indicator,-18} {ValueDescription}".Trim();
+        }
+
+        public virtual string GetIndicator()
+        {
+            return $"<{_helpName}>";
+        }
+
+        public virtual string GetValueDescription()
+        {
+            return ValueDescription;
         }
     }
 }

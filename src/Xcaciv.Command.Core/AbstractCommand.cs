@@ -76,32 +76,58 @@ namespace Xcaciv.Command.Core
             builder.AppendLine($"  {baseCommand?.Description}");
             builder.AppendLine();
             builder.AppendLine($"Usage:");
-            builder.AppendLine($"  {baseCommand?.Prototype}"); // TODO: when prototype is 'todo' generate a prototype from the parameters
-            builder.AppendLine();
-
+            
             if (commandParametersOrdered.Length + commandParametersNamed.Length + commandParametersSuffix.Length + commandParametersFlag.Length > 0)
+            {
+
+                // examne the parameters
+                var parameterBuilder = new StringBuilder();
+                var prototypeBuilder = new StringBuilder();
+
+                foreach (var parameter in commandParametersOrdered)
+                {
+                    parameterBuilder.AppendLine($"  {parameter.ToString()}");
+                    prototypeBuilder.Append($"{parameter.GetIndicator()} ");
+                }
+
+                foreach (var parameter in commandParametersFlag)
+                {
+                    parameterBuilder.AppendLine($"  {parameter.ToString()}");
+                    prototypeBuilder.Append($"{parameter.GetIndicator()} ");
+                }
+
+                foreach (var parameter in commandParametersNamed)
+                {
+                    parameterBuilder.AppendLine($"  {parameter.ToString()}");
+                    string valueIndicator = (parameter.AllowedValues.Length > 0) ?
+                        $"[{string.Join("|", parameter.AllowedValues)}]" :
+                        parameter.Name;
+
+                    prototypeBuilder.Append($"{parameter.GetIndicator()} <{valueIndicator}> ");
+                }
+
+                foreach (var parameter in commandParametersSuffix)
+                {
+                    parameterBuilder.AppendLine($"  {parameter.ToString()}");
+                    prototypeBuilder.Append($"{parameter.GetIndicator()} ");
+                }
+
+                // append parameter help
+                if (baseCommand?.Prototype.Equals("todo", StringComparison.OrdinalIgnoreCase) ?? false)
+                {
+                    builder.AppendLine(prototypeBuilder.ToString());
+                }
+                else
+                {
+                    builder.AppendLine($"  {baseCommand?.Prototype}");
+                }
+
+                builder.AppendLine();
                 builder.AppendLine("Options:");
-
-            foreach (var parameter in commandParametersOrdered)
-            {
-                builder.AppendLine($"  {parameter.ToString()}");
+                builder.AppendLine(parameterBuilder.ToString());
             }
 
-            foreach (var parameter in commandParametersFlag)
-            {
-                builder.AppendLine($"  {parameter.ToString()}");
-            }
-
-            foreach (var parameter in commandParametersNamed)
-            {
-                builder.AppendLine($"  {parameter.ToString()}");
-            }
-
-            foreach (var parameter in commandParametersSuffix)
-            {
-                builder.AppendLine($"  {parameter.ToString()}");
-            }
-
+            // append remarks
             if (helpRemarks != null && helpRemarks.Length > 0)
             {
                 builder.AppendLine("Remarks:");
@@ -115,6 +141,8 @@ namespace Xcaciv.Command.Core
             builder.AppendLine();
             return builder.ToString();
         }
+
+
         /// <summary>
         /// execute pipe and single input the same
         /// </summary>

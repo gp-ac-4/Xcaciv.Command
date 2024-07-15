@@ -27,5 +27,15 @@ namespace Xcaciv.Command.Interface.Attributes
 
         public string ShortAlias { get; } = "";
 
+        public override string GetIndicator()
+        {
+            return $"-{_helpName}";
+        }
+
+        public override string GetValueDescription()
+        {
+            return $"Flag: {ValueDescription}";
+        }
+
     }
 }

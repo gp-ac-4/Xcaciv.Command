@@ -37,5 +37,21 @@ namespace Xcaciv.Command.Interface.Attributes
         /// case is ignored
         /// </summary>
         public string[] AllowedValues { get; set; } = [];
+
+
+        public override string GetIndicator()
+        {
+            return $"-{_helpName}";
+        }
+
+        public override string GetValueDescription()
+        {
+            string description = ValueDescription;
+            if (AllowedValues.Count() > 0)
+            {
+                description += $" (Allowed values: {string.Join(", ", AllowedValues)})";
+            }
+            return description;
+        }
     }
 }
