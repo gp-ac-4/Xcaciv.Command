@@ -47,7 +47,7 @@ namespace Xcaciv.Command.Interface.Attributes
         public override string GetValueDescription()
         {
             string description = ValueDescription;
-            if (AllowedValues.Count() > 0)
+            if (AllowedValues.Length > 0)
             {
                 description += $" (Allowed values: {string.Join(", ", AllowedValues)})";
             }
