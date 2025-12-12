@@ -92,7 +92,7 @@ namespace Xcaciv.Command.Core
 
                 foreach (var parameter in commandParametersFlag)
                 {
-                    parameterBuilder.AppendLine($"  {parameter.ToString()}");
+                    parameterBuilder.AppendLine($"  {parameter}");
                     prototypeBuilder.Append($"{parameter.GetIndicator()} ");
                 }
 
