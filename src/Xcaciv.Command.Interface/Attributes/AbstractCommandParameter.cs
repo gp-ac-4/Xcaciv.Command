@@ -14,7 +14,7 @@ namespace Xcaciv.Command.Interface.Attributes
         /// </summary>
         public string ValueDescription { get; set; } = "";
         /// <summary>
-        /// even though this parameter does not reuqire a name, it is used for help
+        /// even though this parameter does not require a name, it is used for help
         /// </summary>
         public string Name
         {
