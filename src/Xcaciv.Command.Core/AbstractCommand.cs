@@ -86,7 +86,7 @@ namespace Xcaciv.Command.Core
 
                 foreach (var parameter in commandParametersOrdered)
                 {
-                    parameterBuilder.AppendLine($"  {parameter.ToString()}");
+                    parameterBuilder.AppendLine($"  {parameter}");
                     prototypeBuilder.Append($"{parameter.GetIndicator()} ");
                 }
 
@@ -98,7 +98,7 @@ namespace Xcaciv.Command.Core
 
                 foreach (var parameter in commandParametersNamed)
                 {
-                    parameterBuilder.AppendLine($"  {parameter.ToString()}");
+                    parameterBuilder.AppendLine($"  {parameter}");
                     string valueIndicator = (parameter.AllowedValues.Length > 0) ?
                         $"[{string.Join("|", parameter.AllowedValues)}]" :
                         parameter.Name;
