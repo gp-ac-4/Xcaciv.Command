@@ -240,6 +240,25 @@ public class CommandController : Interface.ICommandController
     {
         if (Commands.TryGetValue(commandKey, out ICommandDescription? commandDiscription))
         {
+            // Check for help request on sub-commands first
+            if (commandDiscription.SubCommands.Count > 0 &&
+                ioContext.Parameters?.Length > 0 &&
+                ioContext.Parameters[0].Equals($"--{this.HelpCommand}", StringComparison.CurrentCultureIgnoreCase))
+            {
+                OutputOneLineHelp(commandDiscription, ioContext);
+                return;
+            }
+
+            // Check for help request on main command
+            if (ioContext.Parameters?.Length > 0 && 
+                ioContext.Parameters[0].Equals($"--{this.HelpCommand}", StringComparison.CurrentCultureIgnoreCase))
+            {
+                var cmdInstance = GetCommandInstance(commandDiscription, ioContext);
+                await ioContext.OutputChunk(cmdInstance.Help(ioContext.Parameters, env));
+                return;
+            }
+
+            // Normal execution with exception handling
             try
             {
                 await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Start.");
@@ -258,18 +277,9 @@ public class CommandController : Interface.ICommandController
             }
             catch (Exception ex)
             {
-                // Check to see for a request for help on a sub command
-                if (commandDiscription.SubCommands.Count > 0 &&
-                    ioContext.Parameters[0].Equals($"--{this.HelpCommand}", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    OutputOneLineHelp(commandDiscription, ioContext);
-                }
-                else
-                {
-                    await ioContext.OutputChunk($"Error executing {commandKey} (see trace for more info)");
-                    await ioContext.SetStatusMessage("**Error: " + ex.Message);
-                    await ioContext.AddTraceMessage(ex.ToString());
-                }
+                await ioContext.OutputChunk($"Error executing {commandKey} (see trace for more info)");
+                await ioContext.SetStatusMessage("**Error: " + ex.Message);
+                await ioContext.AddTraceMessage(ex.ToString());
             }
             finally
             {
