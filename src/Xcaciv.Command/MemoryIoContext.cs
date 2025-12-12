@@ -9,7 +9,9 @@ using Xcaciv.Command.Interface;
 
 namespace Xcaciv.Command
 {
-    public class MemoryIoContext(string name = "MemoryIo", string[]? parameters = default, Guid parentId = default) : AbstractTextIo(name, [.. parameters], parentId)
+    // Fix for CS8602: Ensure 'parameters' is not null before using the spread operator
+    public class MemoryIoContext(string name = "MemoryIo", string[]? parameters = default, Guid parentId = default)
+        : AbstractTextIo(name, parameters is not null ? [.. parameters] : [], parentId)
     {
         public ConcurrentBag<MemoryIoContext> Children { get; private set; } = new ConcurrentBag<MemoryIoContext>();
         public ConcurrentBag<string> Output { get; private set; } = new ConcurrentBag<string>();

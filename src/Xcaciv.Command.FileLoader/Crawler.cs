@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Abstractions;
+using System.Security;
 using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
@@ -56,38 +57,56 @@ public class Crawler : ICrawler
                 FullPath = binPath,
             };
 
-            using (var context = new AssemblyContext(binPath, basePathRestriction:"*"))
+            try
             {
-                var commands = new Dictionary<string, ICommandDescription>();
-                packagDesc.Version = context.GetVersion();
-
-                foreach (var commandType in context.GetTypes<ICommandDelegate>())
+                // Use Default security policy for plugin discovery
+                // Base path restriction is set to the directory containing the plugin DLL
+                using (var context = new AssemblyContext(
+                    binPath,
+                    basePathRestriction: Path.GetDirectoryName(binPath) ?? Directory.GetCurrentDirectory(),
+                    securityPolicy: AssemblySecurityPolicy.Default))
                 {
-                    if (commandType == null) continue; // not sure why it could be null, but the compiler says so
+                    var commands = new Dictionary<string, ICommandDescription>();
+                    packagDesc.Version = context.GetVersion();
 
-                    try
+                    foreach (var commandType in context.GetTypes<ICommandDelegate>())
                     {
-                        var newDescription = CommandParameters.CreatePackageDescription(commandType, packagDesc);
+                        if (commandType == null) continue; // not sure why it could be null, but the compiler says so
 
-                        // when it is a sub command, we need to add it to a parent if it already exists
-                        if (newDescription.SubCommands.Count > 0 && commands.TryGetValue(newDescription.BaseCommand, out ICommandDescription? description))
+                        try
                         {
-                            var newSubCommand = newDescription.SubCommands.First().Value;
-                            description.SubCommands[newSubCommand.BaseCommand] = newSubCommand; 
+                            var newDescription = CommandParameters.CreatePackageDescription(commandType, packagDesc);
+
+                            // when it is a sub command, we need to add it to a parent if it already exists
+                            if (newDescription.SubCommands.Count > 0 && commands.TryGetValue(newDescription.BaseCommand, out ICommandDescription? description))
+                            {
+                                var newSubCommand = newDescription.SubCommands.First().Value;
+                                description.SubCommands[newSubCommand.BaseCommand] = newSubCommand; 
+                            }
+                            else
+                            {
+                                // when the parent command does not exist, add it to the list
+                                commands[newDescription.BaseCommand] = newDescription;
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            // when the parent command does not exist, add it to the list
-                            commands[newDescription.BaseCommand] = newDescription;
+                            Trace.WriteLine($"Error processing command type: {ex.Message}");
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLine($"{ex.Message}");
-                    }
+
+                    packagDesc.Commands = commands;
                 }
-
-                packagDesc.Commands = commands;
+            }
+            catch (SecurityException ex)
+            {
+                Trace.WriteLine($"Security violation loading package [{key}] from [{binPath}]: {ex.Message}");
+                return; // Skip this package due to security violation
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Error loading package [{key}] from [{binPath}]: {ex.Message}");
+                return; // Skip this package due to error
             }
 
             // dont add packages without valid commands

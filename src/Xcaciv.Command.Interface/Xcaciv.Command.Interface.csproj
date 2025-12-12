@@ -3,7 +3,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.1.26</Version>
+    <Version>1.1.31</Version>
 	<IsPublishable>True</IsPublishable>
     <AssemblyName>Xcaciv.Command.Interface</AssemblyName>
     <RootNamespace>Xcaciv.Command.Interface</RootNamespace>

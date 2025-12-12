@@ -3,7 +3,7 @@
   <PropertyGroup>
 	  <ImplicitUsings>enable</ImplicitUsings>
 	  <Nullable>enable</Nullable>
-	  <Version>1.0.12</Version>
+	  <Version>1.0.18</Version>
 	  <AssemblyName>Xcaciv.Command.Core</AssemblyName>
 	  <RootNamespace>Xcaciv.Command.Core</RootNamespace>
 	  <IsPublishable>True</IsPublishable>

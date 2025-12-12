@@ -11,9 +11,9 @@ namespace Xcaciv.Command.Interface.Attributes
     /// ordered parameters are required to be passed before named parameters
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public class CommandParameterOrderedAttribute : Attribute
+    public class CommandParameterOrderedAttribute : AbstractCommandParameter
     {
-        private string _helpName = "TODO";
+        
         /// <summary>
         /// An unnamed parameter that is determined by the order of the value in the parameters
         /// ordered parameters are required to be passed before named parameters
@@ -25,19 +25,11 @@ namespace Xcaciv.Command.Interface.Attributes
             this.Name = name;
             this.ValueDescription = description;
         }
-
         /// <summary>
-        /// even though this parameter does not reuqire a name, it is used for help
+        /// input values that are allowed, anything else will throw an error
+        /// case is ignored
         /// </summary>
-        public string Name
-        {
-            get { return _helpName; }
-            set { _helpName = CommandDescription.GetValidCommandName(value, false); }
-        }
-        /// <summary>
-        /// description of the value for help
-        /// </summary>
-        public string ValueDescription { get; set; } = "";
+        public string[] AllowedValues { get; set; } = [];
         /// <summary>
         /// used when no value is provided
         /// this satisfies the IsRequired flag
@@ -52,14 +44,6 @@ namespace Xcaciv.Command.Interface.Attributes
         /// only the first parameter specified for pipeline population will be used
         /// </summary>
         public bool UsePipe { get; set; } = false;
-        /// <summary>
-        /// format the help string
-        /// </summary>
-        /// <returns></returns>
-        public override string ToString()
-        {
-            var placeholder = $"<{_helpName}>";
-            return $"{placeholder,18} {ValueDescription}".Trim();
-        }
+        
     }
 }
