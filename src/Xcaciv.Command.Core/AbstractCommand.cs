@@ -80,7 +80,7 @@ namespace Xcaciv.Command.Core
             if (commandParametersOrdered.Length + commandParametersNamed.Length + commandParametersSuffix.Length + commandParametersFlag.Length > 0)
             {
 
-                // examne the parameters
+                // examine the parameters
                 var parameterBuilder = new StringBuilder();
                 var prototypeBuilder = new StringBuilder();
 
