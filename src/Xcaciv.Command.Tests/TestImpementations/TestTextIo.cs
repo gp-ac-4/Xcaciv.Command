@@ -27,7 +27,7 @@ namespace Xcaciv.Command.Tests.TestImpementations
 
         public Dictionary<string, string> PromptAnswers { get; private set; } = new Dictionary<string, string>();
 
-        public TestTextIo(string[]? parameters = null) : base("TestTextIo", [.. parameters])
+        public TestTextIo(string[]? parameters = null) : base("TestTextIo", parameters ?? [], default)
         {
             this.Verbose = true;
         }
