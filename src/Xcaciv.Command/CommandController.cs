@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Security;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -314,8 +315,19 @@ public class CommandController : Interface.ICommandController
         {
             if (String.IsNullOrEmpty(packagePath)) throw new InvalidOperationException($"Command [{fullTypeName}] is not loaded and no assembly was defined.");
 
-            using var context = new AssemblyContext(packagePath, basePathRestriction: "*"); // TODO: restrict the path
-            commandInstance = context.CreateInstance<ICommandDelegate>(fullTypeName);
+            try
+            {
+                // Use Default security policy - plugins are loaded from verified package directories
+                using var context = new AssemblyContext(
+                    packagePath,
+                    basePathRestriction: Path.GetDirectoryName(packagePath) ?? Directory.GetCurrentDirectory(),
+                    securityPolicy: AssemblySecurityPolicy.Default);
+                commandInstance = context.CreateInstance<ICommandDelegate>(fullTypeName);
+            }
+            catch (SecurityException ex)
+            {
+                throw new InvalidOperationException($"Security violation loading command [{fullTypeName}] from [{packagePath}]: {ex.Message}", ex);
+            }
         }
         else
         {
