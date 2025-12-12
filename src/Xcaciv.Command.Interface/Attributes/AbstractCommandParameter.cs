@@ -30,7 +30,7 @@ namespace Xcaciv.Command.Interface.Attributes
             string indicator = GetIndicator();
             string valueDescription = GetValueDescription();
 
-            return $"{indicator,-18} {ValueDescription}".Trim();
+            return $"{indicator,-18} {valueDescription}".Trim();
         }
 
         public virtual string GetIndicator()
