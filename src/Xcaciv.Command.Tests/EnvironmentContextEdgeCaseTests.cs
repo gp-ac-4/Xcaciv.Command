@@ -261,7 +261,7 @@ namespace Xcaciv.Command.Tests
         /// Test: Multiple simultaneous child environments from same parent
         /// </summary>
         [Fact]
-        public async Task MultipleSiblingSiblings_ShouldBeIndependentAsync()
+        public async Task MultipleSiblings_ShouldBeIndependentAsync()
         {
             // Arrange
             var parent = new EnvironmentContext();
