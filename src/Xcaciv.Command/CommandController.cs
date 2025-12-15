@@ -27,6 +27,7 @@ public class CommandController : Interface.ICommandController
 {
     protected const string PIPELINE_CHAR = "|";
     protected ICrawler Crawler;
+    protected IAuditLogger _auditLogger;
 
     /// <summary>
     /// registered command
@@ -39,6 +40,17 @@ public class CommandController : Interface.ICommandController
     protected IVerfiedSourceDirectories PackageBinaryDirectories { get; set; } = new VerfiedSourceDirectories(new FileSystem());
 
     public string HelpCommand { get; set; } = "HELP";
+    
+    /// <summary>
+    /// Optional audit logger for command execution and environment change tracking.
+    /// If not provided, defaults to NoOpAuditLogger (no logging).
+    /// </summary>
+    public IAuditLogger AuditLogger 
+    { 
+        get => _auditLogger;
+        set => _auditLogger = value;
+    }
+
     /// <summary>
     /// Command Manger
     /// </summary>
@@ -49,6 +61,7 @@ public class CommandController : Interface.ICommandController
     public CommandController(ICrawler crawler) 
     {
         this.Crawler = crawler;
+        this._auditLogger = new NoOpAuditLogger();
     }
     /// <summary>
     /// Command Manager constructor to specify restricted directory
@@ -174,6 +187,12 @@ public class CommandController : Interface.ICommandController
     /// <param name="commandLine"></param>
     public async Task Run(string commandLine, IIoContext ioContext, IEnvironmentContext env)
     {
+        // Propagate audit logger to environment context if it's an EnvironmentContext instance
+        if (env is EnvironmentContext envContext)
+        {
+            envContext.SetAuditLogger(_auditLogger);
+        }
+
         // parse the command line before processing the context
         // check to see if it is a pipeline
         if (commandLine.Contains(PIPELINE_CHAR))
@@ -252,6 +271,7 @@ public class CommandController : Interface.ICommandController
     /// <param name="commandKey"></param>
     /// <param name="args"></param>
     /// <param name="ioContext"></param>
+    /// <param name="env"></param>
     protected async Task ExecuteCommand(string commandKey, IIoContext ioContext, IEnvironmentContext env)
     {
         if (Commands.TryGetValue(commandKey, out ICommandDescription? commandDiscription))
@@ -313,6 +333,10 @@ public class CommandController : Interface.ICommandController
         IEnvironmentContext env,
         string commandKey)
     {
+        var startTime = DateTime.UtcNow;
+        var success = false;
+        string? errorMessage = null;
+
         try
         {
             await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Start.");
@@ -330,9 +354,13 @@ public class CommandController : Interface.ICommandController
                     env.UpdateEnvironment(childEnv.GetEnvinronment());
                 }
             }
+
+            success = true;
         }
         catch (Exception ex)
         {
+            success = false;
+            errorMessage = ex.Message;
             await ioContext.OutputChunk($"Error executing {commandKey} (see trace for more info)");
             await ioContext.SetStatusMessage("**Error: " + ex.Message);
             await ioContext.AddTraceMessage(ex.ToString());
@@ -340,6 +368,16 @@ public class CommandController : Interface.ICommandController
         finally
         {
             await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Done.");
+            
+            // Log command execution to audit trail
+            var duration = DateTime.UtcNow - startTime;
+            _auditLogger?.LogCommandExecution(
+                commandKey,
+                ioContext.Parameters ?? Array.Empty<string>(),
+                startTime,
+                duration,
+                success,
+                errorMessage);
         }
     }
 

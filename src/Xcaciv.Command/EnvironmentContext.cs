@@ -17,6 +17,11 @@ namespace Xcaciv.Command
         /// </summary>
         protected ConcurrentDictionary<string, string> EnvironmentVariables { get; set; } = new ConcurrentDictionary<string, string>();
 
+        /// <summary>
+        /// Optional audit logger for environment variable changes
+        /// </summary>
+        protected IAuditLogger? _auditLogger;
+
         public bool HasChanged {  get; private set; }
 
         public Guid Id {  get; } = Guid.NewGuid();
@@ -41,10 +46,22 @@ namespace Xcaciv.Command
         {
             var childValues = this.GetEnvinronment();
             var child = new EnvironmentContext(childValues);
+            // Propagate audit logger to child
+            if (_auditLogger != null)
+            {
+                child.SetAuditLogger(_auditLogger);
+            }
             return Task.FromResult<IEnvironmentContext>(child);
         }
-        
 
+        /// <summary>
+        /// Set the audit logger for this environment context
+        /// </summary>
+        public virtual void SetAuditLogger(IAuditLogger auditLogger)
+        {
+            _auditLogger = auditLogger;
+        }
+        
         /// <summary>
         /// <see cref="Xcaciv.Command.Interface.IEnvironmentContext"/>
         /// </summary>
@@ -55,13 +72,19 @@ namespace Xcaciv.Command
         {
             // make case insensitive var names
             key = key.ToUpper();
+            string? oldValue = null;
+            
             EnvironmentVariables.AddOrUpdate(key, addValue, (key, value) =>
             {
+                oldValue = value;
                 Trace.WriteLine($"Environment value {key} changed from {value} to {addValue}.");
                 return addValue;
             });
 
             this.HasChanged = true;
+
+            // Log environment change to audit trail
+            _auditLogger?.LogEnvironmentChange(key, oldValue, addValue, "system", DateTime.UtcNow);
         }
         /// <summary>
         /// <see cref="Xcaciv.Command.Interface.IEnvironmentContext"/>
