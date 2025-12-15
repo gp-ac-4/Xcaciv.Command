@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31919.166
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11310.294 d18.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xcaciv.Command", "src\Xcaciv.Command\Xcaciv.Command.csproj", "{E6280E51-8ED7-4ED0-819A-063251C9E53D}"
 EndProject
@@ -17,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		src\Directory.Packages.props = src\Directory.Packages.props
 		NuGet.config = NuGet.config
 		README.md = README.md
+		tmp\ssem_improvement_tasks.md = tmp\ssem_improvement_tasks.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "zTestCommandPackage", "src\zTestCommandPackage\zTestCommandPackage.csproj", "{B062C312-8C65-45E6-AF49-0692502DA605}"
