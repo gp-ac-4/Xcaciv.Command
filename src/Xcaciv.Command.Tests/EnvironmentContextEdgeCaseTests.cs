@@ -228,7 +228,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var env = new EnvironmentContext();
-            var unicodeValue = "Hello ?? ????? ??";
+            var unicodeValue = "Hello \u00A9 \u03A9 \u20AC \u4F60\u597D \uD83D\uDE03";
 
             // Act
             env.SetValue("UnicodeVar", unicodeValue);
