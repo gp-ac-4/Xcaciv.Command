@@ -1,3 +1,11 @@
+# Copilot Instructions
+
+The github repo is xcaciv/Xcaciv.Loader and the primary branch that I work off of is main.
+
+Never stub or mock functionality unless explicitly asked to do so.
+Your terminal is PowerShell, only use powershell syntax.
+NEVER delete or remove content from task files. I will only update/mark completion status while preserving all existing text for future phases. Thank you for the correction.
+
 ## Formatting and Style
 
 - Do not use emojis in code, documentation, or responses. Use only standard markdown formatting.
