@@ -93,7 +93,7 @@ namespace Xcaciv.Command.Tests
         public void ParameterWithUnicodeCharacters_ShouldBeAccepted()
         {
             // Arrange
-            var unicodeStr = "Hello ?? ?? ?????";
+            var unicodeStr = "Hello éü 漢字 😊";
             var parameterList = new List<string> { unicodeStr };
             var parameterLookup = new Dictionary<string, string>();
             var param = new CommandParameterOrderedAttribute("text", "A text parameter") { IsRequired = true };
