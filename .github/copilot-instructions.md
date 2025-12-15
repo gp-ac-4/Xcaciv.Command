@@ -113,6 +113,9 @@ Transparency is the principle of designing a system so that its internal state a
   - `src/Xcaciv.Command.Interface/` — public interfaces and Attributes (e.g. `ICommandDelegate`, `ICommandController`, and attribute types under `Attributes/`).
   - `src/Xcaciv.Command.FileLoader` — plugin discovery (`ICrawler` / `Crawler`) and verified package directory handling.
   - `src/Xcaciv.Command/Commands/` — built-in commands (e.g. `SayCommand`, `SetCommand`, `EnvCommand`, `RegifCommand`).
+  - /docs                   # Documentation files including readme, design docs, etc.
+  - /tmp                    # Test command and temporary files
+  - README.md               # Project description, installation/usage instructions
 
 ## Key design & important behaviors
 - Commands are loaded either as compiled-in types (via `EnableDefaultCommands()` or `AddCommand(Type)`) or discovered from plugin folders (`AddPackageDirectory()` + `LoadCommands()`).
