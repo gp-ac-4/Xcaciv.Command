@@ -286,9 +286,8 @@ public class CommandController : Interface.ICommandController
             else
             {
                 var message = $"Command [{commandKey}] not found.";
-                var task1 = ioContext.OutputChunk($"{message} Try '{this.HelpCommand}'");
-                var task2 = ioContext.AddTraceMessage(message);
-                await Task.WhenAll(task1, task2);
+                await ioContext.OutputChunk($"{message} Try '{this.HelpCommand}'");
+                await ioContext.AddTraceMessage(message);
             }
         }
     }
