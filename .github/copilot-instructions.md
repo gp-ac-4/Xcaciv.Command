@@ -3,7 +3,7 @@
 The github repo is xcaciv/Xcaciv.Loader and the primary branch that I work off of is main.
 
 Never stub or mock functionality unless explicitly asked to do so.
-Your terminal is PowerShell, only use powershell syntax.
+Your terminal is PowerShell, only use PowerShell syntax.
 NEVER delete or remove content from task files. I will only update/mark completion status while preserving all existing text for future phases. Thank you for the correction.
 
 ## Formatting and Style
@@ -14,6 +14,7 @@ NEVER delete or remove content from task files. I will only update/mark completi
 
 ## Naming Conventions
 
+- Never use single character variable names, always use descriptive names.
 - Never use the term "Helper" or "Utils" in class names. Use descriptive, intent-revealing names instead.
 - Examples:
   - BAD: `PathHelper`, `StringHelper`, `ValidationUtils`
