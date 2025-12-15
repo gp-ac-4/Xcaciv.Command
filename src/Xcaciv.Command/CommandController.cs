@@ -196,17 +196,31 @@ public class CommandController : Interface.ICommandController
 
     protected async Task PipelineTheBitch(string commandLine, IIoContext ioContext, IEnvironmentContext env)
     {
+        var (tasks, outputChannel) = await CreatePipelineStages(commandLine, ioContext, env);
+        
+        // wait for the pipeline to finish
+        await Task.WhenAll(tasks);
+
+        // handle the final output
+        await CollectPipelineOutput(outputChannel, ioContext);
+    }
+
+    protected async Task<(List<Task>, Channel<string>?)> CreatePipelineStages(
+        string commandLine,
+        IIoContext ioContext,
+        IEnvironmentContext env)
+    {
         var tasks = new List<Task>();
         var pipeChannel = null as Channel<string>;
 
         // split the command line into commands by the pipeline character
-        foreach(var command in commandLine.Split(PIPELINE_CHAR))
+        foreach (var command in commandLine.Split(PIPELINE_CHAR))
         {
             var commandName = CommandDescription.GetValidCommandName(command).ToString();
             var args = CommandDescription.GetArgumentsFromCommandline(command);
             // creating a additional layer of IO to manage the pipes
             await using var childContext = await ioContext.GetChild(args);
-            // we are not creating a child environment for simplified syncronization
+            // we are not creating a child environment for simplified synchronization
             // if not the first command in the pipeline, set the read pipe
             if (pipeChannel != null)
             {
@@ -220,11 +234,13 @@ public class CommandController : Interface.ICommandController
             tasks.Add(ExecuteCommand(commandName, childContext, env));
         }
 
-        // wait for the pipeline to finish
-        await Task.WhenAll(tasks);
+        return (tasks, pipeChannel);
+    }
 
-        // handle the final output
-        await foreach (var output in (pipeChannel ?? Channel.CreateBounded<string>(0)).Reader.ReadAllAsync())
+    protected async Task CollectPipelineOutput(Channel<string>? outputChannel, IIoContext ioContext)
+    {
+        var channel = outputChannel ?? Channel.CreateBounded<string>(0);
+        await foreach (var output in channel.Reader.ReadAllAsync())
         {
             await ioContext.OutputChunk(output);
         }
@@ -253,38 +269,13 @@ public class CommandController : Interface.ICommandController
             if (ioContext.Parameters?.Length > 0 && 
                 ioContext.Parameters[0].Equals($"--{this.HelpCommand}", StringComparison.CurrentCultureIgnoreCase))
             {
-                var cmdInstance = GetCommandInstance(commandDiscription, ioContext);
+                var cmdInstance = InstantiateCommand(commandDiscription, ioContext, commandKey);
                 await ioContext.OutputChunk(cmdInstance.Help(ioContext.Parameters, env));
                 return;
             }
 
             // Normal execution with exception handling
-            try
-            {
-                await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Start.");
-
-                var commandInstance = GetCommandInstance(commandDiscription, ioContext);
-                
-                await using (var childEnv = await env.GetChild(ioContext.Parameters))
-                {
-                    await foreach (var resultMessage in commandInstance.Main(ioContext, childEnv))
-                    {
-                        await ioContext.OutputChunk(resultMessage);
-                    }
-                    if (commandDiscription.ModifiesEnvironment && childEnv.HasChanged) env.UpdateEnvironment(childEnv.GetEnvinronment());
-                }
-                
-            }
-            catch (Exception ex)
-            {
-                await ioContext.OutputChunk($"Error executing {commandKey} (see trace for more info)");
-                await ioContext.SetStatusMessage("**Error: " + ex.Message);
-                await ioContext.AddTraceMessage(ex.ToString());
-            }
-            finally
-            {
-                await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Done.");
-            }
+            await ExecuteCommandWithErrorHandling(commandDiscription, ioContext, env, commandKey);
         }
         else
         {
@@ -295,9 +286,61 @@ public class CommandController : Interface.ICommandController
             else
             {
                 var message = $"Command [{commandKey}] not found.";
-                await ioContext.OutputChunk($"{message} Try '{this.HelpCommand}'");
-                await ioContext.AddTraceMessage(message);
+                var task1 = ioContext.OutputChunk($"{message} Try '{this.HelpCommand}'");
+                var task2 = ioContext.AddTraceMessage(message);
+                await Task.WhenAll(task1, task2);
             }
+        }
+    }
+
+    protected ICommandDelegate InstantiateCommand(
+        ICommandDescription commandDesc,
+        IIoContext context,
+        string commandKey)
+    {
+        try
+        {
+            return GetCommandInstance(commandDesc, context);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to instantiate command {commandKey}: {ex.Message}", ex);
+        }
+    }
+
+    protected async Task ExecuteCommandWithErrorHandling(
+        ICommandDescription commandDesc,
+        IIoContext ioContext,
+        IEnvironmentContext env,
+        string commandKey)
+    {
+        try
+        {
+            await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Start.");
+
+            var commandInstance = InstantiateCommand(commandDesc, ioContext, commandKey);
+            
+            await using (var childEnv = await env.GetChild(ioContext.Parameters))
+            {
+                await foreach (var resultMessage in commandInstance.Main(ioContext, childEnv))
+                {
+                    await ioContext.OutputChunk(resultMessage);
+                }
+                if (commandDesc.ModifiesEnvironment && childEnv.HasChanged) 
+                {
+                    env.UpdateEnvironment(childEnv.GetEnvinronment());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await ioContext.OutputChunk($"Error executing {commandKey} (see trace for more info)");
+            await ioContext.SetStatusMessage("**Error: " + ex.Message);
+            await ioContext.AddTraceMessage(ex.ToString());
+        }
+        finally
+        {
+            await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Done.");
         }
     }
 
