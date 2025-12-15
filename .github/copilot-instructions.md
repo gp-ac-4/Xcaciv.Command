@@ -1,5 +1,109 @@
-## Purpose
-Help AI coding agents become immediately productive in the Xcaciv.Command codebase by summarizing the architecture, conventions, developer flows, and concrete code examples the agent will need to operate safely and effectively.
+## Formatting and Style
+
+- Do not use emojis in code, documentation, or responses. Use only standard markdown formatting.
+- Extended ASCII characters are acceptable where appropriate.
+- Use standard markdown headers, lists, tables, and code blocks for formatting.
+
+## Naming Conventions
+
+- Never use the term "Helper" or "Utils" in class names. Use descriptive, intent-revealing names instead.
+- Examples:
+  - BAD: `PathHelper`, `StringHelper`, `ValidationUtils`
+  - GOOD: `PathValidator`, `StringFormatter`, `InputValidator`
+- Before extracting functionality to a separate class, consider if it belongs closer to where it is used.
+- Follow the Single Responsibility Principle, but avoid over-emphasis of DRY to the detriment of maintainability.
+- Prioritize analyzability: code should be easy to understand and trace, even if it means some controlled duplication.
+
+This document includes guiding principles for .NET development, based on the **Framework for Integrating Application Security into Software Engineering (FIASSE)** and the **Securable Software Engineering Model (SSEM)**. The goal is to influence code generation on a fundamental level to produce software that is inherently "securable", adaptable and resilient to evolving threats.
+
+The primary directive is to **"Resiliently add computing value."** This means generating code that is not only functional but also possesses intrinsic qualities that allow it to be maintained and secured over its lifecycle.
+
+---
+# Exception handling
+
+Only the UI layer is allowed to catch general exceptions and log them. All other layers should only catch specific exceptions that they can handle or recover from or add context to.
+eg. `catch (FileNotFoundException ex) { throw new ConfigurationException("Config file missing", ex); }`
+
+Never use try/catch for flow control or to return a default value. Only use try/catch when an exception can be recovered from gracefully, when context needs to be added to an exception, when an exception needs to be logged. If you need to catch an exception and rethrow it, always add context. In the rare occasion that you cannot, use `throw;` instead of `throw ex;` to preserve the original stack trace.
+
+# Security
+
+Avoid string concatenation for commands or queries. Use parameterized queries or safe APIs.
+
+## The Securable Principle
+
+Security is not a static state but a dynamic process. When generating code, prioritize qualities that allow the software to be evolved, corrected, and adapted to new threats efficiently and without introducing new vulnerabilities.
+
+## Software Engineering principles to follow for security:
+
+#### The Derived Integrity Principle
+
+The Derived Integrity Principle asserts that any value critical to a system’s integrity—whether related to business logic or internal state—must be calculated or derived within the trusted server-side context, never accepted directly from the client.
+
+- Server as the Source of Truth: The server must own and compute authoritative values (e.g., prices, permissions, object states).
+- Client Intent ≠ Client Authority: Clients express intent (e.g., “I want to buy item X”) but must not dictate facts (e.g., “It costs $0.01”).
+
+#### Canonical Input Handling
+
+Prefer the most narrow data types possible for input parameters. For example, use enums or booleans instead of strings where applicable.
+- Canonicalization/Normalization: Ensures that input data conforms to expected formats, types, lengths, and ranges before processing.
+Prevents unexpected or malicious data from entering the system.
+- Sanitization: Cleans input data to remove or neutralize potentially harmful content. Prevents malicious data from being executed or interpreted as code, protecting against injection attacks.
+- Validation: Checks that input data meets specific criteria before processing. Ensures that only valid and expected data is processed, reducing the risk of injection attacks or unexpected behavior. Always prefer allowing explicit values instead of rejecting unexpected values.
+
+## The Securable Software Engineering Model (SSEM)
+
+Focus on the following three core attributes of securable software when generating or modifying code.
+
+### Maintainability
+
+**Goal:** Create code that can be easily understood, modified, and tested, as this is the foundation for long-term security.
+
+-   **Analyzability:** Generate code that is simple, readable, and has low cyclomatic complexity. Use clear and consistent naming conventions. The easier the code is to understand, the easier it is to spot and fix security flaws.
+-   **Modifiability:** Produce modular, loosely coupled, and highly cohesive code. This ensures that changes in one part of the system do not have unintended security consequences elsewhere.
+-   **Testability:** Write code that is inherently testable. Use pure functions where possible and apply dependency injection. Code with high test coverage is more likely to be secure.
+
+### Trustworthiness
+
+**Goal:** Create code that behaves as expected, protects sensitive data, and ensures that actions are legitimate and traceable.
+
+-   **Confidentiality:** Protect data from unauthorized disclosure. Never hardcode secrets (credentials, API keys). Use placeholders for secrets and rely on secure configuration management or vault systems. Employ strong, modern encryption for data in transit and at rest.
+-   **Authenticity & Accountability:** Ensure users and services are who they claim to be and that their actions are traceable. Implement strong authentication and authorization checks for all sensitive operations. Generate detailed audit logs for security-relevant events (e.g., login attempts, access control decisions, data modification).
+-   **Integrity:** Protect data and system resources from unauthorized modification.
+
+### Reliability
+
+**Goal:** Create code that operates correctly, resists failure, and can recover from attacks.
+
+-   **Integrity (as part of Reliability):** All inputs are potential vectors for attack. Implement rigorous input validation at the boundaries of your application. Use parameterized queries and safe APIs to prevent injection attacks. Prefer safe serialization formats.
+-   **Resilience:** Implement robust and graceful error handling. Fail safely without leaking sensitive information in error messages. Code should be resilient to unexpected inputs and states.
+-   **Availability:** Ensure the system remains operational. Be mindful of resource consumption and potential denial-of-service vectors (e.g., unbounded operations, resource leaks).
+
+## Securable strategies
+
+### Transparency
+
+Transparency is the principle of designing a system so that its internal state and behavior are observable and understandable to authorized parties. Transparency means that exceptions are not silently swallowed, all errors are logged appropriately, and system behavior can be audited. Logging should be structured and include context to facilitate monitoring and forensic analysis.
+
+### Resilient Coding Practices
+
+- Strong typing to ensure data is usable in the intended way.
+- Filtering and validating all input at trust boundaries. Input validation ensures that data conforms to expected formats, types, lengths, and ranges before processing.
+- Properly escaping and encoding all output destined for other systems or interpreters (exiting trust boundaries). This prevents injection attacks by ensuring that data is treated as data, not executable code.
+- Sandboxing the use of null values to input checks and database communication. Use exceptions to handle exceptional cases.
+- Implement comprehensive and strategic error handling to manage unexpected conditions gracefully, rather than allowing the application to crash or behave unpredictably.
+- Using immutable data structures for threaded programming to prevent insecure modification and ensure thread safety and prevent race conditions.
+- Canonical Input Handling: Canonicalization/Normalization, Sanitization Validation
+
+---
+
+# Project Structure 
+
+-   **Modularity:** Organize code into well-defined, independent modules or components. This improves maintainability and limits the change surface of security vulnerabilities.
+-   **Layering:** Adhere to architectural layering (e.g., presentation, business logic, data access). This enforces separation of concerns and helps in applying security controls at appropriate layers.
+-   **Configuration Management:** Externalize configuration settings, especially security-sensitive ones. Use environment variables or windowsWindows Credential Manager stores instead of hardcoding values.
+-   **Dependency Management:** Regularly audit and update third-party libraries and frameworks to mitigate known vulnerabilities. Use tools to scan for vulnerable dependencies.
+
 
 ## Big picture
 - **What this repo is:** an extensible .NET command framework that discovers and runs command plugins (class library DLLs) and also ships a set of built-in commands.
@@ -9,6 +113,9 @@ Help AI coding agents become immediately productive in the Xcaciv.Command codeba
   - `src/Xcaciv.Command.Interface/` — public interfaces and Attributes (e.g. `ICommandDelegate`, `ICommandController`, and attribute types under `Attributes/`).
   - `src/Xcaciv.Command.FileLoader` — plugin discovery (`ICrawler` / `Crawler`) and verified package directory handling.
   - `src/Xcaciv.Command/Commands/` — built-in commands (e.g. `SayCommand`, `SetCommand`, `EnvCommand`, `RegifCommand`).
+  - /docs                   # Documentation files including readme, design docs, etc.
+  - /tmp                    # Test command and temporary files
+  - README.md               # Project description, installation/usage instructions
 
 ## Key design & important behaviors
 - Commands are loaded either as compiled-in types (via `EnableDefaultCommands()` or `AddCommand(Type)`) or discovered from plugin folders (`AddPackageDirectory()` + `LoadCommands()`).

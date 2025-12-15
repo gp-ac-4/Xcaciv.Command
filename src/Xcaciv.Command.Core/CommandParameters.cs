@@ -87,6 +87,21 @@ public static class CommandParameters
     {
         foreach (var parameter in commandParametersOrdered)
         {
+            // Check if parameter list is empty before accessing index 0
+            if (parameterList.Count == 0)
+            {
+                if (!parameter.IsRequired && !string.IsNullOrEmpty(parameter.DefaultValue))
+                {
+                    parameterLookup.Add(parameter.Name, parameter.DefaultValue);
+                    continue;
+                }
+                else if (parameter.IsRequired)
+                {
+                    throw new ArgumentException($"Missing required parameter {parameter.Name}");
+                }
+                continue;
+            }
+
             var foundValue = parameterList[0];
             if (String.IsNullOrEmpty(foundValue) && !String.IsNullOrEmpty(parameter.DefaultValue))
             {
@@ -120,6 +135,21 @@ public static class CommandParameters
     {
         foreach (var parameter in commandParametersSuffix)
         {
+            // Check if parameter list is empty before accessing index 0
+            if (parameterList.Count == 0)
+            {
+                if (!parameter.IsRequired && !string.IsNullOrEmpty(parameter.DefaultValue))
+                {
+                    parameterLookup.Add(parameter.Name, parameter.DefaultValue);
+                    continue;
+                }
+                else if (parameter.IsRequired)
+                {
+                    throw new ArgumentException($"Missing required parameter {parameter.Name}");
+                }
+                continue;
+            }
+
             // if the current parameter is a named parameter, then need to check if we have any
             // unsatisfied named parameters
             if (parameterList[0].StartsWith("-"))
@@ -185,7 +215,7 @@ public static class CommandParameters
                 BaseCommand = attributes.Command,
                 FullTypeName = commandType.FullName ?? String.Empty,
                 PackageDescription = packagDesc
-            };          
+            };         
 
         }
         else
