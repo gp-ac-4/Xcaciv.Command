@@ -1,6 +1,6 @@
 using Xunit;
 using Xcaciv.Command;
-using Xcaciv.Command.Tests.TestImplementations;
+using Xcaciv.Command.Tests.TestImpementations;
 using System;
 using System.Collections.Generic;
 using System.Threading.Channels;
