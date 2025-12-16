@@ -2,9 +2,13 @@ using Xunit;
 using Xcaciv.Command;
 using Xcaciv.Command.Tests.TestImpementations;
 using System;
+using System.Collections.Generic;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Xunit.Abstractions;
+using Xcaciv.Command.Core;
+using Xcaciv.Command.Interface;
+using Xcaciv.Command.Interface.Attributes;
 
 namespace Xcaciv.Command.Tests
 {
@@ -156,6 +160,48 @@ namespace Xcaciv.Command.Tests
         }
 
         /// <summary>
+        /// Integration test: Block mode causes producer to wait when channel is full
+        /// </summary>
+        [Fact]
+        public async Task BlockMode_ProducerBlocksWhenChannelFull_IntegrationTest()
+        {
+            // Arrange - Create a controller with a very small channel and Block mode
+            var controller = new CommandController();
+            controller.EnableDefaultCommands();
+            controller.PipelineConfig = new PipelineConfiguration
+            {
+                MaxChannelQueueSize = 2,  // Very small channel to fill quickly
+                BackpressureMode = PipelineBackpressureMode.Block
+            };
+            
+            // Create a producer command that outputs many items rapidly
+            var producerCommand = new TestProducerCommand(itemCount: 10, delayMs: 0);
+            controller.AddCommand("Test", producerCommand);
+            
+            // Create a slow consumer command that reads items slowly
+            var consumerCommand = new TestSlowConsumerCommand(delayMs: 100);
+            controller.AddCommand("Test", consumerCommand);
+            
+            var env = new EnvironmentContext();
+            var ioContext = new TestTextIo();
+            
+            // Act - Run the pipeline with producer | consumer
+            var startTime = DateTime.UtcNow;
+            await controller.Run("TestProducer | TestSlowConsumer", ioContext, env);
+            var duration = DateTime.UtcNow - startTime;
+            
+            // Assert - Execution should take significant time due to blocking
+            // With 10 items, small channel (2), and 100ms consumer delay:
+            // If blocking works, total time should be >= (10 items * 100ms) = 1000ms
+            // If blocking doesn't work, producer would flood and finish quickly
+            Assert.True(duration.TotalMilliseconds >= 500, 
+                $"Expected blocking behavior to slow execution, but completed in {duration.TotalMilliseconds}ms");
+            
+            // Verify all items were processed
+            Assert.Equal(10, consumerCommand.ProcessedCount);
+        }
+
+        /// <summary>
         /// Test: Multiple pipeline configurations don't interfere
         /// </summary>
         [Fact]
@@ -207,6 +253,84 @@ namespace Xcaciv.Command.Tests
 
             // Assert
             Assert.NotNull(ioContext.Output);
+        }
+    }
+
+    /// <summary>
+    /// Test command that produces a configurable number of items with optional delay.
+    /// </summary>
+    [CommandRegister("TestProducer", "Produces test items for backpressure testing")]
+    internal class TestProducerCommand : AbstractCommand
+    {
+        private readonly int _itemCount;
+        private readonly int _delayMs;
+
+        public TestProducerCommand(int itemCount, int delayMs)
+        {
+            _itemCount = itemCount;
+            _delayMs = delayMs;
+        }
+
+        public override string HandleExecution(string[] parameters, IEnvironmentContext env)
+        {
+            // Not used in this test scenario
+            return string.Empty;
+        }
+
+        public override async IAsyncEnumerable<string> Main(IIoContext ioContext, IEnvironmentContext env)
+        {
+            for (int i = 0; i < _itemCount; i++)
+            {
+                if (_delayMs > 0)
+                {
+                    await Task.Delay(_delayMs);
+                }
+
+                yield return $"Item-{i}";
+            }
+        }
+    }
+
+    /// <summary>
+    /// Test command that consumes piped input slowly to create backpressure.
+    /// </summary>
+    [CommandRegister("TestSlowConsumer", "Consumes input slowly for backpressure testing")]
+    internal class TestSlowConsumerCommand : AbstractCommand
+    {
+        private readonly int _delayMs;
+        public int ProcessedCount { get; private set; }
+
+        public TestSlowConsumerCommand(int delayMs)
+        {
+            _delayMs = delayMs;
+        }
+
+        public override string HandleExecution(string[] parameters, IEnvironmentContext env)
+        {
+            // Not used in this test scenario
+            return string.Empty;
+        }
+
+        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
+        {
+            ProcessedCount++;
+            return pipedChunk;
+        }
+
+        public override async IAsyncEnumerable<string> Main(IIoContext ioContext, IEnvironmentContext env)
+        {
+            if (ioContext.HasPipedInput)
+            {
+                await foreach (var chunk in ioContext.ReadInputPipeChunks())
+                {
+                    if (string.IsNullOrEmpty(chunk)) continue;
+
+                    // Simulate slow processing
+                    await Task.Delay(_delayMs);
+                    
+                    yield return HandlePipedChunk(chunk, ioContext.Parameters, env);
+                }
+            }
         }
     }
 }
