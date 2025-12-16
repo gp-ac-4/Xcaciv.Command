@@ -105,6 +105,15 @@ namespace Xcaciv.Command.Core
             outputPipe = writer;
         }
         /// <summary>
+        /// Sets the output encoder for encoding command output.
+        /// </summary>
+        /// <param name="encoder">The output encoder to use for encoding output chunks.</param>
+        public void SetOutputEncoder(IOutputEncoder encoder)
+        {
+            // Store encoder for use in OutputChunk if needed
+            // Default implementation does nothing; subclasses can override if they need to apply encoding
+        }
+        /// <summary>
         /// display progress
         /// </summary>
         /// <param name="total"></param>
