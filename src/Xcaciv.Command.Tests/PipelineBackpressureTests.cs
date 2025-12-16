@@ -130,16 +130,58 @@ namespace Xcaciv.Command.Tests
         }
 
         /// <summary>
-        /// Test: DropNewest backpressure mode configuration
+        /// Test: DropNewest backpressure mode drops newest items when channel is full
         /// </summary>
+        /// <remarks>
+        /// This integration test verifies that when a bounded channel with DropNewest mode
+        /// reaches capacity, the newest items attempting to be written are dropped while
+        /// the oldest items in the queue are preserved. This is the opposite of DropOldest mode.
+        /// </remarks>
         [Fact]
-        public void BackpressureMode_DropNewest_Configured()
+        public async Task BackpressureMode_DropNewest_DropsNewestItemsWhenFullAsync()
         {
-            // Arrange
-            var mode = PipelineBackpressureMode.DropNewest;
+            // Arrange: Create a channel directly to test DropNewest behavior
+            var channelOptions = new BoundedChannelOptions(3)
+            {
+                FullMode = BoundedChannelFullMode.DropNewest
+            };
+            var channel = Channel.CreateBounded<string>(channelOptions);
 
-            // Assert
-            Assert.Equal(1, (int)mode);
+            // Act: Fill the channel beyond capacity
+            // With DropNewest, when full, new writes are silently dropped
+            Assert.True(await channel.Writer.WaitToWriteAsync()); // Should succeed
+            await channel.Writer.WriteAsync("item-1");
+            await channel.Writer.WriteAsync("item-2");
+            await channel.Writer.WriteAsync("item-3");
+            
+            // Channel is now full (capacity = 3)
+            // Attempt to write more items - these should be dropped with DropNewest
+            await channel.Writer.WriteAsync("item-4"); // Should be dropped
+            await channel.Writer.WriteAsync("item-5"); // Should be dropped
+            
+            channel.Writer.Complete();
+
+            // Assert: Read all items from the channel
+            var items = new List<string>();
+            await foreach (var item in channel.Reader.ReadAllAsync())
+            {
+                items.Add(item);
+            }
+
+            // With DropNewest mode, we should have exactly 3 items (the first 3)
+            Assert.Equal(3, items.Count);
+            
+            // The oldest items should be preserved
+            Assert.Equal("item-1", items[0]);
+            Assert.Equal("item-2", items[1]);
+            Assert.Equal("item-3", items[2]);
+            
+            // The newest items (4 and 5) should have been dropped
+            Assert.DoesNotContain("item-4", items);
+            Assert.DoesNotContain("item-5", items);
+
+            _testOutput.WriteLine($"Items in channel: {string.Join(", ", items)}");
+            _testOutput.WriteLine("DropNewest successfully dropped newest items when channel was full");
         }
 
         /// <summary>
