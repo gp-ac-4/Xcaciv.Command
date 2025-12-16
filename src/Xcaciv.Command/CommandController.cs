@@ -396,7 +396,7 @@ public class CommandController : Interface.ICommandController
         PipelineBackpressureMode.DropOldest => BoundedChannelFullMode.DropOldest,
         PipelineBackpressureMode.DropNewest => BoundedChannelFullMode.DropNewest,
         PipelineBackpressureMode.Block => BoundedChannelFullMode.Wait,
-        _ => BoundedChannelFullMode.DropOldest
+        _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unsupported backpressure mode")
     };
 
     /// <summary>
