@@ -8,86 +8,167 @@ using System.Threading.Tasks;
 namespace Xcaciv.Command.Interface
 {
     /// <summary>
-    /// String pump for UI syncronization context.
-    /// This interface is used to abstract the UI from the command processor.
-    /// Implementations shoudl be thread safe. They should handle pipeline input and 
-    /// output via ChannelReader and ChannelWriter. The implementation should default
-    /// to a particular bound output, but should prioritise the pipeline when channels
-    /// are available.
+    /// Abstraction for command input/output and context management.
+    /// Decouples command execution from specific UI implementations.
     /// </summary>
+    /// <remarks>
+    /// The IIoContext interface provides:
+    /// - Parameter management for command arguments
+    /// - Pipeline support via ChannelReader/ChannelWriter
+    /// - Output handling (standard output, status messages, trace logging)
+    /// - Progress tracking for long-running operations
+    /// 
+    /// Implementations must be thread-safe and prioritize pipeline output
+    /// when channels are available. All output methods are asynchronous
+    /// to support non-blocking I/O operations.
+    /// 
+    /// Security: Parameters are validated by the framework; commands should
+    /// trust parameter content.
+    /// </remarks>
     public partial interface IIoContext: ICommandContext<IIoContext>
     {
         /// <summary>
-        /// signals the presense of pipeline input
+        /// Indicates whether this context has input available from a pipeline.
         /// </summary>
+        /// <value>true if this command is receiving input from a previous command in a pipeline; false otherwise.</value>
+        /// <remarks>
+        /// When true, commands should read input via ReadInputPipeChunks()
+        /// instead of using PromptForCommand().
+        /// </remarks>
         bool HasPipedInput { get; }
+
         /// <summary>
-        /// command parameter list
+        /// Gets the command-line arguments for this command.
         /// </summary>
+        /// <value>Array of command parameters (may be empty if no parameters provided).</value>
+        /// <remarks>
+        /// Parameters have been validated by the framework before reaching the command.
+        /// Commands use parameter attributes to define expected parameters.
+        /// </remarks>
         string[] Parameters { get; }
+
         /// <summary>
-        /// when running in a pipeline this will be the pipe that the command will read from
+        /// Sets the input channel for reading piped output from a previous command.
         /// </summary>
-        /// <param name="reader"></param>
+        /// <param name="reader">The ChannelReader to read piped input from.</param>
+        /// <remarks>
+        /// Called by the framework when setting up a piped command sequence.
+        /// Implementations should store this reader for use in ReadInputPipeChunks().
+        /// </remarks>
         void SetInputPipe(ChannelReader<string> reader);
+
         /// <summary>
-        /// when in a pipeline, read input from the pipe
+        /// Asynchronously reads all output chunks from the input pipe.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>An async enumerable yielding output strings from the previous command.</returns>
+        /// <remarks>
+        /// Called by commands that accept piped input. Each string is a separate
+        /// output chunk from the previous command.
+        /// Blocks until input is available or the pipe is closed.
+        /// </remarks>
         IAsyncEnumerable<string> ReadInputPipeChunks();
+
         /// <summary>
-        /// get command text from context
+        /// Prompts the user for a command via the configured input mechanism.
         /// </summary>
-        /// <param name="prompt"></param>
-        /// <returns></returns>
+        /// <param name="prompt">The prompt text to display to the user.</param>
+        /// <returns>The command text entered by the user.</returns>
+        /// <remarks>
+        /// Only used when this context does not have piped input (HasPipedInput = false).
+        /// Implementation depends on UI context (console, web, etc.).
+        /// </remarks>
         Task<string> PromptForCommand(string prompt);
+
         /// <summary>
-        /// when running in a pipeline this will be the pipe that the command will write to
-        /// the implementation should write what is passed to OutputChunk() to this channel writer
+        /// Sets the output channel for writing output to the next command in a pipeline.
         /// </summary>
-        /// <param name="writer"></param>
+        /// <param name="writer">The ChannelWriter to send output to the next command.</param>
+        /// <remarks>
+        /// Called by the framework when setting up a piped command sequence.
+        /// Implementations should write OutputChunk() data to this writer when available.
+        /// </remarks>
         void SetOutputPipe(ChannelWriter<string> writer);
+
         /// <summary>
-        /// output text used for cumulative standard output
-        /// should prioritize pipeline output using the ChannelWriter
+        /// Outputs a chunk of command result data.
         /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
+        /// <param name="message">The output text to send.</param>
+        /// <returns>A task representing the asynchronous output operation.</returns>
+        /// <remarks>
+        /// The implementation prioritizes pipeline output (ChannelWriter) when available,
+        /// otherwise outputs to the default output (console, UI buffer, etc.).
+        /// Each OutputChunk() call represents one discrete unit of output.
+        /// </remarks>
         Task OutputChunk(string message);
+
         /// <summary>
-        /// replace status text with new text
-        /// used for static status output
-        /// SHOULD NOT CONTAIN ACTUAL RESULT
+        /// Sets the current status message (replaces previous status).
         /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
+        /// <param name="message">The status message to display.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <remarks>
+        /// Used for displaying transient status (not command output).
+        /// Should NOT contain actual command results—use OutputChunk() for that.
+        /// Example use: "Processing item 5 of 10" during long operations.
+        /// </remarks>
         Task SetStatusMessage(string message);
+
         /// <summary>
-        /// adds to the trace collection
-        /// can be output to the screen when being verbose
-        /// messages should help troubleshooting for developers and users
+        /// Adds a trace message for diagnostic/logging purposes.
         /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
+        /// <param name="message">The trace message to record.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <remarks>
+        /// Trace messages are intended for developers and advanced users for troubleshooting.
+        /// Not normally shown in standard output; typically logged or output in verbose mode.
+        /// Use for exception details, internal state info, security events, etc.
+        /// </remarks>
         Task AddTraceMessage(string message);
+
         /// <summary>
-        /// set proces progress based on total
+        /// Updates progress for a long-running operation.
         /// </summary>
-        /// <param name="total"></param>
-        /// <param name="step"></param>
-        /// <returns>whole number signifying percentage</returns>
+        /// <param name="total">Total number of items/steps to process.</param>
+        /// <param name="step">Current step/item number (0 to total).</param>
+        /// <returns>A task that returns the computed percentage complete (0-100).</returns>
+        /// <remarks>
+        /// Used to provide progress feedback during long operations.
+        /// Example: SetProgress(100, 25) would return 25 (percent complete).
+        /// </remarks>
         Task<int> SetProgress(int total, int step);
+
         /// <summary>
-        /// signal that the status is complete
+        /// Signals that the operation is complete.
         /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
+        /// <param name="message">Optional completion message to display.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <remarks>
+        /// Called after command execution completes (success or failure).
+        /// Implementations may use this to finalize output, close pipes, etc.
+        /// </remarks>
         Task Complete(string? message);
+
         /// <summary>
-        /// overwrite the current parameters with a new array
+        /// Replaces the current parameter array with a new set of parameters.
         /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
+        /// <param name="parameters">The new parameter array.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <remarks>
+        /// Used internally by the framework when handling sub-commands.
+        /// Sub-command name is removed from parameters before calling the sub-command.
+        /// </remarks>
         Task SetParameters(string[] parameters);
+
+        /// <summary>
+        /// Sets the output encoder for encoding command output.
+        /// </summary>
+        /// <param name="encoder">The IOutputEncoder to apply to all output chunks.</param>
+        /// <remarks>
+        /// Called by the framework to propagate the output encoder from CommandController.
+        /// The encoder is applied to each OutputChunk() call before the output is displayed or piped.
+        /// 
+        /// This is optional; if not called, the context uses the default encoder (typically NoOpEncoder).
+        /// </remarks>
+        void SetOutputEncoder(IOutputEncoder encoder);
     }
 }

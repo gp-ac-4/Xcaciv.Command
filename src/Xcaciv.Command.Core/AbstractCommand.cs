@@ -149,7 +149,7 @@ namespace Xcaciv.Command.Core
         /// <param name="io"></param>
         /// <param name="environment"></param>
         /// <returns></returns>
-        public async IAsyncEnumerable<string> Main(IIoContext io, IEnvironmentContext environment)
+        public virtual async IAsyncEnumerable<string> Main(IIoContext io, IEnvironmentContext environment)
         {
             if (io.HasPipedInput)
             {
