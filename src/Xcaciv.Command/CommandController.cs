@@ -52,6 +52,11 @@ public class CommandController : Interface.ICommandController
     }
 
     /// <summary>
+    /// Pipeline configuration for DoS protection (bounded channels, backpressure, timeouts).
+    /// </summary>
+    public PipelineConfiguration PipelineConfig { get; set; } = new PipelineConfiguration();
+
+    /// <summary>
     /// Command Manger
     /// </summary>
     public CommandController() : this(new Crawler()) { }
@@ -245,8 +250,12 @@ public class CommandController : Interface.ICommandController
             {
                 childContext.SetInputPipe(pipeChannel.Reader);
             }
-            // set the write pipe
-            pipeChannel = Channel.CreateUnbounded<string>();
+            // set the write pipe with bounded channel to prevent memory exhaustion
+            pipeChannel = Channel.CreateBounded<string>(
+                new BoundedChannelOptions(PipelineConfig.MaxChannelQueueSize)
+                {
+                    FullMode = GetChannelFullMode(PipelineConfig.BackpressureMode)
+                });
             childContext.SetOutputPipe(pipeChannel.Writer);
 
             // add the task to the collection
@@ -255,6 +264,17 @@ public class CommandController : Interface.ICommandController
 
         return (tasks, pipeChannel);
     }
+
+    /// <summary>
+    /// Convert PipelineBackpressureMode to BoundedChannelFullMode.
+    /// </summary>
+    protected BoundedChannelFullMode GetChannelFullMode(PipelineBackpressureMode mode) => mode switch
+    {
+        PipelineBackpressureMode.DropOldest => BoundedChannelFullMode.DropOldest,
+        PipelineBackpressureMode.DropNewest => BoundedChannelFullMode.DropNewest,
+        PipelineBackpressureMode.Block => BoundedChannelFullMode.Wait,
+        _ => BoundedChannelFullMode.DropOldest
+    };
 
     protected async Task CollectPipelineOutput(Channel<string>? outputChannel, IIoContext ioContext)
     {
