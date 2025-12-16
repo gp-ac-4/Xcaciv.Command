@@ -35,6 +35,33 @@ This framework uses Xcaciv.Loader 2.0.1's instance-based security policies:
 - **Security Exception Handling**: Graceful handling of security violations with detailed logging
 - **Per-Instance Configuration**: Each AssemblyContext has independent security settings
 
+For detailed security model, plugin development guidelines, and vulnerability reporting procedures, see [SECURITY.md](SECURITY.md).
+
+### Audit Logging
+
+Command execution and environment changes can be logged via `IAuditLogger`:
+
+```csharp
+// Example: Using audit logging
+var controller = new CommandController();
+controller.EnableDefaultCommands();
+var env = new EnvironmentContext();
+
+// Provide an audit logger implementation
+var auditLogger = new YourAuditLoggerImplementation();
+controller.AuditLogger = auditLogger;
+
+// Command execution and environment changes are now logged
+await controller.Run("say hello", ioContext, env);
+```
+
+Logs include:
+- Command execution with parameters, duration, and success status
+- Environment variable changes with old/new values
+- Timestamps in UTC for consistency
+
+See [SECURITY.md](SECURITY.md#audit-logging) for secure audit logging patterns.
+
 ## Roadmap
 
 - [X] Threaded pipelining
