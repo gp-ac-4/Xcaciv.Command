@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Xcaciv.Command.Interface;
+using Xcaciv.Command.Encoders;
 
 namespace Xcaciv.Command.Tests
 {
