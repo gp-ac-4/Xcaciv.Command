@@ -13,9 +13,9 @@ namespace Xcaciv.Command;
 public class CommandLoader : ICommandLoader
 {
     private readonly ICrawler _crawler;
-    private readonly IVerfiedSourceDirectories _verifiedDirectories;
+    private readonly IVerifiedSourceDirectories _verifiedDirectories;
 
-    public CommandLoader(ICrawler crawler, IVerfiedSourceDirectories verifiedDirectories)
+    public CommandLoader(ICrawler crawler, IVerifiedSourceDirectories verifiedDirectories)
     {
         _crawler = crawler ?? throw new ArgumentNullException(nameof(crawler));
         _verifiedDirectories = verifiedDirectories ?? throw new ArgumentNullException(nameof(verifiedDirectories));

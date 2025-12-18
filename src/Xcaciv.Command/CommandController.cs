@@ -53,7 +53,7 @@ public class CommandController : Interface.ICommandController
     public CommandController(ICrawler crawler)
         : this(
             commandRegistry: null,
-            commandLoader: new CommandLoader(crawler, new VerfiedSourceDirectories(new FileSystem())),
+            commandLoader: new CommandLoader(crawler, new VerifiedSourceDirectories(new FileSystem())),
             pipelineExecutor: null,
             commandExecutor: null,
             commandFactory: null,
@@ -75,11 +75,11 @@ public class CommandController : Interface.ICommandController
     /// <summary>
     /// Command Manager constructor for testing custom directory verification logic.
     /// </summary>
-    /// <param name="packageBinearyDirectories">Custom implementation of IVerfiedSourceDirectories.</param>
-    public CommandController(IVerfiedSourceDirectories packageBinearyDirectories)
+    /// <param name="packageBinaryDirectories">Custom implementation of IVerifiedSourceDirectories.</param>
+    public CommandController(IVerifiedSourceDirectories packageBinaryDirectories)
         : this(
             commandRegistry: null,
-            commandLoader: new CommandLoader(new Crawler(), packageBinearyDirectories),
+            commandLoader: new CommandLoader(new Crawler(), packageBinaryDirectories),
             pipelineExecutor: null,
             commandExecutor: null,
             commandFactory: null,
@@ -101,7 +101,7 @@ public class CommandController : Interface.ICommandController
         _commandRegistry = commandRegistry ?? new CommandRegistry();
         _commandFactory = commandFactory ?? new CommandFactory(serviceProvider);
         _commandExecutor = commandExecutor ?? new CommandExecutor(_commandRegistry, _commandFactory);
-        _commandLoader = commandLoader ?? new CommandLoader(new Crawler(), new VerfiedSourceDirectories(new FileSystem()));
+        _commandLoader = commandLoader ?? new CommandLoader(new Crawler(), new VerifiedSourceDirectories(new FileSystem()));
         _pipelineExecutor = pipelineExecutor ?? new PipelineExecutor();
 
         _auditLogger = new NoOpAuditLogger();
@@ -150,7 +150,7 @@ public class CommandController : Interface.ICommandController
     public PipelineConfiguration PipelineConfig
     {
         get => _pipelineExecutor.Configuration;
-        set => _pipelineExecutor.Configuration = value ?? throw new ArgumentNullException(nameof(value));
+        set => _pipelineExecutor.Configuration = value ?? throw new ArgumentNullException(nameof(PipelineConfig));
     }
 
     /// <summary>
@@ -242,9 +242,16 @@ public class CommandController : Interface.ICommandController
     /// <summary>
     /// output all the help strings
     /// </summary>
+    /// <remarks>
+    /// Note: This method blocks on an async operation to maintain backward compatibility with
+    /// the ICommandController interface. To avoid potential deadlocks in some synchronization
+    /// contexts, consider using the async Run method with help parameters instead.
+    /// </remarks>
     public void GetHelp(string command, IIoContext context, IEnvironmentContext env)
     {
-        _commandExecutor.GetHelpAsync(command, context, env).GetAwaiter().GetResult();
+        // Run asynchronously on the thread pool to avoid potential deadlocks
+        // when blocking synchronously on an async operation.
+        Task.Run(() => _commandExecutor.GetHelpAsync(command, context, env)).GetAwaiter().GetResult();
     }
 
     private Task ExecuteCommandInternal(string commandKey, IIoContext ioContext, IEnvironmentContext env)

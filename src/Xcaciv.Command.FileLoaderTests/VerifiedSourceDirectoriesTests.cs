@@ -4,14 +4,14 @@ using System.IO.Abstractions.TestingHelpers;
 
 namespace Xcaciv.Command.Tests.FileLoader
 {
-    public class VerfiedSourceDirectoriesTests
+    public class VerifiedSourceDirectoriesTests
     {
         [Fact]
         public void VerifyRestrictedPath_ShouldReturnTrue_WhenFilePathIsWithinRestrictedPath()
         {
             // Arrange
             var fileSystem = new MockFileSystem();
-            var directories = new VerfiedSourceDirectories(fileSystem);
+            var directories = new VerifiedSourceDirectories(fileSystem);
             directories.SetRestrictedDirectory("/restricted/path");
 
             // Act
@@ -26,7 +26,7 @@ namespace Xcaciv.Command.Tests.FileLoader
         {
             // Arrange
             var fileSystem = new MockFileSystem();
-            var directories = new VerfiedSourceDirectories(fileSystem);
+            var directories = new VerifiedSourceDirectories(fileSystem);
             directories.SetRestrictedDirectory("/restricted/path");
 
             // Act
@@ -42,7 +42,7 @@ namespace Xcaciv.Command.Tests.FileLoader
             // Arrange
             var fileSystem = new MockFileSystem();
             fileSystem.AddFile("/restricted/path/file.txt", new MockFileData("Test file"));
-            var directories = new VerfiedSourceDirectories(fileSystem);
+            var directories = new VerifiedSourceDirectories(fileSystem);
             directories.SetRestrictedDirectory("/restricted/path");
 
             // Act
@@ -57,7 +57,7 @@ namespace Xcaciv.Command.Tests.FileLoader
         {
             // Arrange
             var fileSystem = new MockFileSystem();
-            var directories = new VerfiedSourceDirectories(fileSystem);
+            var directories = new VerifiedSourceDirectories(fileSystem);
             directories.SetRestrictedDirectory("/restricted/path");
 
             // Act
@@ -73,7 +73,7 @@ namespace Xcaciv.Command.Tests.FileLoader
             // Arrange
             var fileSystem = new MockFileSystem();
             fileSystem.AddDirectory("/restricted/path/directory");
-            var directories = new VerfiedSourceDirectories(fileSystem);
+            var directories = new VerifiedSourceDirectories(fileSystem);
             directories.SetRestrictedDirectory("/restricted/path");
 
             // Act
@@ -88,7 +88,7 @@ namespace Xcaciv.Command.Tests.FileLoader
         {
             // Arrange
             var fileSystem = new MockFileSystem();
-            var directories = new VerfiedSourceDirectories(fileSystem);
+            var directories = new VerifiedSourceDirectories(fileSystem);
             directories.SetRestrictedDirectory("/restricted/path");
 
             // Act
@@ -104,7 +104,7 @@ namespace Xcaciv.Command.Tests.FileLoader
             // Arrange
             var fileSystem = new MockFileSystem();
             fileSystem.AddDirectory("/valid/directory");
-            var directories = new VerfiedSourceDirectories(fileSystem);
+            var directories = new VerifiedSourceDirectories(fileSystem);
             directories.SetRestrictedDirectory("/valid");
 
             // Act
@@ -120,7 +120,7 @@ namespace Xcaciv.Command.Tests.FileLoader
         {
             // Arrange
             var fileSystem = new MockFileSystem();
-            var directories = new VerfiedSourceDirectories(fileSystem);
+            var directories = new VerifiedSourceDirectories(fileSystem);
 
             // Act
             var result = directories.AddDirectory("/invalid/directory");

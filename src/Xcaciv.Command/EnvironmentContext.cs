@@ -44,7 +44,7 @@ namespace Xcaciv.Command
 
         public Task<IEnvironmentContext> GetChild(string[]? childArguments = null)
         {
-            var childValues = this.GetEnvinronment();
+            var childValues = this.GetEnvironment();
             var child = new EnvironmentContext(childValues);
             // Propagate audit logger to child
             if (_auditLogger != null)
@@ -111,7 +111,7 @@ namespace Xcaciv.Command
 
         // todo GetValue with default and optional set env var
 
-        public Dictionary<string, string> GetEnvinronment()
+        public Dictionary<string, string> GetEnvironment()
         {
             return EnvironmentVariables.ToDictionary();
         }
