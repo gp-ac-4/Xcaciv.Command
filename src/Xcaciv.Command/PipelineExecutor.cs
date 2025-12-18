@@ -24,26 +24,19 @@ public class PipelineExecutor : IPipelineExecutor
         if (environmentContext == null) throw new ArgumentNullException(nameof(environmentContext));
         if (executeCommand == null) throw new ArgumentNullException(nameof(executeCommand));
 
-        var (tasks, channels, outputChannel) = await CreatePipelineStages(commandLine, ioContext, environmentContext, executeCommand).ConfigureAwait(false);
+        var (tasks, outputChannel) = await CreatePipelineStages(commandLine, ioContext, environmentContext, executeCommand).ConfigureAwait(false);
         await Task.WhenAll(tasks).ConfigureAwait(false);
-        
-        // Complete all channel writers after tasks finish
-        foreach (var channel in channels)
-        {
-            channel.Writer.Complete();
-        }
-        
+
         await CollectPipelineOutput(outputChannel, ioContext).ConfigureAwait(false);
     }
 
-    private async Task<(List<Task>, List<Channel<string>>, Channel<string>?)> CreatePipelineStages(
+    private async Task<(List<Task>, Channel<string>?)> CreatePipelineStages(
         string commandLine,
         IIoContext ioContext,
         IEnvironmentContext environmentContext,
         Func<string, IIoContext, IEnvironmentContext, Task> executeCommand)
     {
         var tasks = new List<Task>();
-        var channels = new List<Channel<string>>();
         Channel<string>? pipeChannel = null;
 
         foreach (var command in commandLine.Split('|'))
@@ -61,13 +54,30 @@ public class PipelineExecutor : IPipelineExecutor
             {
                 FullMode = GetChannelFullMode(Configuration.BackpressureMode)
             });
-            channels.Add(pipeChannel);
             childContext.SetOutputPipe(pipeChannel.Writer);
 
-            tasks.Add(executeCommand(commandName, childContext, environmentContext));
+            tasks.Add(RunStageAsync(commandName, childContext, environmentContext, executeCommand));
         }
 
-        return (tasks, channels, pipeChannel);
+        return (tasks, pipeChannel);
+    }
+
+    private static Task RunStageAsync(
+        string commandName,
+        IIoContext childContext,
+        IEnvironmentContext environmentContext,
+        Func<string, IIoContext, IEnvironmentContext, Task> executeCommand)
+    {
+        return RunStageInternal();
+
+        async Task RunStageInternal()
+        {
+            await using (childContext)
+            {
+                await executeCommand(commandName, childContext, environmentContext).ConfigureAwait(false);
+                await childContext.Complete(null).ConfigureAwait(false);
+            }
+        }
     }
 
     private async Task CollectPipelineOutput(Channel<string>? outputChannel, IIoContext ioContext)
