@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
@@ -126,6 +127,7 @@ public class CommandExecutor : ICommandExecutor
         var startTime = DateTime.UtcNow;
         var success = false;
         string? errorMessage = null;
+        var resultFailures = new List<string>();
 
         try
         {
@@ -135,9 +137,31 @@ public class CommandExecutor : ICommandExecutor
 
             await using (var childEnv = await environmentContext.GetChild(ioContext.Parameters).ConfigureAwait(false))
             {
-                await foreach (var resultMessage in commandInstance.Main(ioContext, childEnv).ConfigureAwait(false))
+                await foreach (var result in commandInstance.Main(ioContext, childEnv).ConfigureAwait(false))
                 {
-                    await ioContext.OutputChunk(resultMessage).ConfigureAwait(false);
+                    if (result == null)
+                    {
+                        continue;
+                    }
+
+                    if (result.IsSuccess)
+                    {
+                        if (!string.IsNullOrEmpty(result.Output))
+                        {
+                            await ioContext.OutputChunk(result.Output).ConfigureAwait(false);
+                        }
+                    }
+                    else
+                    {
+                        var failureMessage = result.ErrorMessage ?? $"Command [{commandKey}] reported failure (CorrelationId: {result.CorrelationId}).";
+                        resultFailures.Add(failureMessage);
+                        await ioContext.OutputChunk(failureMessage).ConfigureAwait(false);
+
+                        if (result.Exception != null)
+                        {
+                            await ioContext.AddTraceMessage(result.Exception.ToString()).ConfigureAwait(false);
+                        }
+                    }
                 }
 
                 if (commandDescription.ModifiesEnvironment && childEnv.HasChanged)
@@ -146,7 +170,7 @@ public class CommandExecutor : ICommandExecutor
                 }
             }
 
-            success = true;
+            success = resultFailures.Count == 0;
         }
         catch (Exception ex)
         {
@@ -159,6 +183,11 @@ public class CommandExecutor : ICommandExecutor
         finally
         {
             await ioContext.AddTraceMessage($"ExecuteCommand: {commandKey} Done.").ConfigureAwait(false);
+
+            if (!success && string.IsNullOrEmpty(errorMessage) && resultFailures.Count > 0)
+            {
+                errorMessage = string.Join(Environment.NewLine, resultFailures);
+            }
 
             var duration = DateTime.UtcNow - startTime;
             _auditLogger?.LogCommandExecution(

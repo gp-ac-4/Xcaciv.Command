@@ -149,22 +149,26 @@ namespace Xcaciv.Command.Core
         /// <param name="io"></param>
         /// <param name="environment"></param>
         /// <returns></returns>
-        public virtual async IAsyncEnumerable<string> Main(IIoContext io, IEnvironmentContext environment)
+        public virtual async IAsyncEnumerable<IResult<string>> Main(IIoContext io, IEnvironmentContext environment)
         {
             if (io.HasPipedInput)
             {
-                await foreach (var p in io.ReadInputPipeChunks())
+                await foreach (var pipedChunk in io.ReadInputPipeChunks())
                 {
-                    if (string.IsNullOrEmpty(p)) continue;
-                    yield return HandlePipedChunk(p, io.Parameters, environment);
+                    if (string.IsNullOrEmpty(pipedChunk)) continue;
+                    yield return CommandResult<string>.Success(HandlePipedChunk(pipedChunk, io.Parameters, environment));
                 }
             }
             else
             {
-                if (io.Parameters.Length > 0 && io.Parameters[0].Equals("--HELP", StringComparison.CurrentCultureIgnoreCase))
-                    yield return BuildHelpString(io.Parameters, environment);
+                if (IsHelpRequest(io.Parameters))
+                {
+                    yield return CommandResult<string>.Success(BuildHelpString(io.Parameters, environment));
+                }
                 else
-                    yield return HandleExecution(io.Parameters, environment);
+                {
+                    yield return CommandResult<string>.Success(HandleExecution(io.Parameters, environment));
+                }
             }
         }
         /// <summary>
@@ -239,6 +243,16 @@ namespace Xcaciv.Command.Core
                 flags = flags.Where(x => !x.UsePipe).ToArray();
             }
             return flags;
+        }
+
+        protected static bool IsHelpRequest(string[] parameters)
+        {
+            if (parameters == null || parameters.Length == 0)
+            {
+                return false;
+            }
+
+            return parameters[0].Equals("--HELP", StringComparison.CurrentCultureIgnoreCase);
         }
 
         public abstract string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env);
