@@ -44,13 +44,12 @@ public class CommandExecutor : ICommandExecutor
                 return;
             }
 
-            var resolvedDescription = commandDescription;
             var parameters = ioContext.Parameters;
-            if (resolvedDescription.SubCommands.Count > 0 &&
+            if (commandDescription.SubCommands.Count > 0 &&
                 parameters is { Length: > 0 } &&
                 parameters[0].Equals($"--{HelpCommand}", StringComparison.CurrentCultureIgnoreCase))
             {
-                await OutputOneLineHelp(resolvedDescription, ioContext).ConfigureAwait(false);
+                await OutputOneLineHelp(commandDescription, ioContext).ConfigureAwait(false);
                 return;
             }
 
@@ -58,12 +57,12 @@ public class CommandExecutor : ICommandExecutor
             if (parameters is { Length: > 0 } &&
                 parameters[0].Equals($"--{HelpCommand}", StringComparison.CurrentCultureIgnoreCase))
             {
-                var commandInstance = _commandFactory.CreateCommand(resolvedDescription, ioContext);
+                var commandInstance = _commandFactory.CreateCommand(commandDescription, ioContext);
                 await ioContext.OutputChunk(commandInstance.Help(ioContext.Parameters, environmentContext)).ConfigureAwait(false);
                 return;
             }
 
-            await ExecuteCommandWithErrorHandling(resolvedDescription, ioContext, environmentContext, commandKey).ConfigureAwait(false);
+            await ExecuteCommandWithErrorHandling(commandDescription, ioContext, environmentContext, commandKey).ConfigureAwait(false);
             return;
         }
 

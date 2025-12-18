@@ -32,7 +32,7 @@ namespace Xcaciv.Command.Tests
 
             // Assert
             Assert.Equal(10_000, config.MaxChannelQueueSize);
-            Assert.Equal(PipelineBackpressureMode.DropOldest, config.BackpressureMode);
+            Assert.Equal(PipelineBackpressureMode.Block, config.BackpressureMode);
             Assert.Equal(0, config.ExecutionTimeoutSeconds);
         }
 

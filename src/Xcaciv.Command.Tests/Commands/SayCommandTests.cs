@@ -16,7 +16,7 @@ namespace Xcaciv.Command.Tests.Commands
         [Fact()]
         public async Task HandleExecutionTest()
         {
-            var commands = new CommandController(new Crawler(), "");
+            var commands = new CommandController(new Crawler(), AppContext.BaseDirectory);
             commands.EnableDefaultCommands();
 
             var env = new EnvironmentContext();
@@ -44,7 +44,7 @@ namespace Xcaciv.Command.Tests.Commands
         [Fact()]
         public async Task HandleExecutionWithEnvTest()
         {
-            var commands = new CommandController(new Crawler(), "");
+            var commands = new CommandController(new Crawler(), AppContext.BaseDirectory);
             commands.EnableDefaultCommands();
 
             var env = new EnvironmentContext();

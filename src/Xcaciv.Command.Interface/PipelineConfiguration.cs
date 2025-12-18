@@ -17,7 +17,7 @@ public class PipelineConfiguration
     /// Policy when channel buffer is full.
     /// - DropOldest: Remove oldest item, add new item (FIFO drop)
     /// - DropNewest: Reject new item, keep old items (LIFO drop)
-    /// - Block: Wait for consumer to make room (backpressure)
+    /// - Block: Wait for consumer to make room (backpressure) default.
     /// </summary>
     public PipelineBackpressureMode BackpressureMode { get; set; } = PipelineBackpressureMode.Block;
 
