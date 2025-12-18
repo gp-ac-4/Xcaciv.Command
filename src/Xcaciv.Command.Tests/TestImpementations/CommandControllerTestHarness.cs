@@ -32,7 +32,9 @@ namespace Xcaciv.Command.Tests.TestImpementations
 
         internal Dictionary<string, ICommandDescription> GetCommands()
         {
-            return this.Commands;
+            return CommandRegistry
+                .GetAllCommands()
+                .ToDictionary(description => description.BaseCommand, description => description);
         }
     }
 }
