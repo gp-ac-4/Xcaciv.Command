@@ -18,10 +18,22 @@ function Invoke-DotNet {
         [string[]]$Arguments
     )
 
-    Write-Host "dotnet $($Arguments -join ' ')" -ForegroundColor Cyan
+    $sanitizedArguments = @()
+    for ($argumentIndex = 0; $argumentIndex -lt $Arguments.Length; $argumentIndex++) {
+        $currentArgument = $Arguments[$argumentIndex]
+        if ($currentArgument -eq '--api-key' -and ($argumentIndex + 1) -lt $Arguments.Length) {
+            $sanitizedArguments += $currentArgument
+            $sanitizedArguments += '***REDACTED***'
+            $argumentIndex++
+            continue
+        }
+        $sanitizedArguments += $currentArgument
+    }
+
+    Write-Host "dotnet $($sanitizedArguments -join ' ')" -ForegroundColor Cyan
     dotnet @Arguments
     if ($LASTEXITCODE -ne 0) {
-        throw "dotnet $($Arguments -join ' ') failed with exit code $LASTEXITCODE."
+        throw "dotnet $($sanitizedArguments -join ' ') failed with exit code $LASTEXITCODE."
     }
 }
 
