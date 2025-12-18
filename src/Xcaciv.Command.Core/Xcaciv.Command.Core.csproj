@@ -8,7 +8,7 @@
 	  <RootNamespace>Xcaciv.Command.Core</RootNamespace>
 	  <IsPublishable>True</IsPublishable>
 	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	  <TargetFramework>net8.0</TargetFramework>
+	  <TargetFrameworks>$(XcacivTargetFrameworks)</TargetFrameworks>
 	  <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
 	  <Copyright>Alton Crossley</Copyright>
 	  <PackageProjectUrl>https://github.com/Xcaciv/Xcaciv.Command</PackageProjectUrl>
@@ -25,10 +25,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="readme.md">
-	    <PackagePath>\</PackagePath>
-	    <Pack>True</Pack>
-	  </None>
+	  <None Include="readme.md" Pack="True" PackagePath="readme.md" />
 	</ItemGroup>
 
 </Project>
