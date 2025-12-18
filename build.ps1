@@ -21,12 +21,18 @@ function Invoke-DotNet {
     $sanitizedArguments = @()
     for ($argumentIndex = 0; $argumentIndex -lt $Arguments.Length; $argumentIndex++) {
         $currentArgument = $Arguments[$argumentIndex]
+        if ($currentArgument -like '--api-key=*') {
+            $sanitizedArguments += '--api-key=***REDACTED***'
+            continue
+        }
+
         if ($currentArgument -eq '--api-key' -and ($argumentIndex + 1) -lt $Arguments.Length) {
             $sanitizedArguments += $currentArgument
             $sanitizedArguments += '***REDACTED***'
             $argumentIndex++
             continue
         }
+
         $sanitizedArguments += $currentArgument
     }
 
