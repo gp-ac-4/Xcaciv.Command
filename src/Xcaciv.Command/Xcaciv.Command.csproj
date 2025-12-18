@@ -35,8 +35,11 @@
   <ItemGroup>
     <None Update="readme.md">
       <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
+      <PackagePath>readme.md</PackagePath>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="readme.md" Pack="True" PackagePath="readme.md" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
