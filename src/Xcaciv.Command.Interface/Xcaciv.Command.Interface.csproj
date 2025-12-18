@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>1.1.31</Version>
-	<IsPublishable>True</IsPublishable>
+    <IsPublishable>True</IsPublishable>
     <AssemblyName>Xcaciv.Command.Interface</AssemblyName>
     <RootNamespace>Xcaciv.Command.Interface</RootNamespace>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
