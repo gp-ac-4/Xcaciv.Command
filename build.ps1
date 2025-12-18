@@ -4,7 +4,8 @@ param(
     [string]$Configuration = 'Release',
     [string]$VersionSuffix,
     [string]$NuGetSource = 'https://api.nuget.org/v3/index.json',
-    [string]$NuGetApiKey
+    [string]$NuGetApiKey,
+    [switch]$UseNet10
 )
 
 Set-StrictMode -Version Latest
@@ -35,13 +36,24 @@ try {
         New-Item -ItemType Directory -Path $artifactDirectory -Force | Out-Null
     }
 
-    Invoke-DotNet -Arguments @('restore', $solutionPath)
-    Invoke-DotNet -Arguments @('build', $solutionPath, '--configuration', $Configuration, '--nologo')
+    $msbuildProperties = @()
+    if ($UseNet10.IsPresent) {
+        $msbuildProperties += '-p:UseNet10=true'
+    }
+
+    $restoreArguments = @('restore', $solutionPath)
+    $restoreArguments += $msbuildProperties
+    Invoke-DotNet -Arguments $restoreArguments
+
+    $buildArguments = @('build', $solutionPath, '--configuration', $Configuration, '--nologo')
+    $buildArguments += $msbuildProperties
+    Invoke-DotNet -Arguments $buildArguments
 
     $packArguments = @('pack', $packageProjectPath, '--configuration', $Configuration, '--output', $artifactDirectory, '--nologo')
     if ($VersionSuffix) {
         $packArguments += "-p:VersionSuffix=$VersionSuffix"
     }
+    $packArguments += $msbuildProperties
 
     Invoke-DotNet -Arguments $packArguments
 
