@@ -24,31 +24,33 @@ namespace zTestCommandPackage
             return $"[{BaseCommand}] ({FriendlyName}) - test command to output each parameter as a chunk";
         }
 
-        public async IAsyncEnumerable<string> Main(IIoContext io, IEnvironmentContext statusContext)
+        public async IAsyncEnumerable<IResult<string>> Main(IIoContext io, IEnvironmentContext statusContext)
         {
             await io.AddTraceMessage($"{this.BaseCommand} test start");
             if (io.HasPipedInput)
             {
-                await foreach (var p in io.ReadInputPipeChunks())
-                    yield return this.FormatEcho(p);
+                await foreach (var pipedValue in io.ReadInputPipeChunks())
+                {
+                    yield return CommandResult<string>.Success(this.FormatEcho(pipedValue));
+                }
             }
-            else if (io.Parameters[0].Equals("--HELP", StringComparison.CurrentCultureIgnoreCase))
+            else if (io.Parameters.Length > 0 && io.Parameters[0].Equals("--HELP", StringComparison.CurrentCultureIgnoreCase))
             {
-                yield return this.Help(io.Parameters, statusContext);
+                yield return CommandResult<string>.Success(this.Help(io.Parameters, statusContext));
             }
             else
             {
-                foreach (var p in io.Parameters)
+                foreach (var parameterValue in io.Parameters)
                 {
-                    yield return this.FormatEcho(p);
+                    yield return CommandResult<string>.Success(this.FormatEcho(parameterValue));
                 }
             }
             await io.AddTraceMessage($"{this.BaseCommand} test end");
         }
 
-        public virtual string FormatEcho(string p)
+        public virtual string FormatEcho(string text)
         {
-            return $"{p}";
+            return $"{text}";
         }
 
         public ValueTask DisposeAsync()

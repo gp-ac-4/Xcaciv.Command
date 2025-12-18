@@ -1,7 +1,7 @@
 
 namespace Xcaciv.Command.FileLoader;
 
-public interface IVerfiedSourceDirectories
+public interface IVerifiedSourceDirectories
 {
     IReadOnlyList<string> Directories { get; }
     string RestrictedDirectory { get; }

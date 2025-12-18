@@ -2,7 +2,7 @@ using System.IO.Abstractions;
 
 namespace Xcaciv.Command.FileLoader;
 
-public class VerfiedSourceDirectories : IVerfiedSourceDirectories
+public class VerifiedSourceDirectories : IVerifiedSourceDirectories
 {
     protected IFileSystem FileSystem { get; set; }
     /// <summary>
@@ -19,8 +19,8 @@ public class VerfiedSourceDirectories : IVerfiedSourceDirectories
     /// <summary>
     /// constructor defaulting the file system abstraction
     /// </summary>
-    public VerfiedSourceDirectories() : this(new FileSystem()) { }
-    public VerfiedSourceDirectories(IFileSystem fileSystem)
+    public VerifiedSourceDirectories() : this(new FileSystem()) { }
+    public VerifiedSourceDirectories(IFileSystem fileSystem)
     {
         FileSystem = fileSystem;
     }

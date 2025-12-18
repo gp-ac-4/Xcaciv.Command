@@ -28,11 +28,13 @@ namespace Xcaciv.Command.Tests.TestImpementations
         /// Command Manager test constructor
         /// </summary>
         /// <param name="packageBinearyDirectories"></param>
-        public CommandControllerTestHarness(IVerfiedSourceDirectories packageBinearyDirectories) : base(packageBinearyDirectories) { }
+        public CommandControllerTestHarness(IVerifiedSourceDirectories packageBinearyDirectories) : base(packageBinearyDirectories) { }
 
         internal Dictionary<string, ICommandDescription> GetCommands()
         {
-            return this.Commands;
+            return CommandRegistry
+                .GetAllCommands()
+                .ToDictionary(description => description.BaseCommand, description => description);
         }
     }
 }

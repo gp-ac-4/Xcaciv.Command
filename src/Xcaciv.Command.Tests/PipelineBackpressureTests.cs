@@ -32,7 +32,7 @@ namespace Xcaciv.Command.Tests
 
             // Assert
             Assert.Equal(10_000, config.MaxChannelQueueSize);
-            Assert.Equal(PipelineBackpressureMode.DropOldest, config.BackpressureMode);
+            Assert.Equal(PipelineBackpressureMode.Block, config.BackpressureMode);
             Assert.Equal(0, config.ExecutionTimeoutSeconds);
         }
 
@@ -331,7 +331,7 @@ namespace Xcaciv.Command.Tests
             return string.Empty;
         }
 
-        public override async IAsyncEnumerable<string> Main(IIoContext ioContext, IEnvironmentContext env)
+        public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {
             for (int i = 0; i < _itemCount; i++)
             {
@@ -340,7 +340,7 @@ namespace Xcaciv.Command.Tests
                     await Task.Delay(_delayMs);
                 }
 
-                yield return $"Item-{i}";
+                yield return CommandResult<string>.Success($"Item-{i}");
             }
         }
     }
@@ -371,7 +371,7 @@ namespace Xcaciv.Command.Tests
             return pipedChunk;
         }
 
-        public override async IAsyncEnumerable<string> Main(IIoContext ioContext, IEnvironmentContext env)
+        public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {
             if (ioContext.HasPipedInput)
             {
@@ -382,7 +382,7 @@ namespace Xcaciv.Command.Tests
                     // Simulate slow processing
                     await Task.Delay(_delayMs);
                     
-                    yield return HandlePipedChunk(chunk, ioContext.Parameters, env);
+                    yield return CommandResult<string>.Success(HandlePipedChunk(chunk, ioContext.Parameters, env));
                 }
             }
         }

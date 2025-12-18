@@ -203,7 +203,7 @@ namespace Xcaciv.Command.Tests
         }
 
         [Fact]
-        public void EncodersShouldBeThreadSafe()
+        public async Task EncodersShouldBeThreadSafe()
         {
             // Arrange
             var encoder = new HtmlEncoder();
@@ -214,7 +214,7 @@ namespace Xcaciv.Command.Tests
             var tasks = Enumerable.Range(0, 100)
                 .Select(_ => Task.Run(() => outputs.Add(encoder.Encode(input))))
                 .ToArray();
-            Task.WaitAll(tasks);
+            await Task.WhenAll(tasks);
 
             // Assert
             Assert.Equal(100, outputs.Count);

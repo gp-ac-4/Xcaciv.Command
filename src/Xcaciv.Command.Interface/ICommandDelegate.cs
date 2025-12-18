@@ -25,7 +25,7 @@ namespace Xcaciv.Command.Interface
         /// </summary>
         /// <param name="ioContext">The IO context for input/output and parameter access.</param>
         /// <param name="env">The environment context for variable access (isolated child context if environment-modifying).</param>
-        /// <returns>An async enumerable of output strings. Each string is output as a separate chunk.</returns>
+        /// <returns>An async enumerable of result objects. Successful results carry output chunks; failures describe errors.</returns>
         /// <remarks>
         /// Implementations should yield output via "yield return" or async enumeration.
         /// Output supports pipelining: if part of a piped command sequence, output is sent
@@ -35,7 +35,7 @@ namespace Xcaciv.Command.Interface
         /// Changes to this context are not reflected in the parent unless the command
         /// has ModifiesEnvironment=true on its CommandDescription.
         /// </remarks>
-        IAsyncEnumerable<string> Main(IIoContext ioContext, IEnvironmentContext env);
+        IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env);
 
         /// <summary>
         /// Outputs detailed usage instructions for the command.
