@@ -15,7 +15,7 @@ namespace Xcaciv.Command.Commands
         public override string HandleExecution(string[] parameters, IEnvironmentContext env)
         {
             var values = String.Empty;
-            foreach (var valuePair in env.GetEnvinronment())
+            foreach (var valuePair in env.GetEnvironment())
             {
                 values += @$"{valuePair.Key} = {valuePair.Value}\n";
             }
@@ -25,7 +25,7 @@ namespace Xcaciv.Command.Commands
         public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
         {
             var values = String.Empty;
-            foreach (var valuePair in env.GetEnvinronment())
+            foreach (var valuePair in env.GetEnvironment())
             {
                 values += @$"{valuePair.Key} = {valuePair.Value}\n";
             }

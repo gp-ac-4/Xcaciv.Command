@@ -39,7 +39,7 @@ public class CommandRegistry : ICommandRegistry
         if (Attribute.GetCustomAttribute(commandType, typeof(CommandRegisterAttribute)) is not CommandRegisterAttribute)
         {
             Trace.WriteLine(
-                $"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
+                $"{commandType.FullName} implements ICommandDelegate but does not have CommandRegisterAttribute. Unable to automatically register.");
             return;
         }
 

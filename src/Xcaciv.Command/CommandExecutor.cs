@@ -114,7 +114,12 @@ public class CommandExecutor : ICommandExecutor
         }
         catch (Exception ex)
         {
-            await context.OutputChunk(ex.Message).ConfigureAwait(false);
+            await context.AddTraceMessage(
+                $"Error getting help for command '{command}': {ex}").ConfigureAwait(false);
+            var exceptionTypeName = ex.GetType().Name;
+            await context.OutputChunk(
+                $"Error getting help for command '{command}' ({exceptionTypeName}: {ex.Message}). See trace for more details.")
+                .ConfigureAwait(false);
         }
     }
 
@@ -166,7 +171,7 @@ public class CommandExecutor : ICommandExecutor
 
                 if (commandDescription.ModifiesEnvironment && childEnv.HasChanged)
                 {
-                    environmentContext.UpdateEnvironment(childEnv.GetEnvinronment());
+                    environmentContext.UpdateEnvironment(childEnv.GetEnvironment());
                 }
             }
 
