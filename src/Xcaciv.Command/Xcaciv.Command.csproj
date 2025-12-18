@@ -33,12 +33,6 @@
   </ItemGroup>
   
   <ItemGroup>
-    <None Update="readme.md">
-      <Pack>True</Pack>
-      <PackagePath>readme.md</PackagePath>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="readme.md" Pack="True" PackagePath="readme.md" />
   </ItemGroup>
 
