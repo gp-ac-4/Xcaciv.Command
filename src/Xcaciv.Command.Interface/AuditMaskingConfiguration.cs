@@ -105,26 +105,19 @@ public sealed class AuditMaskingConfiguration
         var masked = new string[parameters.Length];
         for (int i = 0; i < parameters.Length; i++)
         {
-            var param = parameters[i];
+            var parameterValue = parameters[i];
             // Check if parameter looks like --name=value or -name value
-            if (param.StartsWith("--") || param.StartsWith("-"))
+            if (parameterValue.StartsWith("--") || parameterValue.StartsWith("-"))
             {
-                var parts = param.Split('=', 2);
-                var paramName = parts[0].TrimStart('-');
-                if (ShouldRedact(paramName))
-                {
-                    masked[i] = parts.Length == 2 
-                        ? $"{parts[0]}={RedactionPlaceholder}" 
-                        : param;
-                }
-                else
-                {
-                    masked[i] = param;
-                }
+                var parts = parameterValue.Split('=', 2);
+                var parameterName = parts[0].TrimStart('-');
+                masked[i] = ShouldRedact(parameterName) && parts.Length == 2
+                    ? $"{parts[0]}={RedactionPlaceholder}"
+                    : parameterValue;
             }
             else
             {
-                masked[i] = param;
+                masked[i] = parameterValue;
             }
         }
         return masked;
