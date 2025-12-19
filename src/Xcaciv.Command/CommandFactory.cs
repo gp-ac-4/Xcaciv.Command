@@ -81,17 +81,22 @@ public class CommandFactory : ICommandFactory
                 ? Path.GetDirectoryName(packagePath) ?? Directory.GetCurrentDirectory()
                 : ".";
 
+            // Enforce strict policy - NOTE this is not effective in Loader v2.1.0 due to limitations. Better enforcement in future versions.
+            var effectivePolicy = _securityConfiguration.AllowReflectionEmit
+                ? _securityConfiguration.SecurityPolicy
+                : AssemblySecurityPolicy.Strict;
+
             using var context = new AssemblyContext(
                 packagePath,
                 basePathRestriction: basePathRestriction,
-                securityPolicy: _securityConfiguration.SecurityPolicy);
+                securityPolicy: effectivePolicy);
             return context.CreateInstance<ICommandDelegate>(fullTypeName);
         }
         catch (SecurityException ex)
         {
             throw new InvalidOperationException(
                 $"Security violation loading command [{fullTypeName}] from [{packagePath}]: " +
-                $"Policy={_securityConfiguration.SecurityPolicy}, " +
+                $"Policy={( _securityConfiguration.AllowReflectionEmit ? _securityConfiguration.SecurityPolicy : AssemblySecurityPolicy.Strict )}, " +
                 $"PathRestriction={_securityConfiguration.EnforceBasePathRestriction}. " +
                 $"Details: {ex.Message}", ex);
         }

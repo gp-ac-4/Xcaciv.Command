@@ -2,7 +2,7 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <AssemblyName>Xcaciv.Command</AssemblyName>
     <RootNamespace>Xcaciv.Command</RootNamespace>
     <IsPublishable>True</IsPublishable>
@@ -29,11 +29,6 @@
     <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj" />
     <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
     <ProjectReference Include="..\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj" />
-  </ItemGroup>
-
-  <!-- Exclude optional DI adapter file from core build to keep DI-agnostic -->
-  <ItemGroup>
-    <Compile Remove="Extensions\ServiceCollectionExtensions.cs" />
   </ItemGroup>
   
   <ItemGroup>
