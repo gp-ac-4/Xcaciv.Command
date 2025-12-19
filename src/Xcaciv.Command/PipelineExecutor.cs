@@ -39,7 +39,7 @@ public class PipelineExecutor : IPipelineExecutor
         var tasks = new List<Task>();
         Channel<string>? pipeChannel = null;
 
-        foreach (var command in commandLine.Split('|'))
+        foreach (var command in commandLine.Split(CommandSyntax.PipelineDelimiter))
         {
             var commandName = CommandDescription.GetValidCommandName(command).ToString();
             var args = CommandDescription.GetArgumentsFromCommandline(command);
@@ -72,11 +72,13 @@ public class PipelineExecutor : IPipelineExecutor
 
         async Task RunStageInternal()
         {
+            await childContext.AddTraceMessage($"Pipeline stage start: {commandName}").ConfigureAwait(false);
             await using (childContext)
             {
                 await executeCommand(commandName, childContext, environmentContext).ConfigureAwait(false);
                 await childContext.Complete(null).ConfigureAwait(false);
             }
+            await childContext.AddTraceMessage($"Pipeline stage complete: {commandName}").ConfigureAwait(false);
         }
     }
 

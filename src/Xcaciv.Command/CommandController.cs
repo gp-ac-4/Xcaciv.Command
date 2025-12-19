@@ -24,8 +24,6 @@ namespace Xcaciv.Command;
 /// </remarks>
 public class CommandController : Interface.ICommandController
 {
-    protected const string PIPELINE_CHAR = "|";
-
     private readonly ICommandRegistry _commandRegistry;
     private readonly ICommandLoader _commandLoader;
     private readonly IPipelineExecutor _pipelineExecutor;
@@ -224,7 +222,7 @@ public class CommandController : Interface.ICommandController
 
         ioContext.SetOutputEncoder(_outputEncoder);
 
-        if (commandLine.Contains(PIPELINE_CHAR))
+        if (commandLine.IndexOf(CommandSyntax.PipelineDelimiter) >= 0)
         {
             await _pipelineExecutor.ExecuteAsync(commandLine, ioContext, env, ExecuteCommandInternal).ConfigureAwait(false);
         }
