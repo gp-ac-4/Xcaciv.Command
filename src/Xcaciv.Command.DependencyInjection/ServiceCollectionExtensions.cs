@@ -64,20 +64,20 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection WithAuditLogger<T>(this IServiceCollection services)
         where T : class, IAuditLogger
     {
-        services.AddSingleton<IAuditLogger, T>();
+        services.Replace(ServiceDescriptor.Singleton<IAuditLogger, T>());
         return services;
     }
 
     public static IServiceCollection WithStructuredAuditLogging(this IServiceCollection services)
     {
-        services.AddSingleton<IAuditLogger, StructuredAuditLogger>();
+        services.Replace(ServiceDescriptor.Singleton<IAuditLogger, StructuredAuditLogger>());
         return services;
     }
 
     public static IServiceCollection WithOutputEncoder<T>(this IServiceCollection services)
         where T : class, IOutputEncoder
     {
-        services.AddSingleton<IOutputEncoder, T>();
+        services.Replace(ServiceDescriptor.Singleton<IOutputEncoder, T>());
         return services;
     }
 

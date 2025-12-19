@@ -99,7 +99,7 @@ public class HelpService : IHelpService
             // Use prototype from attribute or generated one
             if (baseCommand.Prototype.Equals("todo", StringComparison.OrdinalIgnoreCase))
             {
-                builder.AppendLine(prototypeBuilder.ToString());
+                builder.Append(prototypeBuilder).AppendLine();
             }
             else
             {
@@ -108,7 +108,7 @@ public class HelpService : IHelpService
 
             builder.AppendLine();
             builder.AppendLine("Options:");
-            builder.AppendLine(parameterBuilder.ToString());
+            builder.Append(parameterBuilder).AppendLine();
         }
 
         // Remarks section
@@ -137,6 +137,22 @@ public class HelpService : IHelpService
 
         // Get the command type using the cache to avoid repeated assembly loads
         var commandType = GetCommandType(commandDescription.FullTypeName, commandDescription.PackageDescription?.FullPath);
+                
+        // If Type.GetType fails (common for plugin types), try loading from assembly
+        string assemblyLoadError = null;
+        if (commandType == null && !string.IsNullOrEmpty(commandDescription.PackageDescription?.FullPath))
+        {
+            try
+            {
+                var assembly = System.Reflection.Assembly.LoadFrom(commandDescription.PackageDescription.FullPath);
+                commandType = assembly.GetType(commandDescription.FullTypeName);
+            }
+            catch (Exception ex)
+            {
+                // Capture the error to include in diagnostic message
+                assemblyLoadError = $"AssemblyLoadError: {ex.GetType().Name}";
+            }
+        }
 
         if (commandType != null)
         {
@@ -155,6 +171,12 @@ public class HelpService : IHelpService
             }
         }
 
+        // If assembly load failed, include diagnostic information
+        if (assemblyLoadError != null)
+        {
+            return $"{commandDescription.BaseCommand,-12} [Type info unavailable: {assemblyLoadError}]";
+        }
+        
         return $"{commandDescription.BaseCommand,-12} [No description available]";
     }
 
