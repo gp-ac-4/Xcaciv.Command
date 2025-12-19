@@ -117,11 +117,22 @@ public class PipelineExecutor : IPipelineExecutor
                     await executeCommand(commandName, childContext, environmentContext, stageCts.Token).ConfigureAwait(false);
                     await childContext.Complete(null).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) when (stageCts.Token.IsCancellationRequested && configuration.StageTimeoutSeconds > 0)
+                catch (OperationCanceledException) when (stageCts.Token.IsCancellationRequested)
                 {
-                    // Timeout occurred on this stage
-                    await childContext.AddTraceMessage($"Pipeline stage timeout: {commandName} (exceeded {configuration.StageTimeoutSeconds}s)").ConfigureAwait(false);
-                    await childContext.Complete($"Stage '{commandName}' exceeded timeout of {configuration.StageTimeoutSeconds} seconds").ConfigureAwait(false);
+                    // Determine if this was a stage timeout or parent cancellation
+                    if (!cancellationToken.IsCancellationRequested && configuration.StageTimeoutSeconds > 0)
+                    {
+                        // Stage timeout occurred
+                        await childContext.AddTraceMessage($"Pipeline stage timeout: {commandName} (exceeded {configuration.StageTimeoutSeconds}s)").ConfigureAwait(false);
+                        await childContext.Complete($"Stage '{commandName}' exceeded timeout of {configuration.StageTimeoutSeconds} seconds").ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        // Parent cancellation - complete gracefully without error message
+                        await childContext.AddTraceMessage($"Pipeline stage cancelled: {commandName}").ConfigureAwait(false);
+                        await childContext.Complete(null).ConfigureAwait(false);
+                        throw; // Re-throw to propagate cancellation
+                    }
                 }
             }
         }

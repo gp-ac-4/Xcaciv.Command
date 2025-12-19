@@ -178,4 +178,90 @@ public class PipelineChannelCompletionTests
             }
         }
     }
+
+    [Fact]
+    public async Task Pipeline_GracefullyHandlesParentCancellation()
+    {
+        var pipelineExecutor = new PipelineExecutor();
+        var environmentContext = new EnvironmentContext();
+        var rootContext = new TestTextIo();
+        var commandStarted = new TaskCompletionSource<bool>();
+        var cancellationRequested = new TaskCompletionSource<bool>();
+
+        var commandFactories = new Dictionary<string, Func<ICommandDelegate>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["SLOWCOMMAND"] = () => new SlowCommand(commandStarted, cancellationRequested)
+        };
+
+        using var cts = new CancellationTokenSource();
+        
+        var runTask = pipelineExecutor.ExecuteAsync(
+            "SLOWCOMMAND",
+            rootContext,
+            environmentContext,
+            (name, ctx, env, ct) => ExecuteCommandWithCancellationAsync(name, ctx, env, ct, commandFactories),
+            cts.Token);
+
+        // Wait for command to start
+        await commandStarted.Task;
+        
+        // Cancel the operation
+        cts.Cancel();
+        cancellationRequested.SetResult(true);
+
+        // Verify that cancellation is propagated
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => await runTask);
+    }
+
+    private static async Task ExecuteCommandWithCancellationAsync(
+        string commandName,
+        IIoContext ioContext,
+        IEnvironmentContext environmentContext,
+        CancellationToken cancellationToken,
+        IDictionary<string, Func<ICommandDelegate>> commandFactories)
+    {
+        if (!commandFactories.TryGetValue(commandName, out var factory))
+        {
+            throw new InvalidOperationException($"Command [{commandName}] is not registered in the test harness.");
+        }
+
+        await using var command = factory();
+        await foreach (var result in command.Main(ioContext, environmentContext).WithCancellation(cancellationToken))
+        {
+            if (result.IsSuccess && !string.IsNullOrEmpty(result.Output))
+            {
+                await ioContext.OutputChunk(result.Output);
+            }
+        }
+    }
+
+    [CommandRegister("SLOWCOMMAND", "Command that waits for cancellation")]
+    private sealed class SlowCommand : AbstractCommand
+    {
+        private readonly TaskCompletionSource<bool> _commandStarted;
+        private readonly TaskCompletionSource<bool> _cancellationRequested;
+
+        public SlowCommand(TaskCompletionSource<bool> commandStarted, TaskCompletionSource<bool> cancellationRequested)
+        {
+            _commandStarted = commandStarted;
+            _cancellationRequested = cancellationRequested;
+        }
+
+        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env) => pipedChunk;
+
+        public override string HandleExecution(string[] parameters, IEnvironmentContext env) => string.Empty;
+
+        public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
+        {
+            _commandStarted.SetResult(true);
+            
+            // Wait for cancellation signal
+            await _cancellationRequested.Task;
+            
+            // Small delay to ensure cancellation is processed
+            await Task.Delay(50);
+            
+            yield return CommandResult<string>.Success("Should not reach here");
+        }
+    }
 }
