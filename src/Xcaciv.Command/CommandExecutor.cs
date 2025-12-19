@@ -115,9 +115,9 @@ public class CommandExecutor : ICommandExecutor
                 }
 
                 // Show each sub-command
-                foreach (var subCommand in description.SubCommands)
+                var subHelpLines = description.SubCommands.Select(subCommand => _helpService.BuildOneLineHelp(subCommand.Value));
+                foreach (var subHelpLine in subHelpLines)
                 {
-                    var subHelpLine = _helpService.BuildOneLineHelp(subCommand.Value);
                     await context.OutputChunk(subHelpLine).ConfigureAwait(false);
                 }
             }
