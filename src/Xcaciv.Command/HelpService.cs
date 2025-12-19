@@ -136,6 +136,7 @@ public class HelpService : IHelpService
         var commandType = Type.GetType(commandDescription.FullTypeName);
         
         // If Type.GetType fails (common for plugin types), try loading from assembly
+        string assemblyLoadError = null;
         if (commandType == null && !string.IsNullOrEmpty(commandDescription.PackageDescription?.FullPath))
         {
             try
@@ -143,9 +144,10 @@ public class HelpService : IHelpService
                 var assembly = System.Reflection.Assembly.LoadFrom(commandDescription.PackageDescription.FullPath);
                 commandType = assembly.GetType(commandDescription.FullTypeName);
             }
-            catch
+            catch (Exception ex)
             {
-                // If assembly load fails, fall through to default
+                // Capture the error to include in diagnostic message
+                assemblyLoadError = $"AssemblyLoadError: {ex.GetType().Name}";
             }
         }
 
@@ -166,6 +168,12 @@ public class HelpService : IHelpService
             }
         }
 
+        // If assembly load failed, include diagnostic information
+        if (assemblyLoadError != null)
+        {
+            return $"{commandDescription.BaseCommand,-12} [Type info unavailable: {assemblyLoadError}]";
+        }
+        
         return $"{commandDescription.BaseCommand,-12} [No description available]";
     }
 
