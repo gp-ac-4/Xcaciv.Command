@@ -213,8 +213,9 @@ public class HelpService : IHelpService
                         assemblyPath,
                         basePathRestriction: basePathRestriction,
                         securityPolicy: AssemblySecurityPolicy.Strict);
-                    
-                    type = context.GetType(fullTypeName);
+
+                    var loadedTypes = context.GetTypes() ?? Enumerable.Empty<Type>();
+                    type = loadedTypes.FirstOrDefault(t => t.FullName == fullTypeName);
                 }
                 catch (SecurityException ex)
                 {
