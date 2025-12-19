@@ -9,6 +9,8 @@ namespace Xcaciv.Command;
 
 /// <summary>
 /// In-memory registry that tracks available commands and their metadata.
+/// Note: This registry is not thread-safe for concurrent writes. Register commands during
+/// application startup or guard Add operations externally if multi-threaded registration is required.
 /// </summary>
 public class CommandRegistry : ICommandRegistry
 {

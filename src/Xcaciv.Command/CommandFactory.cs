@@ -29,9 +29,8 @@ public class CommandFactory : ICommandFactory
             commandDescription.SubCommands.TryGetValue(ioContext.Parameters[0].ToUpper(), out var subCommandDescription) &&
             subCommandDescription != null)
         {
-            // Note: Blocking on async operation here. SetParameters is typically fast (parameter array manipulation).
-            // This is required because CreateCommand must be synchronous to match ICommandFactory interface.
-            // To avoid potential deadlocks, SetParameters should not perform long-running operations.
+            // Contract: SetParameters must be fast and non-blocking. This call uses ConfigureAwait(false)
+            // and synchronous wait due to ICommandFactory being synchronous.
             ioContext.SetParameters(ioContext.Parameters[1..]).ConfigureAwait(false).GetAwaiter().GetResult();
             return CreateCommand(subCommandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
         }

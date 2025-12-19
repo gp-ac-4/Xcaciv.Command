@@ -2,7 +2,7 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.5.18</Version>
+    <Version>1.6.0</Version>
     <AssemblyName>Xcaciv.Command</AssemblyName>
     <RootNamespace>Xcaciv.Command</RootNamespace>
     <IsPublishable>True</IsPublishable>
@@ -25,17 +25,17 @@
   </ItemGroup>
   
   <ItemGroup>
-	  <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj">
-		  <IncludeAssets>Xcaciv.Command.FileLoader.dll</IncludeAssets>
-	  </ProjectReference>
-	  <ProjectReference Packge="True" Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
-	  <ProjectReference Packge="True" Include="..\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj" />
+    <!-- Project references included for compilation; packaging handled by CopyProjectReferencesToPackage target -->
+    <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj" />
+    <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
+    <ProjectReference Include="..\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj" />
   </ItemGroup>
   
   <ItemGroup>
     <None Include="readme.md" Pack="True" PackagePath="readme.md" />
   </ItemGroup>
 
+  <!-- Ensure outputs of ProjectReference dependencies are copied into the package build output -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
