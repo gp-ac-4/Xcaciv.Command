@@ -39,4 +39,17 @@ public interface IAuditLogger
         string? newValue,
         string changedBy,
         DateTime changedAt);
+
+    /// <summary>
+    /// Log a structured audit event with correlation ID and rich metadata.
+    /// This method should be preferred over LogCommandExecution for new implementations.
+    /// </summary>
+    /// <param name="auditEvent">The structured audit event to log.</param>
+    void LogAuditEvent(AuditEvent auditEvent);
+
+    /// <summary>
+    /// Gets or sets the masking configuration for parameter redaction in audit logs.
+    /// If null, no masking is applied.
+    /// </summary>
+    AuditMaskingConfiguration? MaskingConfiguration { get; set; }
 }

@@ -170,5 +170,24 @@ namespace Xcaciv.Command.Interface
         /// This is optional; if not called, the context uses the default encoder (typically NoOpEncoder).
         /// </remarks>
         void SetOutputEncoder(IOutputEncoder encoder);
+
+        /// <summary>
+        /// Gets the pipeline stage number (1-based) if this command is part of a pipeline.
+        /// Returns null for standalone command execution.
+        /// </summary>
+        int? PipelineStage { get; }
+
+        /// <summary>
+        /// Gets the total number of stages in the pipeline if this command is part of one.
+        /// Returns null for standalone command execution.
+        /// </summary>
+        int? PipelineTotalStages { get; }
+
+        /// <summary>
+        /// Sets pipeline stage metadata for audit logging and diagnostics.
+        /// </summary>
+        /// <param name="stage">The 1-based stage number.</param>
+        /// <param name="totalStages">The total number of stages in the pipeline.</param>
+        void SetPipelineStage(int stage, int totalStages);
     }
 }

@@ -39,11 +39,18 @@ public class PipelineExecutor : IPipelineExecutor
         var tasks = new List<Task>();
         Channel<string>? pipeChannel = null;
 
-        foreach (var command in commandLine.Split(CommandSyntax.PipelineDelimiter))
+        var commands = commandLine.Split(CommandSyntax.PipelineDelimiter);
+        var totalStages = commands.Length;
+        var currentStage = 1;
+
+        foreach (var command in commands)
         {
             var commandName = CommandDescription.GetValidCommandName(command).ToString();
             var args = CommandDescription.GetArgumentsFromCommandline(command);
             var childContext = await ioContext.GetChild(args).ConfigureAwait(false);
+
+            // Set pipeline stage metadata for audit logging
+            childContext.SetPipelineStage(currentStage, totalStages);
 
             if (pipeChannel != null)
             {
@@ -57,6 +64,7 @@ public class PipelineExecutor : IPipelineExecutor
             childContext.SetOutputPipe(pipeChannel.Writer);
 
             tasks.Add(RunStageAsync(commandName, childContext, environmentContext, executeCommand));
+            currentStage++;
         }
 
         return (tasks, pipeChannel);

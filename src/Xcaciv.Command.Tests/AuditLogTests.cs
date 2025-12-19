@@ -48,12 +48,14 @@ namespace Xcaciv.Command.Tests
             // Act
             await controller.Run("say hello", ioContext, env);
 
-            // Assert
-            Assert.NotEmpty(logger.ExecutionLogs);
-            var log = logger.ExecutionLogs[0];
-            Assert.Equal("SAY", log.CommandName);
-            Assert.Equal("hello", log.Parameters[0]);
-            Assert.True(log.Success);
+            // Assert - Check new AuditEvents structure
+            Assert.NotEmpty(logger.AuditEvents);
+            var auditEvent = logger.AuditEvents[0];
+            Assert.Equal("SAY", auditEvent.CommandName);
+            Assert.Equal("hello", auditEvent.Parameters[0]);
+            Assert.True(auditEvent.Success);
+            Assert.NotNull(auditEvent.CorrelationId); // New in v2.0
+            Assert.NotNull(auditEvent.PackageOrigin); // New in v2.0
         }
 
         /// <summary>
@@ -74,10 +76,10 @@ namespace Xcaciv.Command.Tests
             await controller.Run("say test", ioContext, env);
 
             // Assert
-            Assert.NotEmpty(logger.ExecutionLogs);
-            var log = logger.ExecutionLogs[0];
-            Assert.True(log.Duration >= TimeSpan.Zero);
-            Assert.NotEqual(default(DateTime), log.ExecutedAt);
+            Assert.NotEmpty(logger.AuditEvents);
+            var auditEvent = logger.AuditEvents[0];
+            Assert.True(auditEvent.Duration >= TimeSpan.Zero);
+            Assert.NotEqual(default(DateTime), auditEvent.ExecutedAt);
         }
 
         /// <summary>
@@ -101,10 +103,10 @@ namespace Xcaciv.Command.Tests
             var afterTime = DateTime.UtcNow;
 
             // Assert
-            Assert.NotEmpty(logger.ExecutionLogs);
-            var log = logger.ExecutionLogs[0];
-            Assert.True(log.ExecutedAt >= beforeTime);
-            Assert.True(log.ExecutedAt <= afterTime);
+            Assert.NotEmpty(logger.AuditEvents);
+            var auditEvent = logger.AuditEvents[0];
+            Assert.True(auditEvent.ExecutedAt >= beforeTime);
+            Assert.True(auditEvent.ExecutedAt <= afterTime);
         }
 
         /// <summary>
@@ -177,10 +179,10 @@ namespace Xcaciv.Command.Tests
             await controller.Run("say test1 test2", ioContext, env);
 
             // Assert
-            Assert.NotEmpty(logger.ExecutionLogs);
-            var log = logger.ExecutionLogs[0];
-            Assert.NotNull(log.Parameters);
-            Assert.Equal("SAY", log.CommandName);
+            Assert.NotEmpty(logger.AuditEvents);
+            var auditEvent = logger.AuditEvents[0];
+            Assert.NotNull(auditEvent.Parameters);
+            Assert.Equal("SAY", auditEvent.CommandName);
         }
 
         /// <summary>
@@ -207,10 +209,10 @@ namespace Xcaciv.Command.Tests
             await controller.Run("say third", ioContext3, env);
 
             // Assert
-            Assert.Equal(3, logger.ExecutionLogs.Count);
-            Assert.Equal("SAY", logger.ExecutionLogs[0].CommandName);
-            Assert.Equal("SAY", logger.ExecutionLogs[1].CommandName);
-            Assert.Equal("SAY", logger.ExecutionLogs[2].CommandName);
+            Assert.Equal(3, logger.AuditEvents.Count);
+            Assert.Equal("SAY", logger.AuditEvents[0].CommandName);
+            Assert.Equal("SAY", logger.AuditEvents[1].CommandName);
+            Assert.Equal("SAY", logger.AuditEvents[2].CommandName);
         }
     }
 }

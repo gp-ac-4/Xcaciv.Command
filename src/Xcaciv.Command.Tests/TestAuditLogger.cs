@@ -13,6 +13,9 @@ namespace Xcaciv.Command.Tests
         {
             public List<CommandExecutionLog> ExecutionLogs { get; } = new();
             public List<EnvironmentChangeLog> EnvironmentLogs { get; } = new();
+            public List<AuditEvent> AuditEvents { get; } = new();
+
+            public AuditMaskingConfiguration? MaskingConfiguration { get; set; }
 
             public void LogCommandExecution(
                 string commandName,
@@ -48,6 +51,11 @@ namespace Xcaciv.Command.Tests
                     ChangedBy = changedBy,
                     ChangedAt = changedAt
                 });
+            }
+
+            public void LogAuditEvent(AuditEvent auditEvent)
+            {
+                AuditEvents.Add(auditEvent);
             }
 
             public class CommandExecutionLog

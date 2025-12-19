@@ -193,13 +193,21 @@ public class CommandExecutor : ICommandExecutor
             }
 
             var duration = DateTime.UtcNow - startTime;
-            _auditLogger?.LogCommandExecution(
-                commandKey,
-                ioContext.Parameters ?? Array.Empty<string>(),
-                startTime,
-                duration,
-                success,
-                errorMessage);
+
+            // Emit structured audit event with package origin, correlation ID, and pipeline stage info
+            var auditEvent = new AuditEvent
+            {
+                CommandName = commandKey,
+                PackageOrigin = commandDescription?.PackageDescription?.FullPath ?? "built-in",
+                Parameters = ioContext.Parameters ?? Array.Empty<string>(),
+                ExecutedAt = startTime,
+                Duration = duration,
+                Success = success,
+                ErrorMessage = errorMessage,
+                PipelineStage = ioContext.PipelineStage,
+                PipelineTotalStages = ioContext.PipelineTotalStages
+            };
+            _auditLogger?.LogAuditEvent(auditEvent);
         }
     }
 
