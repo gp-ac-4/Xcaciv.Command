@@ -178,11 +178,16 @@ public class HelpService : IHelpService
     /// <returns>The Type if found, otherwise null.</returns>
     private Type? GetCommandType(string fullTypeName, string? assemblyPath)
     {
+        // Create composite key that includes assembly path to handle same type names in different assemblies
+        var cacheKey = string.IsNullOrEmpty(assemblyPath) 
+            ? fullTypeName 
+            : $"{fullTypeName}|{assemblyPath}";
+        
         // Use GetOrAdd to atomically check cache and load if needed
-        return _typeCache.GetOrAdd(fullTypeName, typeName =>
+        return _typeCache.GetOrAdd(cacheKey, _ =>
         {
             // First try Type.GetType (works for built-in types)
-            var type = Type.GetType(typeName);
+            var type = Type.GetType(fullTypeName);
             
             // If Type.GetType fails (common for plugin types), try loading from assembly
             if (type == null && !string.IsNullOrEmpty(assemblyPath))
@@ -190,7 +195,7 @@ public class HelpService : IHelpService
                 try
                 {
                     var assembly = System.Reflection.Assembly.LoadFrom(assemblyPath);
-                    type = assembly.GetType(typeName);
+                    type = assembly.GetType(fullTypeName);
                 }
                 catch
                 {
