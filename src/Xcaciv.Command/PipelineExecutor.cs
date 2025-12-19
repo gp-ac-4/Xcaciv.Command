@@ -54,7 +54,8 @@ public class PipelineExecutor : IPipelineExecutor
         var tasks = new List<Task>();
         Channel<string>? pipeChannel = null;
 
-        var commands = commandLine.Split(CommandSyntax.PipelineDelimiter);
+        // Use formal parser to handle quoted arguments, escapes, and delimiters
+        var commands = PipelineParser.ParsePipeline(commandLine);
         var totalStages = commands.Length;
         var currentStage = 1;
 
@@ -80,7 +81,7 @@ public class PipelineExecutor : IPipelineExecutor
             });
             childContext.SetOutputPipe(pipeChannel.Writer);
 
-            tasks.Add(RunStageAsync(commandName, childContext, environmentContext, executeCommand, cancellationToken));
+            tasks.Add(RunStageAsync(commandName, childContext, environmentContext, executeCommand, Configuration, cancellationToken));
             currentStage++;
         }
 
@@ -92,6 +93,7 @@ public class PipelineExecutor : IPipelineExecutor
         IIoContext childContext,
         IEnvironmentContext environmentContext,
         Func<string, IIoContext, IEnvironmentContext, CancellationToken, Task> executeCommand,
+        PipelineConfiguration configuration,
         CancellationToken cancellationToken)
     {
         return RunStageInternal();
@@ -102,8 +104,25 @@ public class PipelineExecutor : IPipelineExecutor
             await using (childContext)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                await executeCommand(commandName, childContext, environmentContext, cancellationToken).ConfigureAwait(false);
-                await childContext.Complete(null).ConfigureAwait(false);
+
+                // Create stage-specific timeout if configured
+                using var stageCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                if (configuration.StageTimeoutSeconds > 0)
+                {
+                    stageCts.CancelAfter(TimeSpan.FromSeconds(configuration.StageTimeoutSeconds));
+                }
+
+                try
+                {
+                    await executeCommand(commandName, childContext, environmentContext, stageCts.Token).ConfigureAwait(false);
+                    await childContext.Complete(null).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (stageCts.Token.IsCancellationRequested && configuration.StageTimeoutSeconds > 0)
+                {
+                    // Timeout occurred on this stage
+                    await childContext.AddTraceMessage($"Pipeline stage timeout: {commandName} (exceeded {configuration.StageTimeoutSeconds}s)").ConfigureAwait(false);
+                    await childContext.Complete($"Stage '{commandName}' exceeded timeout of {configuration.StageTimeoutSeconds} seconds").ConfigureAwait(false);
+                }
             }
             await childContext.AddTraceMessage($"Pipeline stage complete: {commandName}").ConfigureAwait(false);
         }
