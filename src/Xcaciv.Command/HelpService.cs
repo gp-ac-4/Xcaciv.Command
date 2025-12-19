@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Security;
 using System.Text;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
+using Xcaciv.Loader;
 
 namespace Xcaciv.Command;
 
@@ -211,17 +215,44 @@ public class HelpService : IHelpService
             // First try Type.GetType (works for built-in types)
             var type = Type.GetType(fullTypeName);
             
-            // If Type.GetType fails (common for plugin types), try loading from assembly
+            // If Type.GetType fails (common for plugin types), try loading from assembly using AssemblyContext
             if (type == null && !string.IsNullOrEmpty(assemblyPath))
             {
                 try
                 {
-                    var assembly = System.Reflection.Assembly.LoadFrom(assemblyPath);
-                    type = assembly.GetType(fullTypeName);
+                    // Use AssemblyContext to enforce security restrictions consistent with CommandFactory
+                    var basePathRestriction = Path.GetDirectoryName(assemblyPath) ?? Directory.GetCurrentDirectory();
+                    
+                    using var context = new AssemblyContext(
+                        assemblyPath,
+                        basePathRestriction: basePathRestriction,
+                        securityPolicy: AssemblySecurityPolicy.Strict);
+                    
+                    type = context.GetType(fullTypeName);
                 }
-                catch
+                catch (SecurityException ex)
                 {
-                    // If assembly load fails, return null (will be cached)
+                    // Log security violations for diagnostics
+                    Trace.WriteLine(
+                        $"Security violation loading type [{fullTypeName}] from [{assemblyPath}]: {ex.Message}");
+                }
+                catch (FileNotFoundException ex)
+                {
+                    // Log file not found for diagnostics
+                    Trace.WriteLine(
+                        $"Assembly not found for type [{fullTypeName}] at [{assemblyPath}]: {ex.Message}");
+                }
+                catch (FileLoadException ex)
+                {
+                    // Log file load issues for diagnostics
+                    Trace.WriteLine(
+                        $"Failed to load assembly for type [{fullTypeName}] from [{assemblyPath}]: {ex.Message}");
+                }
+                catch (BadImageFormatException ex)
+                {
+                    // Log bad image format for diagnostics
+                    Trace.WriteLine(
+                        $"Invalid assembly format for type [{fullTypeName}] at [{assemblyPath}]: {ex.Message}");
                 }
             }
             
