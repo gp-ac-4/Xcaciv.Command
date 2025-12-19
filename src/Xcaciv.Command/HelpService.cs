@@ -1,8 +1,13 @@
 using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Security;
 using System.Text;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
+using Xcaciv.Loader;
 
 namespace Xcaciv.Command;
 
@@ -12,6 +17,8 @@ namespace Xcaciv.Command;
 /// </summary>
 public class HelpService : IHelpService
 {
+    // Cache for loaded types to avoid repeated assembly loads during help generation
+    private readonly ConcurrentDictionary<string, Type?> _typeCache = new();
     public string BuildHelp(ICommandDelegate command, string[] parameters, IEnvironmentContext environment)
     {
         if (command == null) throw new ArgumentNullException(nameof(command));
@@ -132,24 +139,8 @@ public class HelpService : IHelpService
             return $"-\t{commandDescription.BaseCommand,-12} [Has sub-commands]";
         }
 
-        // Try to get the command type - first try Type.GetType (works for built-in types)
-        var commandType = Type.GetType(commandDescription.FullTypeName);
-        
-        // If Type.GetType fails (common for plugin types), try loading from assembly
-        string assemblyLoadError = null;
-        if (commandType == null && !string.IsNullOrEmpty(commandDescription.PackageDescription?.FullPath))
-        {
-            try
-            {
-                var assembly = System.Reflection.Assembly.LoadFrom(commandDescription.PackageDescription.FullPath);
-                commandType = assembly.GetType(commandDescription.FullTypeName);
-            }
-            catch (Exception ex)
-            {
-                // Capture the error to include in diagnostic message
-                assemblyLoadError = $"AssemblyLoadError: {ex.GetType().Name}";
-            }
-        }
+        // Get the command type using the cache to avoid repeated assembly loads
+        var commandType = GetCommandType(commandDescription.FullTypeName, commandDescription.PackageDescription?.FullPath);
 
         if (commandType != null)
         {
@@ -168,12 +159,6 @@ public class HelpService : IHelpService
             }
         }
 
-        // If assembly load failed, include diagnostic information
-        if (assemblyLoadError != null)
-        {
-            return $"{commandDescription.BaseCommand,-12} [Type info unavailable: {assemblyLoadError}]";
-        }
-        
         return $"{commandDescription.BaseCommand,-12} [No description available]";
     }
 
@@ -187,6 +172,78 @@ public class HelpService : IHelpService
         return parameters.Any(p => p.Equals("--HELP", StringComparison.OrdinalIgnoreCase) ||
                                    p.Equals("-?", StringComparison.OrdinalIgnoreCase) ||
                                    p.Equals("/?", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Gets or loads the Type for a command, using a cache to avoid repeated assembly loads.
+    /// </summary>
+    /// <param name="fullTypeName">The full type name of the command.</param>
+    /// <param name="assemblyPath">Optional assembly path for plugin types.</param>
+    /// <returns>The Type if found, otherwise null.</returns>
+    private Type? GetCommandType(string fullTypeName, string? assemblyPath)
+    {
+        // Create composite key that includes assembly path to handle same type names in different assemblies
+        var cacheKey = string.IsNullOrEmpty(assemblyPath) 
+            ? fullTypeName 
+            : $"{fullTypeName}|{assemblyPath}";
+        
+        // Use GetOrAdd to atomically check cache and load if needed
+        return _typeCache.GetOrAdd(cacheKey, _ =>
+        {
+            // First try Type.GetType (works for built-in types)
+            var type = Type.GetType(fullTypeName);
+            
+            // If Type.GetType fails (common for plugin types), try loading from assembly using AssemblyContext
+            if (type == null && !string.IsNullOrEmpty(assemblyPath))
+            {
+                try
+                {
+                    // Use AssemblyContext to enforce security restrictions consistent with CommandFactory
+                    var basePathRestriction = Path.GetDirectoryName(assemblyPath);
+                    
+                    // Only proceed if we have a valid directory path for security enforcement
+                    if (string.IsNullOrEmpty(basePathRestriction))
+                    {
+                        Trace.WriteLine(
+                            $"Cannot load type [{fullTypeName}] from [{assemblyPath}]: Invalid path for security enforcement");
+                        return type;
+                    }
+                    
+                    using var context = new AssemblyContext(
+                        assemblyPath,
+                        basePathRestriction: basePathRestriction,
+                        securityPolicy: AssemblySecurityPolicy.Strict);
+                    
+                    type = context.GetType(fullTypeName);
+                }
+                catch (SecurityException ex)
+                {
+                    // Log security violations for diagnostics
+                    Trace.WriteLine(
+                        $"Security violation loading type [{fullTypeName}] from [{assemblyPath}]: {ex.Message}");
+                }
+                catch (FileNotFoundException ex)
+                {
+                    // Log file not found for diagnostics
+                    Trace.WriteLine(
+                        $"Assembly not found for type [{fullTypeName}] at [{assemblyPath}]: {ex.Message}");
+                }
+                catch (FileLoadException ex)
+                {
+                    // Log file load issues for diagnostics
+                    Trace.WriteLine(
+                        $"Failed to load assembly for type [{fullTypeName}] from [{assemblyPath}]: {ex.Message}");
+                }
+                catch (BadImageFormatException ex)
+                {
+                    // Log bad image format for diagnostics
+                    Trace.WriteLine(
+                        $"Invalid assembly format for type [{fullTypeName}] at [{assemblyPath}]: {ex.Message}");
+                }
+            }
+            
+            return type;
+        });
     }
 
     private static CommandParameterOrderedAttribute[] GetOrderedParameters(Type commandType, bool hasPipedInput)
