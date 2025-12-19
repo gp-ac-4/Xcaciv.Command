@@ -38,6 +38,7 @@ public static class ServiceCollectionExtensions
 
         services.TryAddSingleton<IAuditLogger, NoOpAuditLogger>();
         services.TryAddSingleton<IOutputEncoder, NoOpEncoder>();
+        services.TryAddSingleton<IHelpService, HelpService>();
 
         services.TryAddSingleton<ICommandController, CommandController>();
 
