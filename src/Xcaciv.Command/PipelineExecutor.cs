@@ -120,15 +120,24 @@ public class PipelineExecutor : IPipelineExecutor
                 catch (OperationCanceledException) when (stageCts.Token.IsCancellationRequested)
                 {
                     // Determine if this was a stage timeout or parent cancellation
-                    if (!cancellationToken.IsCancellationRequested && configuration.StageTimeoutSeconds > 0)
+                    if (!cancellationToken.IsCancellationRequested)
                     {
-                        // Stage timeout occurred
-                        await childContext.AddTraceMessage($"Pipeline stage timeout: {commandName} (exceeded {configuration.StageTimeoutSeconds}s)").ConfigureAwait(false);
-                        await childContext.Complete($"Stage '{commandName}' exceeded timeout of {configuration.StageTimeoutSeconds} seconds").ConfigureAwait(false);
+                        // Stage-specific cancellation (timeout if configured)
+                        if (configuration.StageTimeoutSeconds > 0)
+                        {
+                            await childContext.AddTraceMessage($"Pipeline stage timeout: {commandName} (exceeded {configuration.StageTimeoutSeconds}s)").ConfigureAwait(false);
+                            await childContext.Complete($"Stage '{commandName}' exceeded timeout of {configuration.StageTimeoutSeconds} seconds").ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            // Stage cancelled but no timeout configured - treat as error
+                            await childContext.AddTraceMessage($"Pipeline stage cancelled unexpectedly: {commandName}").ConfigureAwait(false);
+                            await childContext.Complete($"Stage '{commandName}' was cancelled").ConfigureAwait(false);
+                        }
                     }
                     else
                     {
-                        // Parent cancellation - complete gracefully without error message
+                        // Parent cancellation - complete gracefully and propagate
                         await childContext.AddTraceMessage($"Pipeline stage cancelled: {commandName}").ConfigureAwait(false);
                         await childContext.Complete(null).ConfigureAwait(false);
                         throw; // Re-throw to propagate cancellation

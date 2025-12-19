@@ -258,9 +258,6 @@ public class PipelineChannelCompletionTests
             // Wait for cancellation signal
             await _cancellationRequested.Task;
             
-            // Small delay to ensure cancellation is processed
-            await Task.Delay(50);
-            
             yield return CommandResult<string>.Success("Should not reach here");
         }
     }
