@@ -46,20 +46,18 @@ public class CommandExecutor : ICommandExecutor
             }
 
             var parameters = ioContext.Parameters;
-            if (commandDescription.SubCommands.Count > 0 &&
-                parameters is { Length: > 0 } &&
-                parameters[0].Equals($"--{HelpCommand}", StringComparison.CurrentCultureIgnoreCase))
+            if (parameters is { Length: > 0 } && parameters[0].Equals($"--{HelpCommand}", StringComparison.CurrentCultureIgnoreCase))
             {
-                await OutputOneLineHelp(commandDescription, ioContext).ConfigureAwait(false);
-                return;
-            }
-
-            parameters = ioContext.Parameters;
-            if (parameters is { Length: > 0 } &&
-                parameters[0].Equals($"--{HelpCommand}", StringComparison.CurrentCultureIgnoreCase))
-            {
-                var commandInstance = _commandFactory.CreateCommand(commandDescription, ioContext);
-                await ioContext.OutputChunk(commandInstance.Help(ioContext.Parameters, environmentContext)).ConfigureAwait(false);
+                // For root commands with sub-commands, show one-line summaries; for leaf commands, show full help.
+                if (commandDescription.SubCommands.Count > 0)
+                {
+                    await OutputOneLineHelp(commandDescription, ioContext).ConfigureAwait(false);
+                }
+                else
+                {
+                    var commandInstance = _commandFactory.CreateCommand(commandDescription, ioContext);
+                    await ioContext.OutputChunk(commandInstance.Help(ioContext.Parameters, environmentContext)).ConfigureAwait(false);
+                }
                 return;
             }
 
