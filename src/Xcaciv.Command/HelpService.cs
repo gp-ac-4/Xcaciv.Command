@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using Xcaciv.Command.Interface;
@@ -12,6 +13,8 @@ namespace Xcaciv.Command;
 /// </summary>
 public class HelpService : IHelpService
 {
+    // Cache for loaded types to avoid repeated assembly loads during help generation
+    private readonly ConcurrentDictionary<string, Type?> _typeCache = new();
     public string BuildHelp(ICommandDelegate command, string[] parameters, IEnvironmentContext environment)
     {
         if (command == null) throw new ArgumentNullException(nameof(command));
@@ -132,22 +135,8 @@ public class HelpService : IHelpService
             return $"-\t{commandDescription.BaseCommand,-12} [Has sub-commands]";
         }
 
-        // Try to get the command type - first try Type.GetType (works for built-in types)
-        var commandType = Type.GetType(commandDescription.FullTypeName);
-        
-        // If Type.GetType fails (common for plugin types), try loading from assembly
-        if (commandType == null && !string.IsNullOrEmpty(commandDescription.PackageDescription?.FullPath))
-        {
-            try
-            {
-                var assembly = System.Reflection.Assembly.LoadFrom(commandDescription.PackageDescription.FullPath);
-                commandType = assembly.GetType(commandDescription.FullTypeName);
-            }
-            catch
-            {
-                // If assembly load fails, fall through to default
-            }
-        }
+        // Get the command type using the cache to avoid repeated assembly loads
+        var commandType = GetCommandType(commandDescription.FullTypeName, commandDescription.PackageDescription?.FullPath);
 
         if (commandType != null)
         {
@@ -179,6 +168,38 @@ public class HelpService : IHelpService
         return parameters.Any(p => p.Equals("--HELP", StringComparison.OrdinalIgnoreCase) ||
                                    p.Equals("-?", StringComparison.OrdinalIgnoreCase) ||
                                    p.Equals("/?", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Gets or loads the Type for a command, using a cache to avoid repeated assembly loads.
+    /// </summary>
+    /// <param name="fullTypeName">The full type name of the command.</param>
+    /// <param name="assemblyPath">Optional assembly path for plugin types.</param>
+    /// <returns>The Type if found, otherwise null.</returns>
+    private Type? GetCommandType(string fullTypeName, string? assemblyPath)
+    {
+        // Use GetOrAdd to atomically check cache and load if needed
+        return _typeCache.GetOrAdd(fullTypeName, typeName =>
+        {
+            // First try Type.GetType (works for built-in types)
+            var type = Type.GetType(typeName);
+            
+            // If Type.GetType fails (common for plugin types), try loading from assembly
+            if (type == null && !string.IsNullOrEmpty(assemblyPath))
+            {
+                try
+                {
+                    var assembly = System.Reflection.Assembly.LoadFrom(assemblyPath);
+                    type = assembly.GetType(typeName);
+                }
+                catch
+                {
+                    // If assembly load fails, return null (will be cached)
+                }
+            }
+            
+            return type;
+        });
     }
 
     private static CommandParameterOrderedAttribute[] GetOrderedParameters(Type commandType, bool hasPipedInput)
