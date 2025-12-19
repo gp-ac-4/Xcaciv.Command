@@ -76,12 +76,20 @@ Risk & Validation
 - Manual smoke checks: default commands, `--HELP` for root/leaf, a simple pipeline like `say a | say b`.
 
 Task Checklist
-- [ ] Phase 1: csproj cleanup
-- [ ] Phase 2: async/help flow simplification
-- [ ] Phase 3: pipeline constant + diagnostics
-- [ ] Phase 4: docs/comments + optional lock or docs in registry
-- [ ] Tests pass in CI and locally
+- [x] Phase 1: csproj cleanup
+- [x] Phase 2: async/help flow simplification
+- [x] Phase 3: pipeline constant + diagnostics
+- [x] Phase 4: docs/comments + optional lock or docs in registry
+- [x] Tests pass in CI and locally
 
 Notes for Future
 - Consider adding cancellation support in public APIs.
 - Evaluate masking strategy for sensitive parameters in audit logs.
+
+---
+Progress Update (v1.6.0)
+- Applied Phase 1: Cleaned `ProjectReference` metadata in `src/Xcaciv.Command/Xcaciv.Command.csproj` and added maintainer comments.
+- Applied Phase 2: Consolidated `--HELP` handling in `src/Xcaciv.Command/CommandExecutor.cs`; clarified sync help path in `CommandController` remarks; documented `SetParameters` sync contract in `CommandFactory`.
+- Applied Phase 3: Introduced `src/Xcaciv.Command.Interface/CommandSyntax.cs` and updated `CommandController` and `PipelineExecutor` to use the shared delimiter; added per-stage start/finish trace in `PipelineExecutor`.
+- Applied Phase 4: Documented `CommandRegistry` concurrency expectations; retained audit logging semantics and added notes.
+- Validation: Build succeeded. Test summary — total: 150, failed: 0, succeeded: 150, skipped: 0, duration: ~2.6s.
