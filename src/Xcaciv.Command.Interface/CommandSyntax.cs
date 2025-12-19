@@ -7,5 +7,8 @@ namespace Xcaciv.Command.Interface
     public static class CommandSyntax
     {
         public const char PipelineDelimiter = '|';
+        public const char DoubleQuote = '"';
+        public const char SingleQuote = '\'';
+        public const char EscapeChar = '\\';
     }
 }

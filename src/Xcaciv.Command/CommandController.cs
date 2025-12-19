@@ -247,7 +247,6 @@ public class CommandController : Interface.ICommandController
     }
 
     /// <summary>
-    /// <summary>
     /// Asynchronously output all the help strings for a command.
     /// </summary>
     public async Task GetHelpAsync(string command, IIoContext context, IEnvironmentContext env, CancellationToken cancellationToken = default)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Xcaciv.Command.Interface;
 
 namespace Xcaciv.Command;
 
@@ -14,11 +15,6 @@ namespace Xcaciv.Command;
 /// </summary>
 public class PipelineParser
 {
-    private const char PipeDelimiter = '|';
-    private const char DoubleQuote = '"';
-    private const char SingleQuote = '\'';
-    private const char EscapeChar = '\\';
-
     /// <summary>
     /// Parse pipeline command line into individual command segments.
     /// </summary>
@@ -41,11 +37,11 @@ public class PipelineParser
             var ch = commandLine[i];
 
             // Handle escape sequences
-            if (ch == EscapeChar && i + 1 < commandLine.Length)
+            if (ch == CommandSyntax.EscapeChar && i + 1 < commandLine.Length)
             {
                 var nextChar = commandLine[i + 1];
                 // Unescape special characters
-                if (nextChar == PipeDelimiter || nextChar == DoubleQuote || nextChar == SingleQuote || nextChar == EscapeChar)
+                if (nextChar == CommandSyntax.PipelineDelimiter || nextChar == CommandSyntax.DoubleQuote || nextChar == CommandSyntax.SingleQuote || nextChar == CommandSyntax.EscapeChar)
                 {
                     currentSegment.Append(nextChar);
                     i += 2;
@@ -54,7 +50,7 @@ public class PipelineParser
             }
 
             // Handle unquoted pipe delimiter (segment boundary)
-            if (ch == PipeDelimiter)
+            if (ch == CommandSyntax.PipelineDelimiter)
             {
                 var segment = currentSegment.ToString().Trim();
                 if (!string.IsNullOrEmpty(segment))
@@ -67,16 +63,16 @@ public class PipelineParser
             }
 
             // Handle double-quoted strings (allow whitespace and special chars)
-            if (ch == DoubleQuote)
+            if (ch == CommandSyntax.DoubleQuote)
             {
-                i = ParseQuotedString(commandLine, i, DoubleQuote, currentSegment);
+                i = ParseQuotedString(commandLine, i, CommandSyntax.DoubleQuote, currentSegment);
                 continue;
             }
 
             // Handle single-quoted strings (literal, no escape processing)
-            if (ch == SingleQuote)
+            if (ch == CommandSyntax.SingleQuote)
             {
-                i = ParseQuotedString(commandLine, i, SingleQuote, currentSegment);
+                i = ParseQuotedString(commandLine, i, CommandSyntax.SingleQuote, currentSegment);
                 continue;
             }
 
@@ -101,17 +97,17 @@ public class PipelineParser
     private static int ParseQuotedString(string input, int startIndex, char quoteChar, StringBuilder output)
     {
         var i = startIndex + 1; // Skip opening quote
-        var isDoubleQuoted = quoteChar == DoubleQuote;
+        var isDoubleQuoted = quoteChar == CommandSyntax.DoubleQuote;
 
         while (i < input.Length)
         {
             var ch = input[i];
 
             // Handle escape sequences in double-quoted strings
-            if (isDoubleQuoted && ch == EscapeChar && i + 1 < input.Length)
+            if (isDoubleQuoted && ch == CommandSyntax.EscapeChar && i + 1 < input.Length)
             {
                 var nextChar = input[i + 1];
-                if (nextChar == DoubleQuote || nextChar == EscapeChar || nextChar == PipeDelimiter)
+                if (nextChar == CommandSyntax.DoubleQuote || nextChar == CommandSyntax.EscapeChar || nextChar == CommandSyntax.PipelineDelimiter)
                 {
                     output.Append(nextChar);
                     i += 2;
@@ -130,6 +126,6 @@ public class PipelineParser
             i++;
         }
 
-        throw new InvalidOperationException($"Unbalanced {quoteChar} quote in pipeline: {input}");
+        throw new InvalidOperationException($"Unbalanced {quoteChar} quote in pipeline.");
     }
 }
