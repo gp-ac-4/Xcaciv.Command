@@ -199,7 +199,15 @@ public class HelpService : IHelpService
                 try
                 {
                     // Use AssemblyContext to enforce security restrictions consistent with CommandFactory
-                    var basePathRestriction = Path.GetDirectoryName(assemblyPath) ?? Directory.GetCurrentDirectory();
+                    var basePathRestriction = Path.GetDirectoryName(assemblyPath);
+                    
+                    // Only proceed if we have a valid directory path for security enforcement
+                    if (string.IsNullOrEmpty(basePathRestriction))
+                    {
+                        Trace.WriteLine(
+                            $"Cannot load type [{fullTypeName}] from [{assemblyPath}]: Invalid path for security enforcement");
+                        return type;
+                    }
                     
                     using var context = new AssemblyContext(
                         assemblyPath,
