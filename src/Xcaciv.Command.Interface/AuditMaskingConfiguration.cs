@@ -59,13 +59,7 @@ public sealed class AuditMaskingConfiguration
             return true;
 
         // Pattern match
-        foreach (var pattern in RedactedParameterPatterns)
-        {
-            if (MatchesPattern(parameterName, pattern))
-                return true;
-        }
-
-        return false;
+        return RedactedParameterPatterns.Any(pattern => MatchesPattern(parameterName, pattern));
     }
 
     private bool MatchesPattern(string value, string pattern)
