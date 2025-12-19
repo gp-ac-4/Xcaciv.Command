@@ -124,7 +124,6 @@ public class PipelineExecutor : IPipelineExecutor
                     await childContext.Complete($"Stage '{commandName}' exceeded timeout of {configuration.StageTimeoutSeconds} seconds").ConfigureAwait(false);
                 }
             }
-            await childContext.AddTraceMessage($"Pipeline stage complete: {commandName}").ConfigureAwait(false);
         }
     }
 

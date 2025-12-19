@@ -16,7 +16,7 @@ Findings (high level)
 - Minor duplication and clarity issues around help routing.
 - Pipeline uses hardcoded delimiter in two places (`CommandController.PIPELINE_CHAR` vs literal in `PipelineExecutor`).
 - `CommandRegistry` uses a non-thread-safe `Dictionary` (registration likely at startup; worth documenting).
-- `Xcaciv.Command.csproj` has metadata typos/misuse on `ProjectReference` entries that don’t affect build but reduce clarity and could break packaging intent.
+- `Xcaciv.Command.csproj` has metadata typos/misuse on `ProjectReference` entries that don't affect build but reduce clarity and could break packaging intent.
 
 Refactoring/Hardening Plan
 
@@ -52,7 +52,7 @@ Phase 4: Robustness, clarity, and docs (very low risk)
    - Loader behavior when no directories configured (throws `NoPluginsFoundException`).
 
 Out of Scope / Deferred (needs human review)
-- Changing interface shapes (e.g., making `GetHelp` async) — would be a breaking change.
+- Changing interface shapes (e.g., making `GetHelp` async) â€” would be a breaking change.
 - Deeper changes to assembly loading policy or widening trust boundaries.
 
 Proposed File Changes
@@ -92,5 +92,5 @@ Progress Update (v1.6.0)
 - Applied Phase 2: Consolidated `--HELP` handling in `src/Xcaciv.Command/CommandExecutor.cs`; clarified sync help path in `CommandController` remarks; documented `SetParameters` sync contract in `CommandFactory`.
 - Applied Phase 3: Introduced `src/Xcaciv.Command.Interface/CommandSyntax.cs` and updated `CommandController` and `PipelineExecutor` to use the shared delimiter; added per-stage start/finish trace in `PipelineExecutor`.
 - Applied Phase 4: Documented `CommandRegistry` concurrency expectations; retained audit logging semantics and added notes.
-- Validation: Build succeeded. Test summary — total: 150, failed: 0, succeeded: 150, skipped: 0, duration: ~2.6s.
+- Validation: Build succeeded. Test summary â€” total: 150, failed: 0, succeeded: 150, skipped: 0, duration: ~2.6s.
 - Build script: Updated `build.ps1` to resolve repository root robustly, auto-discover the solution, and fall back to project-only build when needed. Verified pack works with .NET 8 and with `-UseNet10` enabling .NET 10 multi-targeting; packages saved under `artifacts/packages`.
