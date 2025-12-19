@@ -76,9 +76,9 @@ public class PipelineExecutor : IPipelineExecutor
             await using (childContext)
             {
                 await executeCommand(commandName, childContext, environmentContext).ConfigureAwait(false);
+                await childContext.AddTraceMessage($"Pipeline stage complete: {commandName}").ConfigureAwait(false);
                 await childContext.Complete(null).ConfigureAwait(false);
             }
-            await childContext.AddTraceMessage($"Pipeline stage complete: {commandName}").ConfigureAwait(false);
         }
     }
 
