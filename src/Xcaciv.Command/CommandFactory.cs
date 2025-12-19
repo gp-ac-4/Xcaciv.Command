@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Security;
+using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
 using Xcaciv.Loader;
 
@@ -8,6 +9,7 @@ namespace Xcaciv.Command;
 
 /// <summary>
 /// Default command factory that supports optional dependency injection resolution.
+/// Provides both sync and async methods for command instantiation.
 /// </summary>
 public class CommandFactory : ICommandFactory
 {
@@ -73,5 +75,24 @@ public class CommandFactory : ICommandFactory
         {
             throw new InvalidOperationException($"Security violation loading command [{fullTypeName}] from [{packagePath}]: {ex.Message}", ex);
         }
+    }
+
+    public async Task<ICommandDelegate> CreateCommandAsync(ICommandDescription commandDescription, IIoContext ioContext)
+    {
+        if (commandDescription == null) throw new ArgumentNullException(nameof(commandDescription));
+        if (ioContext == null) throw new ArgumentNullException(nameof(ioContext));
+
+        if (commandDescription.SubCommands.Count > 0 &&
+            ioContext.Parameters != null &&
+            ioContext.Parameters.Length > 0 &&
+            commandDescription.SubCommands.TryGetValue(ioContext.Parameters[0].ToUpper(), out var subCommandDescription) &&
+            subCommandDescription != null)
+        {
+            // Use async SetParameters to avoid blocking
+            await ioContext.SetParameters(ioContext.Parameters[1..]).ConfigureAwait(false);
+            return CreateCommand(subCommandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
+        }
+
+        return CreateCommand(commandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
     }
 }

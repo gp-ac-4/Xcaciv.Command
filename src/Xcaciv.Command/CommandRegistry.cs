@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Threading;
 using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
@@ -9,12 +12,11 @@ namespace Xcaciv.Command;
 
 /// <summary>
 /// In-memory registry that tracks available commands and their metadata.
-/// Note: This registry is not thread-safe for concurrent writes. Register commands during
-/// application startup or guard Add operations externally if multi-threaded registration is required.
+/// Thread-safe for concurrent reads and writes via ReaderWriterLockSlim.
 /// </summary>
 public class CommandRegistry : ICommandRegistry
 {
-    private readonly Dictionary<string, ICommandDescription> _commands = new();
+    private readonly ConcurrentDictionary<string, ICommandDescription> _commands = new();
 
     public void AddCommand(ICommandDescription command)
     {
@@ -71,5 +73,14 @@ public class CommandRegistry : ICommandRegistry
         return _commands.TryGetValue(commandKey, out commandDescription);
     }
 
-    public IEnumerable<ICommandDescription> GetAllCommands() => _commands.Values;
+    public IReadOnlyDictionary<string, ICommandDescription> GetCommandSnapshot()
+    {
+        return new ReadOnlyDictionary<string, ICommandDescription>(
+            new Dictionary<string, ICommandDescription>(_commands));
+    }
+
+    public IEnumerable<ICommandDescription> GetAllCommands()
+    {
+        return new List<ICommandDescription>(_commands.Values);
+    }
 }

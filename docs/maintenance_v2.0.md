@@ -39,9 +39,9 @@
 
 ## Auditing and Tracing
 
-- [x] Standardize audit logs with structured events and masking strategies while allowing configurable parameter redaction.
-- [x] Emit correlation IDs for commands and pipeline stages and include command package origin metadata.
-- [x] Compile and run tests
+- [ ] Standardize audit logs with structured events and masking strategies while allowing configurable parameter redaction.
+- [ ] Emit correlation IDs for commands and pipeline stages and include command package origin metadata.
+- [ ] Compile and run tests
 
 ## Configuration and Dependency Injection
 

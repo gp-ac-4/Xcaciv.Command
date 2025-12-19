@@ -22,4 +22,13 @@ public interface ICommandFactory
     /// <param name="packagePath">Path to the assembly that contains the type.</param>
     /// <returns>Instantiated command implementation.</returns>
     ICommandDelegate CreateCommand(string fullTypeName, string packagePath);
+
+    /// <summary>
+    /// Asynchronously constructs a command instance from a command description, handling sub-command routing.
+    /// This method avoids blocking on SetParameters and is preferred for pipeline/executor contexts.
+    /// </summary>
+    /// <param name="commandDescription">Command metadata.</param>
+    /// <param name="ioContext">IO context containing the current parameter set.</param>
+    /// <returns>Instantiated command implementation.</returns>
+    Task<ICommandDelegate> CreateCommandAsync(ICommandDescription commandDescription, IIoContext ioContext);
 }
