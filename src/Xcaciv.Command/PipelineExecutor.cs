@@ -117,11 +117,31 @@ public class PipelineExecutor : IPipelineExecutor
                     await executeCommand(commandName, childContext, environmentContext, stageCts.Token).ConfigureAwait(false);
                     await childContext.Complete(null).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) when (stageCts.Token.IsCancellationRequested && configuration.StageTimeoutSeconds > 0)
+                catch (OperationCanceledException) when (stageCts.Token.IsCancellationRequested)
                 {
-                    // Timeout occurred on this stage
-                    await childContext.AddTraceMessage($"Pipeline stage timeout: {commandName} (exceeded {configuration.StageTimeoutSeconds}s)").ConfigureAwait(false);
-                    await childContext.Complete($"Stage '{commandName}' exceeded timeout of {configuration.StageTimeoutSeconds} seconds").ConfigureAwait(false);
+                    // Determine if this was a stage timeout or parent cancellation
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        // Stage-specific cancellation (timeout if configured)
+                        if (configuration.StageTimeoutSeconds > 0)
+                        {
+                            await childContext.AddTraceMessage($"Pipeline stage timeout: {commandName} (exceeded {configuration.StageTimeoutSeconds}s)").ConfigureAwait(false);
+                            await childContext.Complete($"Stage '{commandName}' exceeded timeout of {configuration.StageTimeoutSeconds} seconds").ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            // Stage cancelled but no timeout configured - treat as error
+                            await childContext.AddTraceMessage($"Pipeline stage cancelled unexpectedly: {commandName}").ConfigureAwait(false);
+                            await childContext.Complete($"Stage '{commandName}' was cancelled").ConfigureAwait(false);
+                        }
+                    }
+                    else
+                    {
+                        // Parent cancellation - complete gracefully and propagate
+                        await childContext.AddTraceMessage($"Pipeline stage cancelled: {commandName}").ConfigureAwait(false);
+                        await childContext.Complete(null).ConfigureAwait(false);
+                        throw; // Re-throw to propagate cancellation
+                    }
                 }
             }
         }
