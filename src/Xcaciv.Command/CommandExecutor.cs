@@ -97,6 +97,16 @@ public class CommandExecutor : ICommandExecutor
             : OutputCommandHelp(command, ioContext, environmentContext);
     }
 
+    public Task GetHelpAsync(string command, IIoContext ioContext, IEnvironmentContext environmentContext, CancellationToken cancellationToken)
+    {
+        if (ioContext == null) throw new ArgumentNullException(nameof(ioContext));
+        if (environmentContext == null) throw new ArgumentNullException(nameof(environmentContext));
+
+        // Help generation is synchronous and doesn't perform cancellable operations
+        // Accept token for API consistency but delegate to non-cancellable version
+        return GetHelpAsync(command, ioContext, environmentContext);
+    }
+
     private async Task OutputAllCommands(IIoContext context)
     {
         foreach (var description in _registry.GetAllCommands())
