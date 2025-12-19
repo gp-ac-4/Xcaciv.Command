@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Xcaciv.Command.FileLoader;
 using Xcaciv.Command.Interface;
 
@@ -47,12 +48,9 @@ public static class CommandControllerFactory
         // Add package directories and load commands
         if (options.PackageDirectories != null)
         {
-            foreach (var dir in options.PackageDirectories)
+            foreach (var dir in options.PackageDirectories.Where(d => !string.IsNullOrWhiteSpace(d)))
             {
-                if (!string.IsNullOrWhiteSpace(dir))
-                {
-                    controller.AddPackageDirectory(dir);
-                }
+                controller.AddPackageDirectory(dir);
             }
             controller.LoadCommands();
         }
