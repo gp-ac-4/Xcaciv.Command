@@ -4,9 +4,19 @@ namespace Xcaciv.Command.Interface
     public interface ICommandController
     {
         /// <summary>
-        /// enable compiled-in commands
+        /// Register built-in commands in the command registry.
+        /// This is the primary method for enabling the framework's default command set.
         /// </summary>
-        void EnableDefaultCommands();
+        void RegisterBuiltInCommands();
+        
+        /// <summary>
+        /// [DEPRECATED] Use RegisterBuiltInCommands() instead.
+        /// Provided for backward compatibility during migration to v2.0.
+        /// Will be removed in v3.0.
+        /// </summary>
+        [Obsolete("Use RegisterBuiltInCommands() instead. This method will be removed in v3.0.", false)]
+        void EnableDefaultCommands() => RegisterBuiltInCommands();
+        
         /// <summary>
         /// add a directory from which to load commands
         /// </summary>
@@ -32,12 +42,25 @@ namespace Xcaciv.Command.Interface
         /// <param name="env">Environment context</param>
         /// <param name="cancellationToken">Cancellation token to cancel execution</param>
         Task Run(string commandLine, IIoContext output, IEnvironmentContext env, CancellationToken cancellationToken);
+        
         /// <summary>
-        /// get provided help string for a command or list all commands if the command is empty
+        /// Asynchronously get help information for a command.
+        /// This is the primary method for retrieving command documentation.
         /// </summary>
-        /// <param name="command"></param>
-        /// <param name="output"></param>
+        /// <param name="command">Command name or empty string for all commands</param>
+        /// <param name="output">IO context for output</param>
+        /// <param name="env">Environment context</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        Task GetHelpAsync(string command, IIoContext output, IEnvironmentContext env, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// [DEPRECATED] Use GetHelpAsync() instead.
+        /// Provided for backward compatibility during migration to v2.0.
+        /// Will be removed in v3.0.
+        /// </summary>
+        [Obsolete("Use GetHelpAsync() instead. This method will be removed in v3.0.", false)]
         void GetHelp(string command, IIoContext output, IEnvironmentContext env);
+        
         /// <summary>
         /// install a single command into the index
         /// </summary>

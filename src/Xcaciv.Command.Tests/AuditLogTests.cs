@@ -40,7 +40,7 @@ namespace Xcaciv.Command.Tests
             // Arrange
             var logger = new TestAuditLogger();
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             controller.AuditLogger = logger;
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo(new[] { "hello" });
@@ -67,7 +67,7 @@ namespace Xcaciv.Command.Tests
             // Arrange
             var logger = new TestAuditLogger();
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             controller.AuditLogger = logger;
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo(new[] { "test" });
@@ -91,7 +91,7 @@ namespace Xcaciv.Command.Tests
             // Arrange
             var logger = new TestAuditLogger();
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             controller.AuditLogger = logger;
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo(new[] { "test" });
@@ -170,7 +170,7 @@ namespace Xcaciv.Command.Tests
             // Arrange
             var logger = new TestAuditLogger();
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             controller.AuditLogger = logger;
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo(new[] { "test1", "test2" });
@@ -194,7 +194,7 @@ namespace Xcaciv.Command.Tests
             // Arrange
             var logger = new TestAuditLogger();
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             controller.AuditLogger = logger;
             var env = new EnvironmentContext();
 

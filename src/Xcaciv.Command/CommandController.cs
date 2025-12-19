@@ -174,7 +174,7 @@ public class CommandController : Interface.ICommandController
     /// <summary>
     /// Registers all built-in commands (Say, Set, Env, Regif).
     /// </summary>
-    public void EnableDefaultCommands()
+    public void RegisterBuiltInCommands()
     {
         var packageKey = "Default";
 
@@ -247,6 +247,15 @@ public class CommandController : Interface.ICommandController
     }
 
     /// <summary>
+    /// <summary>
+    /// Asynchronously output all the help strings for a command.
+    /// </summary>
+    public async Task GetHelpAsync(string command, IIoContext context, IEnvironmentContext env, CancellationToken cancellationToken = default)
+    {
+        await _commandExecutor.GetHelpAsync(command, context, env).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// output all the help strings
     /// </summary>
     /// <remarks>
@@ -254,6 +263,7 @@ public class CommandController : Interface.ICommandController
     /// the ICommandController interface. To avoid potential deadlocks in some synchronization
     /// contexts, consider using the async Run method with help parameters instead.
     /// </remarks>
+    [Obsolete("Use GetHelpAsync() instead. This method will be removed in v3.0.", false)]
     public void GetHelp(string command, IIoContext context, IEnvironmentContext env)
     {
         // Run asynchronously on the thread pool to avoid potential deadlocks

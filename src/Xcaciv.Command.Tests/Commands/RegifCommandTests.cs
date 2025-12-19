@@ -1,4 +1,4 @@
-﻿using Xunit;
+using Xunit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +30,7 @@ namespace Xcaciv.Command.Tests.Commands
         {
             var commands = new CommandController(new Crawler(), @"..\..\..\..\..\");
             commands.AddPackageDirectory(commandPackageDir);
-            commands.EnableDefaultCommands();
+            commands.RegisterBuiltInCommands();
             commands.LoadCommands(string.Empty);
 
             var env = new EnvironmentContext();

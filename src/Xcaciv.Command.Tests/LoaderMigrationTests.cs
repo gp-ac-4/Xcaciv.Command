@@ -145,7 +145,7 @@ namespace Xcaciv.Command.Tests
             
             // Act
             controller.LoadCommands(string.Empty);
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
 
             // Assert - Both plugin and default commands should be loaded
             var env = new EnvironmentContext();

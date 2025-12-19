@@ -41,7 +41,7 @@ public static class CommandControllerFactory
         // Enable built-in commands
         if (options.EnableDefaultCommands)
         {
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
         }
 
         // Add package directories and load commands
