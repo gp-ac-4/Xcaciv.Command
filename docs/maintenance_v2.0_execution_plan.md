@@ -24,9 +24,10 @@ This document outlines the phased execution plan for v2.0 maintenance, organized
 **Risk Level:** LOW - Adding optional DI support without breaking existing instantiation patterns
 
 **Changes:**
-- [ ] Bind configuration via `IOptions` where appropriate and provide default wiring inside a startup module
-- [ ] Support external DI containers explicitly and expose extension methods to register components
-- [ ] Compile and run tests
+- [x] Bind configuration via `IOptions` where appropriate and provide default wiring inside a startup module (moved to adapter)
+- [x] Support external DI containers explicitly via a separate adapter project `Xcaciv.Command.DependencyInjection` and extension methods
+- [x] Added `CommandControllerFactory` for non-DI usage
+- [x] Compile and run tests
 
 **Rationale:** DI support is opt-in. Existing direct instantiation patterns remain valid.
 

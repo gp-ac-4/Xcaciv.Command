@@ -30,6 +30,11 @@
     <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
     <ProjectReference Include="..\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj" />
   </ItemGroup>
+
+  <!-- Exclude optional DI adapter file from core build to keep DI-agnostic -->
+  <ItemGroup>
+    <Compile Remove="Extensions\ServiceCollectionExtensions.cs" />
+  </ItemGroup>
   
   <ItemGroup>
     <None Include="readme.md" Pack="True" PackagePath="readme.md" />
