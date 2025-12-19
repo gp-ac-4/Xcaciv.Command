@@ -65,9 +65,11 @@ This document outlines the phased execution plan for v2.0 maintenance, organized
 **Risk Level:** MEDIUM - Centralization of logic without breaking command implementations
 
 **Changes:**
-- [ ] Normalize `--HELP` handling in the controller rather than in individual executors
-- [ ] Introduce `IHelpService` to centralize help building (commands supply metadata)
-- [ ] Compile and run tests
+- [x] Normalize `--HELP` handling in the controller via `IHelpService.IsHelpRequest()`
+- [x] Introduce `IHelpService` to centralize help building (commands supply metadata via attributes)
+- [x] Added backward compatibility - HelpService calls command's `Help()` method if overridden
+- [x] Fixed plugin type loading in `BuildOneLineHelp()` using `Assembly.LoadFrom()`
+- [x] Compile and run tests (150/150 passing)
 
 **Rationale:** Centralizing help logic reduces duplication. Commands adapt to new patterns but existing help output remains functional.
 
