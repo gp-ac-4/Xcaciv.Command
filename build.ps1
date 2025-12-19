@@ -43,7 +43,8 @@ function Invoke-DotNet {
     }
 }
 
-$repositoryRoot = Split-Path -Path $PSScriptRoot -Resolve
+# Use the script directory as the repository root to avoid accidentally moving up a level
+$repositoryRoot = $PSScriptRoot
 Push-Location $repositoryRoot
 try {
     $solutionPath = Join-Path $repositoryRoot 'Xcaciv.Command.sln'
@@ -59,13 +60,35 @@ try {
         $msbuildProperties += '-p:UseNet10=true'
     }
 
-    $restoreArguments = @('restore', $solutionPath)
-    $restoreArguments += $msbuildProperties
-    Invoke-DotNet -Arguments $restoreArguments
+    # Discover solution if default path does not exist
+    if (-not (Test-Path -Path $solutionPath)) {
+        $solutions = Get-ChildItem -Path $repositoryRoot -Filter '*.sln' -Recurse -ErrorAction SilentlyContinue
+        if ($solutions -and $solutions.Count -gt 0) {
+            $solutionPath = $solutions[0].FullName
+            Write-Host "Discovered solution: $solutionPath" -ForegroundColor Yellow
+        }
+    }
 
-    $buildArguments = @('build', $solutionPath, '--configuration', $Configuration, '--nologo')
-    $buildArguments += $msbuildProperties
-    Invoke-DotNet -Arguments $buildArguments
+    if (Test-Path -Path $solutionPath) {
+        $restoreArguments = @('restore', $solutionPath)
+        $restoreArguments += $msbuildProperties
+        Invoke-DotNet -Arguments $restoreArguments
+
+        $buildArguments = @('build', $solutionPath, '--configuration', $Configuration, '--nologo')
+        $buildArguments += $msbuildProperties
+        Invoke-DotNet -Arguments $buildArguments
+    }
+    else {
+        # Fallback to restoring and building the primary package project
+        Write-Host "Solution not found. Falling back to building project: $packageProjectPath" -ForegroundColor Yellow
+        $restoreArguments = @('restore', $packageProjectPath)
+        $restoreArguments += $msbuildProperties
+        Invoke-DotNet -Arguments $restoreArguments
+
+        $buildArguments = @('build', $packageProjectPath, '--configuration', $Configuration, '--nologo')
+        $buildArguments += $msbuildProperties
+        Invoke-DotNet -Arguments $buildArguments
+    }
 
     $packArguments = @('pack', $packageProjectPath, '--configuration', $Configuration, '--output', $artifactDirectory, '--nologo')
     if ($VersionSuffix) {

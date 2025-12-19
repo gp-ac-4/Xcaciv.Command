@@ -93,3 +93,4 @@ Progress Update (v1.6.0)
 - Applied Phase 3: Introduced `src/Xcaciv.Command.Interface/CommandSyntax.cs` and updated `CommandController` and `PipelineExecutor` to use the shared delimiter; added per-stage start/finish trace in `PipelineExecutor`.
 - Applied Phase 4: Documented `CommandRegistry` concurrency expectations; retained audit logging semantics and added notes.
 - Validation: Build succeeded. Test summary — total: 150, failed: 0, succeeded: 150, skipped: 0, duration: ~2.6s.
+- Build script: Updated `build.ps1` to resolve repository root robustly, auto-discover the solution, and fall back to project-only build when needed. Verified pack works with .NET 8 and with `-UseNet10` enabling .NET 10 multi-targeting; packages saved under `artifacts/packages`.
