@@ -74,6 +74,20 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Registers StructuredAuditLogger with a custom output destination.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="output">The TextWriter to write audit events to. Allows redirecting to custom logging infrastructure.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection WithStructuredAuditLogging(
+        this IServiceCollection services,
+        System.IO.TextWriter output)
+    {
+        services.AddSingleton<IAuditLogger>(sp => new StructuredAuditLogger(output));
+        return services;
+    }
+
     public static IServiceCollection WithOutputEncoder<T>(this IServiceCollection services)
         where T : class, IOutputEncoder
     {
