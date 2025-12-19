@@ -96,7 +96,7 @@ public class HelpService : IHelpService
             // Use prototype from attribute or generated one
             if (baseCommand.Prototype.Equals("todo", StringComparison.OrdinalIgnoreCase))
             {
-                builder.AppendLine(prototypeBuilder.ToString());
+                builder.Append(prototypeBuilder).AppendLine();
             }
             else
             {
@@ -105,7 +105,7 @@ public class HelpService : IHelpService
 
             builder.AppendLine();
             builder.AppendLine("Options:");
-            builder.AppendLine(parameterBuilder.ToString());
+            builder.Append(parameterBuilder).AppendLine();
         }
 
         // Remarks section
