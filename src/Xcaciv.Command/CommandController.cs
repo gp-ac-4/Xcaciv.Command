@@ -251,7 +251,7 @@ public class CommandController : Interface.ICommandController
     /// </summary>
     public async Task GetHelpAsync(string command, IIoContext context, IEnvironmentContext env, CancellationToken cancellationToken = default)
     {
-        await _commandExecutor.GetHelpAsync(command, context, env).ConfigureAwait(false);
+        await _commandExecutor.GetHelpAsync(command, context, env, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

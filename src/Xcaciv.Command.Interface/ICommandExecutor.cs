@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Xcaciv.Command.Interface;
@@ -31,4 +32,9 @@ public interface ICommandExecutor
     /// Outputs help text for the requested command, or lists all commands when empty.
     /// </summary>
     Task GetHelpAsync(string command, IIoContext ioContext, IEnvironmentContext environmentContext);
+
+    /// <summary>
+    /// Outputs help text for the requested command with cancellation support, or lists all commands when empty.
+    /// </summary>
+    Task GetHelpAsync(string command, IIoContext ioContext, IEnvironmentContext environmentContext, CancellationToken cancellationToken);
 }
