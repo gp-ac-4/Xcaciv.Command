@@ -51,12 +51,12 @@ This document outlines the phased execution plan for v2.0 maintenance, organized
 **Risk Level:** MEDIUM - Internal improvements with new async overloads
 
 **Changes:**
-- [x] Make `CommandRegistry` thread-safe with `ReaderWriterLockSlim` protecting all dictionary operations
+- [x] Make `CommandRegistry` thread-safe using `ConcurrentDictionary<string, ICommandDescription>` for lock-free operations
 - [x] Add async `CreateCommandAsync(ICommandDescription, IIoContext)` to `ICommandFactory` interface
 - [x] Added `GetCommandSnapshot()` to `ICommandRegistry` for thread-safe concurrent iteration
 - [x] Compile and run tests (150/150 passing)
 
-**Rationale:** Thread-safety is an internal improvement. Adding async factory methods while keeping sync wrappers maintains compatibility.
+**Rationale:** Thread-safety is an internal improvement using concurrent collections instead of explicit locks. Adding async factory methods while keeping sync wrappers maintains compatibility.
 
 ---
 

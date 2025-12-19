@@ -138,6 +138,11 @@ namespace Xcaciv.Command.Tests
             controller.GetHelp(string.Empty, textio, env);
             var output = textio.ToString();
 
+            // Debug: Output the full help text
+            System.Diagnostics.Debug.WriteLine("=== FULL HELP OUTPUT ===");
+            System.Diagnostics.Debug.WriteLine(output);
+            System.Diagnostics.Debug.WriteLine($"=== OUTPUT LENGTH: {output.Length} ===");
+            
             Assert.Contains("SUB DO echo", output);
         }
         [Fact()]

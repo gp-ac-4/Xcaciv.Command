@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Threading;
 using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
@@ -12,7 +11,7 @@ namespace Xcaciv.Command;
 
 /// <summary>
 /// In-memory registry that tracks available commands and their metadata.
-/// Thread-safe for concurrent reads and writes via ReaderWriterLockSlim.
+/// Thread-safe for concurrent reads and writes via ConcurrentDictionary.
 /// </summary>
 public class CommandRegistry : ICommandRegistry
 {

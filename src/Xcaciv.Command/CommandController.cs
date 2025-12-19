@@ -29,6 +29,7 @@ public class CommandController : Interface.ICommandController
     private readonly IPipelineExecutor _pipelineExecutor;
     private readonly ICommandExecutor _commandExecutor;
     private readonly ICommandFactory _commandFactory;
+    private readonly IHelpService _helpService;
 
     protected ICommandRegistry CommandRegistry => _commandRegistry;
 
@@ -98,7 +99,8 @@ public class CommandController : Interface.ICommandController
     {
         _commandRegistry = commandRegistry ?? new CommandRegistry();
         _commandFactory = commandFactory ?? new CommandFactory(serviceProvider);
-        _commandExecutor = commandExecutor ?? new CommandExecutor(_commandRegistry, _commandFactory);
+        _helpService = new HelpService();
+        _commandExecutor = commandExecutor ?? new CommandExecutor(_commandRegistry, _commandFactory, _helpService);
         _commandLoader = commandLoader ?? new CommandLoader(new Crawler(), new VerifiedSourceDirectories(new FileSystem()));
         _pipelineExecutor = pipelineExecutor ?? new PipelineExecutor();
 

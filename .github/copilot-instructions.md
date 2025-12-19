@@ -43,6 +43,14 @@ Avoid string concatenation for commands or queries. Use parameterized queries or
 
 Security is not a static state but a dynamic process. When generating code, prioritize qualities that allow the software to be evolved, corrected, and adapted to new threats efficiently and without introducing new vulnerabilities.
 
+## Concurrency and Thread Safety
+
+Prefer concurrent collections over explicit locking mechanisms:
+- Use `ConcurrentDictionary<TKey, TValue>`, `ConcurrentBag<T>`, `ConcurrentQueue<T>` instead of lock statements or ReaderWriterLockSlim
+- Concurrent collections provide lock-free reads and fine-grained locking for writes, improving performance and reducing deadlock risk
+- Only use explicit locks when coordinating complex multi-step operations that concurrent collections cannot handle atomically
+- Document why explicit locking is needed if you must use it
+
 ## Software Engineering principles to follow for security:
 
 #### The Derived Integrity Principle
