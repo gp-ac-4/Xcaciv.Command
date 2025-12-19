@@ -74,6 +74,14 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    public static IServiceCollection WithStructuredAuditLogging(
+        this IServiceCollection services,
+        System.IO.TextWriter output)
+    {
+        services.AddSingleton<IAuditLogger>(sp => new StructuredAuditLogger(output));
+        return services;
+    }
+
     public static IServiceCollection WithOutputEncoder<T>(this IServiceCollection services)
         where T : class, IOutputEncoder
     {

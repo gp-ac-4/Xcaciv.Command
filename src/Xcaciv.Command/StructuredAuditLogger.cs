@@ -1,11 +1,12 @@
 using System;
+using System.IO;
 using System.Text.Json;
 using Xcaciv.Command.Interface;
 
 namespace Xcaciv.Command;
 
 /// <summary>
-/// Structured audit logger that outputs JSON-formatted audit events to console.
+/// Structured audit logger that outputs JSON-formatted audit events.
 /// Suitable for production use with log aggregation systems.
 /// </summary>
 public class StructuredAuditLogger : IAuditLogger
@@ -15,6 +16,24 @@ public class StructuredAuditLogger : IAuditLogger
         WriteIndented = false,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
+
+    private readonly TextWriter _output;
+
+    /// <summary>
+    /// Initializes a new instance of StructuredAuditLogger with default console output.
+    /// </summary>
+    public StructuredAuditLogger() : this(Console.Out)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of StructuredAuditLogger with a configurable output destination.
+    /// </summary>
+    /// <param name="output">The TextWriter to write audit events to. Defaults to Console.Out if null.</param>
+    public StructuredAuditLogger(TextWriter? output)
+    {
+        _output = output ?? Console.Out;
+    }
 
     /// <summary>
     /// Gets or sets the masking configuration for parameter redaction.
@@ -69,7 +88,7 @@ public class StructuredAuditLogger : IAuditLogger
         };
 
         var json = JsonSerializer.Serialize(envChange, _jsonOptions);
-        Console.WriteLine(json);
+        _output.WriteLine(json);
     }
 
     /// <summary>
@@ -100,7 +119,7 @@ public class StructuredAuditLogger : IAuditLogger
         };
 
         var json = JsonSerializer.Serialize(logEntry, _jsonOptions);
-        Console.WriteLine(json);
+        _output.WriteLine(json);
     }
 
     private bool ShouldMaskEnvironmentVariable(string variableName)
