@@ -32,9 +32,16 @@ public class CommandExecutor : ICommandExecutor
 
     public async Task ExecuteAsync(string commandKey, IIoContext ioContext, IEnvironmentContext environmentContext)
     {
+        await ExecuteAsync(commandKey, ioContext, environmentContext, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task ExecuteAsync(string commandKey, IIoContext ioContext, IEnvironmentContext environmentContext, CancellationToken cancellationToken)
+    {
         if (commandKey == null) throw new ArgumentNullException(nameof(commandKey));
         if (ioContext == null) throw new ArgumentNullException(nameof(ioContext));
         if (environmentContext == null) throw new ArgumentNullException(nameof(environmentContext));
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (_registry.TryGetCommand(commandKey, out var commandDescription))
         {

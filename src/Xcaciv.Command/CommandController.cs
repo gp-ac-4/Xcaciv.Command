@@ -211,6 +211,11 @@ public class CommandController : Interface.ICommandController
     /// </summary>
     public async Task Run(string commandLine, IIoContext ioContext, IEnvironmentContext env)
     {
+        await Run(commandLine, ioContext, env, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task Run(string commandLine, IIoContext ioContext, IEnvironmentContext env, CancellationToken cancellationToken)
+    {
         if (commandLine == null) throw new ArgumentNullException(nameof(commandLine));
         if (ioContext == null) throw new ArgumentNullException(nameof(ioContext));
         if (env == null) throw new ArgumentNullException(nameof(env));
@@ -222,9 +227,11 @@ public class CommandController : Interface.ICommandController
 
         ioContext.SetOutputEncoder(_outputEncoder);
 
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (commandLine.IndexOf(CommandSyntax.PipelineDelimiter) >= 0)
         {
-            await _pipelineExecutor.ExecuteAsync(commandLine, ioContext, env, ExecuteCommandInternal).ConfigureAwait(false);
+            await _pipelineExecutor.ExecuteAsync(commandLine, ioContext, env, ExecuteCommandInternal, cancellationToken).ConfigureAwait(false);
         }
         else
         {
@@ -233,7 +240,7 @@ public class CommandController : Interface.ICommandController
             await ioContext.SetParameters([.. args]).ConfigureAwait(false);
 
             await using var childContext = await ioContext.GetChild(ioContext.Parameters).ConfigureAwait(false);
-            await ExecuteCommandInternal(commandName, childContext, env).ConfigureAwait(false);
+            await ExecuteCommandInternal(commandName, childContext, env, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -255,5 +262,10 @@ public class CommandController : Interface.ICommandController
     private Task ExecuteCommandInternal(string commandKey, IIoContext ioContext, IEnvironmentContext env)
     {
         return _commandExecutor.ExecuteAsync(commandKey, ioContext, env);
+    }
+
+    private Task ExecuteCommandInternal(string commandKey, IIoContext ioContext, IEnvironmentContext env, CancellationToken cancellationToken)
+    {
+        return _commandExecutor.ExecuteAsync(commandKey, ioContext, env, cancellationToken);
     }
 }

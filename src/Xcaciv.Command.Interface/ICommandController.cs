@@ -25,6 +25,14 @@ namespace Xcaciv.Command.Interface
         /// <returns></returns>
         Task Run(string commandLine, IIoContext output, IEnvironmentContext env);
         /// <summary>
+        /// run a command using the loaded command packages with cancellation support
+        /// </summary>
+        /// <param name="commandLine">Command line to execute</param>
+        /// <param name="output">IO context</param>
+        /// <param name="env">Environment context</param>
+        /// <param name="cancellationToken">Cancellation token to cancel execution</param>
+        Task Run(string commandLine, IIoContext output, IEnvironmentContext env, CancellationToken cancellationToken);
+        /// <summary>
         /// get provided help string for a command or list all commands if the command is empty
         /// </summary>
         /// <param name="command"></param>

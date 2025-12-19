@@ -19,12 +19,26 @@ public class PipelineExecutor : IPipelineExecutor
         IEnvironmentContext environmentContext,
         Func<string, IIoContext, IEnvironmentContext, Task> executeCommand)
     {
+        await ExecuteAsync(commandLine, ioContext, environmentContext,
+            async (cmd, ctx, env, ct) => await executeCommand(cmd, ctx, env).ConfigureAwait(false),
+            CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task ExecuteAsync(
+        string commandLine,
+        IIoContext ioContext,
+        IEnvironmentContext environmentContext,
+        Func<string, IIoContext, IEnvironmentContext, CancellationToken, Task> executeCommand,
+        CancellationToken cancellationToken)
+    {
         if (commandLine == null) throw new ArgumentNullException(nameof(commandLine));
         if (ioContext == null) throw new ArgumentNullException(nameof(ioContext));
         if (environmentContext == null) throw new ArgumentNullException(nameof(environmentContext));
         if (executeCommand == null) throw new ArgumentNullException(nameof(executeCommand));
 
-        var (tasks, outputChannel) = await CreatePipelineStages(commandLine, ioContext, environmentContext, executeCommand).ConfigureAwait(false);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var (tasks, outputChannel) = await CreatePipelineStages(commandLine, ioContext, environmentContext, executeCommand, cancellationToken).ConfigureAwait(false);
         await Task.WhenAll(tasks).ConfigureAwait(false);
 
         await CollectPipelineOutput(outputChannel, ioContext).ConfigureAwait(false);
@@ -34,7 +48,8 @@ public class PipelineExecutor : IPipelineExecutor
         string commandLine,
         IIoContext ioContext,
         IEnvironmentContext environmentContext,
-        Func<string, IIoContext, IEnvironmentContext, Task> executeCommand)
+        Func<string, IIoContext, IEnvironmentContext, CancellationToken, Task> executeCommand,
+        CancellationToken cancellationToken)
     {
         var tasks = new List<Task>();
         Channel<string>? pipeChannel = null;
@@ -45,6 +60,8 @@ public class PipelineExecutor : IPipelineExecutor
 
         foreach (var command in commands)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var commandName = CommandDescription.GetValidCommandName(command).ToString();
             var args = CommandDescription.GetArgumentsFromCommandline(command);
             var childContext = await ioContext.GetChild(args).ConfigureAwait(false);
@@ -63,7 +80,7 @@ public class PipelineExecutor : IPipelineExecutor
             });
             childContext.SetOutputPipe(pipeChannel.Writer);
 
-            tasks.Add(RunStageAsync(commandName, childContext, environmentContext, executeCommand));
+            tasks.Add(RunStageAsync(commandName, childContext, environmentContext, executeCommand, cancellationToken));
             currentStage++;
         }
 
@@ -74,7 +91,8 @@ public class PipelineExecutor : IPipelineExecutor
         string commandName,
         IIoContext childContext,
         IEnvironmentContext environmentContext,
-        Func<string, IIoContext, IEnvironmentContext, Task> executeCommand)
+        Func<string, IIoContext, IEnvironmentContext, CancellationToken, Task> executeCommand,
+        CancellationToken cancellationToken)
     {
         return RunStageInternal();
 
@@ -83,7 +101,8 @@ public class PipelineExecutor : IPipelineExecutor
             await childContext.AddTraceMessage($"Pipeline stage start: {commandName}").ConfigureAwait(false);
             await using (childContext)
             {
-                await executeCommand(commandName, childContext, environmentContext).ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
+                await executeCommand(commandName, childContext, environmentContext, cancellationToken).ConfigureAwait(false);
                 await childContext.Complete(null).ConfigureAwait(false);
             }
             await childContext.AddTraceMessage($"Pipeline stage complete: {commandName}").ConfigureAwait(false);

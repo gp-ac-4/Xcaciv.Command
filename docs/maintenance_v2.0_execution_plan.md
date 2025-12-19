@@ -38,9 +38,9 @@ This document outlines the phased execution plan for v2.0 maintenance, organized
 **Risk Level:** MEDIUM - API extensions with default parameters maintain backwards compatibility
 
 **Changes:**
-- [ ] Extend `Main(IIoContext, IEnvironmentContext)` to accept `CancellationToken` (with default)
-- [ ] Thread the token through `Run(string, IIoContext, IEnvironmentContext)` and both `ExecuteAsync` overloads
-- [ ] Compile and run tests
+- [x] Extend controller `Run(..., CancellationToken)` and executor/pipeline overloads to accept `CancellationToken`
+- [x] Thread the token through `Run` → `PipelineExecutor.ExecuteAsync` → `CommandExecutor.ExecuteAsync`
+- [x] Compile and run tests
 
 **Rationale:** Adding optional `CancellationToken` parameters with defaults preserves binary compatibility. Existing callers continue to work.
 

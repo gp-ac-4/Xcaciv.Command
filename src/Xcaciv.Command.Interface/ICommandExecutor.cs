@@ -23,6 +23,11 @@ public interface ICommandExecutor
     Task ExecuteAsync(string commandKey, IIoContext ioContext, IEnvironmentContext environmentContext);
 
     /// <summary>
+    /// Executes the given command with cancellation support.
+    /// </summary>
+    Task ExecuteAsync(string commandKey, IIoContext ioContext, IEnvironmentContext environmentContext, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Outputs help text for the requested command, or lists all commands when empty.
     /// </summary>
     Task GetHelpAsync(string command, IIoContext ioContext, IEnvironmentContext environmentContext);
