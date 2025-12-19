@@ -23,10 +23,17 @@ public class Crawler : ICrawler
     /// abstraction for file system
     /// </summary>
     protected IFileSystem fileSystem;
+    
+    /// <summary>
+    /// Assembly loading security configuration
+    /// </summary>
+    private AssemblySecurityPolicy _securityPolicy = AssemblySecurityPolicy.Strict;
+    
     /// <summary>
     /// empty constructor with default IFileSystem
     /// </summary>
     public Crawler() : this(new FileSystem()) { }
+    
     /// <summary>
     /// constructor for testing with test IFileSystem
     /// </summary>
@@ -35,6 +42,15 @@ public class Crawler : ICrawler
     public Crawler(IFileSystem fileSystem)
     {
         this.fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+    }
+
+    /// <summary>
+    /// Set the security policy for plugin assembly loading.
+    /// Default: AssemblySecurityPolicy.Strict (requires explicit allowlist)
+    /// </summary>
+    public void SetSecurityPolicy(AssemblySecurityPolicy policy)
+    {
+        _securityPolicy = policy;
     }
     /// <summary>
     /// interigate packages for commands and return descriptions
@@ -59,12 +75,12 @@ public class Crawler : ICrawler
 
             try
             {
-                // Use Default security policy for plugin discovery
+                // Use configured security policy for plugin discovery
                 // Base path restriction is set to the directory containing the plugin DLL
                 using (var context = new AssemblyContext(
                     binPath,
                     basePathRestriction: Path.GetDirectoryName(binPath) ?? Directory.GetCurrentDirectory(),
-                    securityPolicy: AssemblySecurityPolicy.Default))
+                    securityPolicy: _securityPolicy))
                 {
                     var commands = new Dictionary<string, ICommandDescription>();
                     packagDesc.Version = context.GetVersion();
@@ -100,12 +116,13 @@ public class Crawler : ICrawler
             }
             catch (SecurityException ex)
             {
-                Trace.WriteLine($"Security violation loading package [{key}] from [{binPath}]: {ex.Message}");
+                Trace.WriteLine($"Security violation loading package [{key}] from [{binPath}]: " +
+                    $"SecurityPolicy={_securityPolicy}. Details: {ex.Message}");
                 return; // Skip this package due to security violation
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"Error loading package [{key}] from [{binPath}]: {ex.Message}");
+                Trace.WriteLine($"Error loading package [{key}] from [{binPath}]: {ex.GetType().Name}: {ex.Message}");
                 return; // Skip this package due to error
             }
 

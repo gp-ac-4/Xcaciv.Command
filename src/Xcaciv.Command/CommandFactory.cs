@@ -14,10 +14,22 @@ namespace Xcaciv.Command;
 public class CommandFactory : ICommandFactory
 {
     private readonly IServiceProvider? _serviceProvider;
+    private AssemblySecurityConfiguration _securityConfiguration;
 
     public CommandFactory(IServiceProvider? serviceProvider = null)
     {
         _serviceProvider = serviceProvider;
+        _securityConfiguration = new AssemblySecurityConfiguration();
+    }
+
+    /// <summary>
+    /// Configure assembly loading security policies.
+    /// </summary>
+    public void SetSecurityConfiguration(AssemblySecurityConfiguration configuration)
+    {
+        if (configuration == null) throw new ArgumentNullException(nameof(configuration));
+        configuration.Validate();
+        _securityConfiguration = configuration;
     }
 
     public ICommandDelegate CreateCommand(ICommandDescription commandDescription, IIoContext ioContext)
@@ -65,15 +77,29 @@ public class CommandFactory : ICommandFactory
 
         try
         {
+            var basePathRestriction = _securityConfiguration.EnforceBasePathRestriction
+                ? Path.GetDirectoryName(packagePath) ?? Directory.GetCurrentDirectory()
+                : ".";
+
             using var context = new AssemblyContext(
                 packagePath,
-                basePathRestriction: Path.GetDirectoryName(packagePath) ?? Directory.GetCurrentDirectory(),
-                securityPolicy: AssemblySecurityPolicy.Default);
+                basePathRestriction: basePathRestriction,
+                securityPolicy: _securityConfiguration.SecurityPolicy);
             return context.CreateInstance<ICommandDelegate>(fullTypeName);
         }
         catch (SecurityException ex)
         {
-            throw new InvalidOperationException($"Security violation loading command [{fullTypeName}] from [{packagePath}]: {ex.Message}", ex);
+            throw new InvalidOperationException(
+                $"Security violation loading command [{fullTypeName}] from [{packagePath}]: " +
+                $"Policy={_securityConfiguration.SecurityPolicy}, " +
+                $"PathRestriction={_securityConfiguration.EnforceBasePathRestriction}. " +
+                $"Details: {ex.Message}", ex);
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or FileLoadException or BadImageFormatException)
+        {
+            throw new InvalidOperationException(
+                $"Failed to load command [{fullTypeName}] from [{packagePath}]: {ex.GetType().Name}. " +
+                $"Verify plugin assembly exists and is valid. {ex.Message}", ex);
         }
     }
 
