@@ -252,7 +252,9 @@ namespace Xcaciv.Command.Core
                 return false;
             }
 
-            return parameters[0].Equals("--HELP", StringComparison.CurrentCultureIgnoreCase);
+            return parameters.Any(p => p.Equals("--HELP", StringComparison.OrdinalIgnoreCase) ||
+                                      p.Equals("-?", StringComparison.OrdinalIgnoreCase) ||
+                                      p.Equals("/?", StringComparison.OrdinalIgnoreCase));
         }
 
         public abstract string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env);

@@ -26,4 +26,14 @@ public interface IPipelineExecutor
         IIoContext ioContext,
         IEnvironmentContext environmentContext,
         Func<string, IIoContext, IEnvironmentContext, Task> executeCommand);
+
+    /// <summary>
+    /// Executes a pipeline with cancellation support.
+    /// </summary>
+    Task ExecuteAsync(
+        string commandLine,
+        IIoContext ioContext,
+        IEnvironmentContext environmentContext,
+        Func<string, IIoContext, IEnvironmentContext, CancellationToken, Task> executeCommand,
+        CancellationToken cancellationToken);
 }

@@ -1,4 +1,4 @@
-﻿using Xunit;
+using Xunit;
 using Xcaciv.Command;
 using System;
 using System.Collections.Generic;
@@ -83,7 +83,7 @@ namespace Xcaciv.Command.Tests
         {
             var controller = new CommandControllerTestHarness(new Crawler(), @"..\..\..\..\..\");
             controller.AddPackageDirectory(commandPackageDir);
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             controller.LoadCommands(string.Empty);
 
             var commands = controller.GetCommands();
@@ -96,7 +96,7 @@ namespace Xcaciv.Command.Tests
         {
             var controller = new CommandController(new Crawler(), @"..\..\..\..\..\") as Interface.ICommandController;
             controller.AddCommand("internal", new InstallCommand());
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
 
             var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
@@ -113,7 +113,7 @@ namespace Xcaciv.Command.Tests
         public void LoadDefaultCommandsTest()
         {
             var controller = new CommandController(new Crawler(), @"..\..\..\..\..\") as Interface.ICommandController;
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
 
             var textio = new TestImpementations.TestTextIo();
             var env = new EnvironmentContext();
@@ -128,7 +128,7 @@ namespace Xcaciv.Command.Tests
         public void AllHelpTestAsync()
         {
             var controller = new CommandControllerTestHarness(new Crawler(), @"..\..\..\..\..\") as Interface.ICommandController;
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
 
             controller.AddPackageDirectory(commandPackageDir);
             controller.LoadCommands(string.Empty);
@@ -145,7 +145,7 @@ namespace Xcaciv.Command.Tests
         {
             var controller = new CommandControllerTestHarness(new Crawler(), @"..\..\..\..\..\");
             controller.AddPackageDirectory(commandPackageDir);
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             controller.LoadCommands(string.Empty);
 
             var textio = new TestImpementations.TestTextIo();
@@ -161,7 +161,7 @@ namespace Xcaciv.Command.Tests
         {
             var controller = new CommandControllerTestHarness(new Crawler(), @"..\..\..\..\..\");
             controller.AddPackageDirectory(commandPackageDir);
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             controller.LoadCommands(string.Empty);
 
             var textio = new TestImpementations.TestTextIo();
@@ -178,7 +178,7 @@ namespace Xcaciv.Command.Tests
         {
             var controller = new CommandControllerTestHarness(new Crawler(), @"..\..\..\..\..\");
             controller.AddPackageDirectory(commandPackageDir);
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             controller.LoadCommands(string.Empty);
 
             var textio = new TestImpementations.TestTextIo();
@@ -197,7 +197,7 @@ namespace Xcaciv.Command.Tests
         public async Task HelpRequestShouldNotThrowExceptionAsync()
         {
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
 
             var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
@@ -221,7 +221,7 @@ namespace Xcaciv.Command.Tests
         public async Task HelpRequestShouldExecuteHelpLogicAsync()
         {
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
 
             var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
@@ -245,7 +245,7 @@ namespace Xcaciv.Command.Tests
         public async Task SayCommandWithPipingAsync()
         {
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
 
             var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();

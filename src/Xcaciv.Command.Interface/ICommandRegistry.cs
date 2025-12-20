@@ -39,6 +39,13 @@ public interface ICommandRegistry
     bool TryGetCommand(string commandKey, out ICommandDescription? commandDescription);
 
     /// <summary>
+    /// Gets a thread-safe immutable snapshot of all registered commands.
+    /// Useful for iteration when concurrent modifications may occur.
+    /// </summary>
+    /// <returns>Immutable snapshot of command descriptions.</returns>
+    IReadOnlyDictionary<string, ICommandDescription> GetCommandSnapshot();
+
+    /// <summary>
     /// Returns all registered commands (root commands only).
     /// </summary>
     IEnumerable<ICommandDescription> GetAllCommands();

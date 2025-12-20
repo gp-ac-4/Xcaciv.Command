@@ -35,4 +35,17 @@ public class NoOpAuditLogger : IAuditLogger
     {
         // No operation - logs are discarded
     }
+
+    /// <summary>
+    /// Log structured audit event (no-op).
+    /// </summary>
+    public void LogAuditEvent(AuditEvent auditEvent)
+    {
+        // No operation - logs are discarded
+    }
+
+    /// <summary>
+    /// Gets or sets the masking configuration (no-op).
+    /// </summary>
+    public AuditMaskingConfiguration? MaskingConfiguration { get; set; }
 }

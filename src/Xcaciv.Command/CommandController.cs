@@ -29,6 +29,7 @@ public class CommandController : Interface.ICommandController
     private readonly IPipelineExecutor _pipelineExecutor;
     private readonly ICommandExecutor _commandExecutor;
     private readonly ICommandFactory _commandFactory;
+    private readonly IHelpService _helpService;
 
     protected ICommandRegistry CommandRegistry => _commandRegistry;
 
@@ -98,7 +99,8 @@ public class CommandController : Interface.ICommandController
     {
         _commandRegistry = commandRegistry ?? new CommandRegistry();
         _commandFactory = commandFactory ?? new CommandFactory(serviceProvider);
-        _commandExecutor = commandExecutor ?? new CommandExecutor(_commandRegistry, _commandFactory);
+        _helpService = new HelpService();
+        _commandExecutor = commandExecutor ?? new CommandExecutor(_commandRegistry, _commandFactory, _helpService);
         _commandLoader = commandLoader ?? new CommandLoader(new Crawler(), new VerifiedSourceDirectories(new FileSystem()));
         _pipelineExecutor = pipelineExecutor ?? new PipelineExecutor();
 
@@ -172,7 +174,7 @@ public class CommandController : Interface.ICommandController
     /// <summary>
     /// Registers all built-in commands (Say, Set, Env, Regif).
     /// </summary>
-    public void EnableDefaultCommands()
+    public void RegisterBuiltInCommands()
     {
         var packageKey = "Default";
 
@@ -211,6 +213,11 @@ public class CommandController : Interface.ICommandController
     /// </summary>
     public async Task Run(string commandLine, IIoContext ioContext, IEnvironmentContext env)
     {
+        await Run(commandLine, ioContext, env, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task Run(string commandLine, IIoContext ioContext, IEnvironmentContext env, CancellationToken cancellationToken)
+    {
         if (commandLine == null) throw new ArgumentNullException(nameof(commandLine));
         if (ioContext == null) throw new ArgumentNullException(nameof(ioContext));
         if (env == null) throw new ArgumentNullException(nameof(env));
@@ -222,9 +229,11 @@ public class CommandController : Interface.ICommandController
 
         ioContext.SetOutputEncoder(_outputEncoder);
 
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (commandLine.IndexOf(CommandSyntax.PipelineDelimiter) >= 0)
         {
-            await _pipelineExecutor.ExecuteAsync(commandLine, ioContext, env, ExecuteCommandInternal).ConfigureAwait(false);
+            await _pipelineExecutor.ExecuteAsync(commandLine, ioContext, env, ExecuteCommandInternal, cancellationToken).ConfigureAwait(false);
         }
         else
         {
@@ -233,8 +242,16 @@ public class CommandController : Interface.ICommandController
             await ioContext.SetParameters([.. args]).ConfigureAwait(false);
 
             await using var childContext = await ioContext.GetChild(ioContext.Parameters).ConfigureAwait(false);
-            await ExecuteCommandInternal(commandName, childContext, env).ConfigureAwait(false);
+            await ExecuteCommandInternal(commandName, childContext, env, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// Asynchronously output all the help strings for a command.
+    /// </summary>
+    public async Task GetHelpAsync(string command, IIoContext context, IEnvironmentContext env, CancellationToken cancellationToken = default)
+    {
+        await _commandExecutor.GetHelpAsync(command, context, env, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -245,6 +262,7 @@ public class CommandController : Interface.ICommandController
     /// the ICommandController interface. To avoid potential deadlocks in some synchronization
     /// contexts, consider using the async Run method with help parameters instead.
     /// </remarks>
+    [Obsolete("Use GetHelpAsync() instead. This method will be removed in v3.0.", false)]
     public void GetHelp(string command, IIoContext context, IEnvironmentContext env)
     {
         // Run asynchronously on the thread pool to avoid potential deadlocks
@@ -255,5 +273,10 @@ public class CommandController : Interface.ICommandController
     private Task ExecuteCommandInternal(string commandKey, IIoContext ioContext, IEnvironmentContext env)
     {
         return _commandExecutor.ExecuteAsync(commandKey, ioContext, env);
+    }
+
+    private Task ExecuteCommandInternal(string commandKey, IIoContext ioContext, IEnvironmentContext env, CancellationToken cancellationToken)
+    {
+        return _commandExecutor.ExecuteAsync(commandKey, ioContext, env, cancellationToken);
     }
 }

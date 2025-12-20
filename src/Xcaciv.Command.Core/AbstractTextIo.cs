@@ -40,6 +40,16 @@ namespace Xcaciv.Command.Core
             return Task.CompletedTask;
         }
 
+        public int? PipelineStage { get; private set; }
+
+        public int? PipelineTotalStages { get; private set; }
+
+        public void SetPipelineStage(int stage, int totalStages)
+        {
+            PipelineStage = stage;
+            PipelineTotalStages = totalStages;
+        }
+
         protected ChannelReader<string>? inputPipe;
         protected ChannelWriter<string>? outputPipe;
         /// <summary>

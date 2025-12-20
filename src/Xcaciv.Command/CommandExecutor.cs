@@ -14,12 +14,14 @@ public class CommandExecutor : ICommandExecutor
 {
     private readonly ICommandRegistry _registry;
     private readonly ICommandFactory _commandFactory;
+    private readonly IHelpService _helpService;
     private IAuditLogger _auditLogger = new NoOpAuditLogger();
 
-    public CommandExecutor(ICommandRegistry registry, ICommandFactory commandFactory)
+    public CommandExecutor(ICommandRegistry registry, ICommandFactory commandFactory, IHelpService helpService)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _commandFactory = commandFactory ?? throw new ArgumentNullException(nameof(commandFactory));
+        _helpService = helpService ?? throw new ArgumentNullException(nameof(helpService));
     }
 
     public string HelpCommand { get; set; } = "HELP";
@@ -32,9 +34,16 @@ public class CommandExecutor : ICommandExecutor
 
     public async Task ExecuteAsync(string commandKey, IIoContext ioContext, IEnvironmentContext environmentContext)
     {
+        await ExecuteAsync(commandKey, ioContext, environmentContext, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task ExecuteAsync(string commandKey, IIoContext ioContext, IEnvironmentContext environmentContext, CancellationToken cancellationToken)
+    {
         if (commandKey == null) throw new ArgumentNullException(nameof(commandKey));
         if (ioContext == null) throw new ArgumentNullException(nameof(ioContext));
         if (environmentContext == null) throw new ArgumentNullException(nameof(environmentContext));
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (_registry.TryGetCommand(commandKey, out var commandDescription))
         {
@@ -46,7 +55,7 @@ public class CommandExecutor : ICommandExecutor
             }
 
             var parameters = ioContext.Parameters;
-            if (parameters is { Length: > 0 } && parameters[0].Equals($"--{HelpCommand}", StringComparison.CurrentCultureIgnoreCase))
+            if (_helpService.IsHelpRequest(parameters))
             {
                 // For root commands with sub-commands, show one-line summaries; for leaf commands, show full help.
                 if (commandDescription.SubCommands.Count > 0)
@@ -56,7 +65,8 @@ public class CommandExecutor : ICommandExecutor
                 else
                 {
                     var commandInstance = _commandFactory.CreateCommand(commandDescription, ioContext);
-                    await ioContext.OutputChunk(commandInstance.Help(ioContext.Parameters, environmentContext)).ConfigureAwait(false);
+                    var helpText = _helpService.BuildHelp(commandInstance, ioContext.Parameters, environmentContext);
+                    await ioContext.OutputChunk(helpText).ConfigureAwait(false);
                 }
                 return;
             }
@@ -87,11 +97,46 @@ public class CommandExecutor : ICommandExecutor
             : OutputCommandHelp(command, ioContext, environmentContext);
     }
 
+    public Task GetHelpAsync(string command, IIoContext ioContext, IEnvironmentContext environmentContext, CancellationToken cancellationToken)
+    {
+        if (ioContext == null) throw new ArgumentNullException(nameof(ioContext));
+        if (environmentContext == null) throw new ArgumentNullException(nameof(environmentContext));
+
+        // Help generation is synchronous and doesn't perform cancellable operations
+        // Accept token for API consistency but delegate to non-cancellable version
+        return GetHelpAsync(command, ioContext, environmentContext);
+    }
+
     private async Task OutputAllCommands(IIoContext context)
     {
         foreach (var description in _registry.GetAllCommands())
         {
-            await OutputOneLineHelp(description, context).ConfigureAwait(false);
+            // For root commands with sub-commands, show the root then all sub-commands
+            if (description.SubCommands.Count > 0 && string.IsNullOrEmpty(description.FullTypeName))
+            {
+                // Get root attribute from first sub-command instance
+                var firstSubCommand = description.SubCommands.First().Value;
+                var commandInstance = _commandFactory.CreateCommand(firstSubCommand, context);
+                var commandType = commandInstance.GetType();
+
+                if (Attribute.GetCustomAttribute(commandType, typeof(CommandRootAttribute)) is CommandRootAttribute rootAttribute)
+                {
+                    await context.OutputChunk($"{description.BaseCommand,-12} {rootAttribute.Description}").ConfigureAwait(false);
+                }
+
+                // Show each sub-command
+                var subHelpLines = description.SubCommands.Select(subCommand => _helpService.BuildOneLineHelp(subCommand.Value));
+                foreach (var subHelpLine in subHelpLines)
+                {
+                    await context.OutputChunk(subHelpLine).ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                // Regular command - show one line
+                var helpLine = _helpService.BuildOneLineHelp(description);
+                await context.OutputChunk(helpLine).ConfigureAwait(false);
+            }
         }
     }
 
@@ -103,7 +148,8 @@ public class CommandExecutor : ICommandExecutor
             if (_registry.TryGetCommand(commandKey, out var description) && description != null)
             {
                 var commandInstance = _commandFactory.CreateCommand(description, context);
-                await context.OutputChunk(commandInstance.Help(context.Parameters, env)).ConfigureAwait(false);
+                var helpText = _helpService.BuildHelp(commandInstance, context.Parameters, env);
+                await context.OutputChunk(helpText).ConfigureAwait(false);
             }
             else
             {
@@ -193,13 +239,21 @@ public class CommandExecutor : ICommandExecutor
             }
 
             var duration = DateTime.UtcNow - startTime;
-            _auditLogger?.LogCommandExecution(
-                commandKey,
-                ioContext.Parameters ?? Array.Empty<string>(),
-                startTime,
-                duration,
-                success,
-                errorMessage);
+
+            // Emit structured audit event with package origin, correlation ID, and pipeline stage info
+            var auditEvent = new AuditEvent
+            {
+                CommandName = commandKey,
+                PackageOrigin = commandDescription?.PackageDescription?.FullPath ?? "built-in",
+                Parameters = ioContext.Parameters ?? Array.Empty<string>(),
+                ExecutedAt = startTime,
+                Duration = duration,
+                Success = success,
+                ErrorMessage = errorMessage,
+                PipelineStage = ioContext.PipelineStage,
+                PipelineTotalStages = ioContext.PipelineTotalStages
+            };
+            _auditLogger?.LogAuditEvent(auditEvent);
         }
     }
 
@@ -218,7 +272,8 @@ public class CommandExecutor : ICommandExecutor
 
                 foreach (var subCommand in description.SubCommands)
                 {
-                    await OutputOneLineHelpFromInstance(subCommand.Value, context).ConfigureAwait(false);
+                    var helpLine = _helpService.BuildOneLineHelp(subCommand.Value);
+                    await context.OutputChunk(helpLine).ConfigureAwait(false);
                 }
             }
             else
@@ -228,13 +283,8 @@ public class CommandExecutor : ICommandExecutor
         }
         else
         {
-            await OutputOneLineHelpFromInstance(description, context).ConfigureAwait(false);
+            var helpLine = _helpService.BuildOneLineHelp(description);
+            await context.OutputChunk(helpLine).ConfigureAwait(false);
         }
-    }
-
-    private async Task OutputOneLineHelpFromInstance(ICommandDescription description, IIoContext context)
-    {
-        var commandInstance = _commandFactory.CreateCommand(description, context);
-        await context.OutputChunk(commandInstance.OneLineHelp(context.Parameters)).ConfigureAwait(false);
     }
 }

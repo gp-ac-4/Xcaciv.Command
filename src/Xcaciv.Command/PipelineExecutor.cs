@@ -19,31 +19,75 @@ public class PipelineExecutor : IPipelineExecutor
         IEnvironmentContext environmentContext,
         Func<string, IIoContext, IEnvironmentContext, Task> executeCommand)
     {
+        await ExecuteAsync(commandLine, ioContext, environmentContext,
+            async (cmd, ctx, env, ct) => await executeCommand(cmd, ctx, env).ConfigureAwait(false),
+            CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task ExecuteAsync(
+        string commandLine,
+        IIoContext ioContext,
+        IEnvironmentContext environmentContext,
+        Func<string, IIoContext, IEnvironmentContext, CancellationToken, Task> executeCommand,
+        CancellationToken cancellationToken)
+    {
         if (commandLine == null) throw new ArgumentNullException(nameof(commandLine));
         if (ioContext == null) throw new ArgumentNullException(nameof(ioContext));
         if (environmentContext == null) throw new ArgumentNullException(nameof(environmentContext));
         if (executeCommand == null) throw new ArgumentNullException(nameof(executeCommand));
 
-        var (tasks, outputChannel) = await CreatePipelineStages(commandLine, ioContext, environmentContext, executeCommand).ConfigureAwait(false);
-        await Task.WhenAll(tasks).ConfigureAwait(false);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        await CollectPipelineOutput(outputChannel, ioContext).ConfigureAwait(false);
+        var (tasks, outputChannel) = await CreatePipelineStages(commandLine, ioContext, environmentContext, executeCommand, cancellationToken).ConfigureAwait(false);
+
+        var allStagesTask = Task.WhenAll(tasks);
+        var cancellationWaitTask = Task.Delay(Timeout.Infinite, cancellationToken);
+
+        var completed = await Task.WhenAny(allStagesTask, cancellationWaitTask).ConfigureAwait(false);
+
+        if (completed == cancellationWaitTask)
+        {
+            // Parent cancellation requested; surface OperationCanceledException to caller
+            throw new OperationCanceledException(cancellationToken);
+        }
+
+        // Await to propagate any stage exceptions
+        await allStagesTask.ConfigureAwait(false);
+
+        // If parent cancellation was requested at any point, propagate now
+        if (cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException(cancellationToken);
+        }
+
+        await CollectPipelineOutput(outputChannel, ioContext, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<(List<Task>, Channel<string>?)> CreatePipelineStages(
         string commandLine,
         IIoContext ioContext,
         IEnvironmentContext environmentContext,
-        Func<string, IIoContext, IEnvironmentContext, Task> executeCommand)
+        Func<string, IIoContext, IEnvironmentContext, CancellationToken, Task> executeCommand,
+        CancellationToken cancellationToken)
     {
         var tasks = new List<Task>();
         Channel<string>? pipeChannel = null;
 
-        foreach (var command in commandLine.Split(CommandSyntax.PipelineDelimiter))
+        // Use formal parser to handle quoted arguments, escapes, and delimiters
+        var commands = PipelineParser.ParsePipeline(commandLine);
+        var totalStages = commands.Length;
+        var currentStage = 1;
+
+        foreach (var command in commands)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var commandName = CommandDescription.GetValidCommandName(command).ToString();
             var args = CommandDescription.GetArgumentsFromCommandline(command);
             var childContext = await ioContext.GetChild(args).ConfigureAwait(false);
+
+            // Set pipeline stage metadata for audit logging
+            childContext.SetPipelineStage(currentStage, totalStages);
 
             if (pipeChannel != null)
             {
@@ -56,7 +100,8 @@ public class PipelineExecutor : IPipelineExecutor
             });
             childContext.SetOutputPipe(pipeChannel.Writer);
 
-            tasks.Add(RunStageAsync(commandName, childContext, environmentContext, executeCommand));
+            tasks.Add(RunStageAsync(commandName, childContext, environmentContext, executeCommand, Configuration, cancellationToken));
+            currentStage++;
         }
 
         return (tasks, pipeChannel);
@@ -66,7 +111,9 @@ public class PipelineExecutor : IPipelineExecutor
         string commandName,
         IIoContext childContext,
         IEnvironmentContext environmentContext,
-        Func<string, IIoContext, IEnvironmentContext, Task> executeCommand)
+        Func<string, IIoContext, IEnvironmentContext, CancellationToken, Task> executeCommand,
+        PipelineConfiguration configuration,
+        CancellationToken cancellationToken)
     {
         return RunStageInternal();
 
@@ -75,22 +122,72 @@ public class PipelineExecutor : IPipelineExecutor
             await childContext.AddTraceMessage($"Pipeline stage start: {commandName}").ConfigureAwait(false);
             await using (childContext)
             {
-                await executeCommand(commandName, childContext, environmentContext).ConfigureAwait(false);
-                await childContext.AddTraceMessage($"Pipeline stage complete: {commandName}").ConfigureAwait(false);
-                await childContext.Complete(null).ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Create stage-specific timeout if configured
+                using var stageCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                if (configuration.StageTimeoutSeconds > 0)
+                {
+                    stageCts.CancelAfter(TimeSpan.FromSeconds(configuration.StageTimeoutSeconds));
+                }
+
+                try
+                {
+                    await executeCommand(commandName, childContext, environmentContext, stageCts.Token).ConfigureAwait(false);
+
+                    // If parent cancellation was requested during or right after execution, propagate it
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        await childContext.AddTraceMessage($"Pipeline stage cancelled: {commandName}").ConfigureAwait(false);
+                        // complete gracefully for downstream, then throw to propagate cancellation
+                        await childContext.Complete(null).ConfigureAwait(false);
+                        throw new OperationCanceledException(cancellationToken);
+                    }
+
+                    await childContext.Complete(null).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (stageCts.Token.IsCancellationRequested)
+                {
+                    // Determine if this was a stage timeout or parent cancellation
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        // Stage-specific cancellation (timeout if configured)
+                        if (configuration.StageTimeoutSeconds > 0)
+                        {
+                            await childContext.AddTraceMessage($"Pipeline stage timeout: {commandName} (exceeded {configuration.StageTimeoutSeconds}s)").ConfigureAwait(false);
+                            await childContext.Complete($"Stage '{commandName}' exceeded timeout of {configuration.StageTimeoutSeconds} seconds").ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            // Stage cancelled but no timeout configured - treat as error
+                            await childContext.AddTraceMessage($"Pipeline stage cancelled unexpectedly: {commandName}").ConfigureAwait(false);
+                            await childContext.Complete($"Stage '{commandName}' was cancelled").ConfigureAwait(false);
+                        }
+                    }
+                    else
+                    {
+                        // Parent cancellation - complete gracefully and propagate
+                        await childContext.AddTraceMessage($"Pipeline stage cancelled: {commandName}").ConfigureAwait(false);
+                        await childContext.Complete(null).ConfigureAwait(false);
+                        throw; // Re-throw to propagate cancellation
+                    }
+                }
             }
         }
     }
 
-    private async Task CollectPipelineOutput(Channel<string>? outputChannel, IIoContext ioContext)
+    private async Task CollectPipelineOutput(Channel<string>? outputChannel, IIoContext ioContext, CancellationToken cancellationToken)
     {
         if (outputChannel == null)
         {
             return;
         }
 
-        await foreach (var output in outputChannel.Reader.ReadAllAsync().ConfigureAwait(false))
+        cancellationToken.ThrowIfCancellationRequested();
+
+        await foreach (var output in outputChannel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await ioContext.OutputChunk(output).ConfigureAwait(false);
         }
     }

@@ -26,7 +26,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo();
 
@@ -45,7 +45,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo();
 
@@ -64,7 +64,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo();
 
@@ -83,7 +83,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo(new[] { "hello" });
 
@@ -102,7 +102,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo(); // No arguments
 
@@ -121,7 +121,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo();
 
@@ -140,7 +140,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo(new[] { "--help" });
 
@@ -159,7 +159,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo();
 
@@ -178,7 +178,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo();
 
@@ -197,7 +197,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             var env = new EnvironmentContext();
             var ioContext = new TestTextIo();
 
@@ -216,7 +216,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             var env = new EnvironmentContext();
 
             // Act - Execute multiple commands in sequence

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TargetFrameworks>$(XcacivTargetFrameworks)</TargetFrameworks>
+    <AssemblyName>Xcaciv.Command.DependencyInjection</AssemblyName>
+    <RootNamespace>Xcaciv.Command.DependencyInjection</RootNamespace>
+    <IsPublishable>True</IsPublishable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
+    <Title>Xcaciv Command DI Adapter</Title>
+    <Description>Optional adapter for wiring Xcaciv.Command into Microsoft.Extensions.DependencyInjection</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Xcaciv.Command\Xcaciv.Command.csproj" />
+    <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
+    <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj" />
+    <ProjectReference Include="..\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+</Project>

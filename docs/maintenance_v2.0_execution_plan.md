@@ -1,0 +1,155 @@
+# Maintenance v2.0 Execution Plan
+
+## Overall Progress
+
+**Status:** 8 of 8 phases COMPLETE (100%)  
+**Test Status:** 150/150 passing (100%)  
+**Build Status:** SUCCESS (0 errors)  
+**Current Branch:** `maintenance_2.0`
+
+| Phase | Title | Risk | Status | Tests |
+|-------|-------|------|--------|-------|
+| 1 | Auditing & Tracing | LOW | ✅ Complete | 150/150 |
+| 2 | Configuration & DI | LOW | ✅ Complete | 150/150 |
+| 3 | Cancellation Tokens | MEDIUM | ✅ Complete | 150/150 |
+| 4 | Registry Thread-Safety | MEDIUM | ✅ Complete | 150/150 |
+| 5 | Help System | MEDIUM | ✅ Complete | 150/150 |
+| 6 | Pipeline Hardening | MEDIUM-HIGH | ✅ Complete | 150/150 |
+| 7 | Security Alignment | HIGH | ✅ Complete | 150/150 |
+| 8 | Breaking API Changes | HIGH | ✅ Complete | 150/150 |
+
+---
+
+## Risk-Ordered Implementation Strategy
+
+This document outlines the phased execution plan for v2.0 maintenance, organized from lowest to highest risk. Each phase must compile and pass tests before proceeding to the next.
+
+---
+
+## Phase 1: Auditing and Tracing Enhancements (LOW RISK)
+
+**Risk Level:** LOW - Additive features that don't break existing APIs
+
+**Changes:**
+- [ ] Standardize audit logs with structured events and masking strategies while allowing configurable parameter redaction
+- [ ] Emit correlation IDs for commands and pipeline stages and include command package origin metadata
+- [ ] Compile and run tests
+
+**Rationale:** These are purely additive features. Existing code continues to work while new audit capabilities are introduced.
+
+---
+
+## Phase 2: Configuration and Dependency Injection (LOW RISK)
+
+**Risk Level:** LOW - Adding optional DI support without breaking existing instantiation patterns
+
+**Changes:**
+- [x] Bind configuration via `IOptions` where appropriate and provide default wiring inside a startup module (moved to adapter)
+- [x] Support external DI containers explicitly via a separate adapter project `Xcaciv.Command.DependencyInjection` and extension methods
+- [x] Added `CommandControllerFactory` for non-DI usage
+- [x] Compile and run tests
+
+**Rationale:** DI support is opt-in. Existing direct instantiation patterns remain valid.
+
+---
+
+## Phase 3: Cancellation Token Propagation (MEDIUM RISK)
+
+**Risk Level:** MEDIUM - API extensions with default parameters maintain backwards compatibility
+
+**Changes:**
+- [x] Extend controller `Run(..., CancellationToken)` and executor/pipeline overloads to accept `CancellationToken`
+- [x] Thread the token through `Run` → `PipelineExecutor.ExecuteAsync` → `CommandExecutor.ExecuteAsync`
+- [x] Compile and run tests
+
+**Rationale:** Adding optional `CancellationToken` parameters with defaults preserves binary compatibility. Existing callers continue to work.
+
+---
+
+## Phase 4: Registry and Factory Lifecycle (MEDIUM RISK)
+
+**Risk Level:** MEDIUM - Internal improvements with new async overloads
+
+**Changes:**
+- [x] Make `CommandRegistry` thread-safe using `ConcurrentDictionary<string, ICommandDescription>` for lock-free operations
+- [x] Add async `CreateCommandAsync(ICommandDescription, IIoContext)` to `ICommandFactory` interface
+- [x] Added `GetCommandSnapshot()` to `ICommandRegistry` for thread-safe concurrent iteration
+- [x] Compile and run tests (150/150 passing)
+
+**Rationale:** Thread-safety is an internal improvement using concurrent collections instead of explicit locks. Adding async factory methods while keeping sync wrappers maintains compatibility.
+
+---
+
+## Phase 5: Parameters and Help Consistency (MEDIUM RISK)
+
+**Risk Level:** MEDIUM - Centralization of logic without breaking command implementations
+
+**Changes:**
+- [x] Normalize `--HELP` handling in the controller via `IHelpService.IsHelpRequest()`
+- [x] Introduce `IHelpService` to centralize help building (commands supply metadata via attributes)
+- [x] Added backward compatibility - HelpService calls command's `Help()` method if overridden
+- [x] Fixed plugin type loading in `BuildOneLineHelp()` using `Assembly.LoadFrom()`
+- [x] Compile and run tests (150/150 passing)
+
+**Rationale:** Centralizing help logic reduces duplication. Commands adapt to new patterns but existing help output remains functional.
+
+---
+
+## Phase 6: Pipeline Hardening (MEDIUM-HIGH RISK)
+
+**Risk Level:** MEDIUM-HIGH - Significant refactoring with backwards compatibility layer
+
+**Changes:**
+- [x] Move pipeline parsing to a dedicated parser with formal grammar (quoted args, escape delimiters)
+- [x] Add per-stage cancellation, timeouts, and resource bounding in `PipelineConfiguration`
+- [ ] Support typed pipe payloads (JSON schema-validated) - DEFERRED to Phase 8
+- [x] Compile and run tests (150/150 passing)
+
+**Rationale:** New parser changes fundamental behavior. Maintains backwards compatibility for existing pipeline syntax while adding new capabilities. Per-stage timeouts prevent individual stages from hanging indefinitely, improving pipeline reliability.
+
+---
+
+## Phase 7: Security Alignment with Xcaciv.Loader 2.x (HIGH RISK)
+
+**Risk Level:** HIGH - Changes security defaults and plugin loading behavior
+
+**Changes:**
+- [x] Use stricter `AssemblySecurityPolicy` defaults with explicit allowlists
+- [x] Enforce `basePathRestriction` and disallow reflection emit by default
+- [x] Add security exception handling with detailed context
+- [x] Compile and run tests (150/150 passing)
+
+**Rationale:** Stricter security defaults may break existing plugins using dynamic loading. This is intentional - Phase 7 prioritizes security over compatibility. Applications must explicitly configure security policies to support legacy plugins.
+
+---
+
+## Phase 8: Breaking API Changes (HIGH RISK)
+
+**Risk Level:** HIGH - Intentional breaking changes requiring major version bump
+
+**Changes:**
+- [x] Make `GetHelp` async: ship `Task GetHelpAsync(...)` and deprecate sync `GetHelp`
+- [x] Remove legacy overloads that imply synchronous execution
+- [x] Rename ambiguous members (e.g., `EnableDefaultCommands()` → `RegisterBuiltInCommands()`)
+- [x] Consolidate interfaces in `AbstractCommandParameter.cs` with clearer responsibilities and XML docs
+- [x] Compile and run tests (150/150 passing)
+
+**Rationale:** These are intentional breaking changes that improve API clarity. Old methods remain functional during transition period (v2.0) but are marked for removal in v3.0, allowing applications time to migrate.
+
+---
+
+## Testing Strategy
+
+After each phase:
+1. Run full test suite: `dotnet test Xcaciv.Command.sln --no-build`
+2. Review test failures and determine if test needs update or code needs fix
+3. Update tests only when they test obsolete behavior
+4. Fix code when tests correctly identify regressions
+5. Document any behavioral changes in CHANGELOG.md
+
+## Rollback Plan
+
+- Each phase is a separate commit
+- Failed phase blocks progression to next phase
+- Can rollback to previous phase commit if needed
+- Mark corresponding checkboxes in maintenance_v2.0.md only after successful phase completion

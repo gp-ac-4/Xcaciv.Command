@@ -104,7 +104,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             controller.PipelineConfig = new PipelineConfiguration
             {
                 MaxChannelQueueSize = 5_000,
@@ -215,7 +215,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange - Create a controller with a very small channel and Block mode
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             controller.PipelineConfig = new PipelineConfiguration
             {
                 MaxChannelQueueSize = 2,  // Very small channel to fill quickly
@@ -257,11 +257,11 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller1 = new CommandController();
-            controller1.EnableDefaultCommands();
+            controller1.RegisterBuiltInCommands();
             controller1.PipelineConfig.MaxChannelQueueSize = 5_000;
 
             var controller2 = new CommandController();
-            controller2.EnableDefaultCommands();
+            controller2.RegisterBuiltInCommands();
             controller2.PipelineConfig.MaxChannelQueueSize = 2_000;
 
             var env = new EnvironmentContext();
@@ -287,7 +287,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var controller = new CommandController();
-            controller.EnableDefaultCommands();
+            controller.RegisterBuiltInCommands();
             controller.PipelineConfig = new PipelineConfiguration
             {
                 MaxChannelQueueSize = 1_000,

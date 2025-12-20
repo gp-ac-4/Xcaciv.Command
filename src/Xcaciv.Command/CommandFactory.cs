@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Security;
+using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
 using Xcaciv.Loader;
 
@@ -8,14 +9,27 @@ namespace Xcaciv.Command;
 
 /// <summary>
 /// Default command factory that supports optional dependency injection resolution.
+/// Provides both sync and async methods for command instantiation.
 /// </summary>
 public class CommandFactory : ICommandFactory
 {
     private readonly IServiceProvider? _serviceProvider;
+    private AssemblySecurityConfiguration _securityConfiguration;
 
     public CommandFactory(IServiceProvider? serviceProvider = null)
     {
         _serviceProvider = serviceProvider;
+        _securityConfiguration = new AssemblySecurityConfiguration();
+    }
+
+    /// <summary>
+    /// Configure assembly loading security policies.
+    /// </summary>
+    public void SetSecurityConfiguration(AssemblySecurityConfiguration configuration)
+    {
+        if (configuration == null) throw new ArgumentNullException(nameof(configuration));
+        configuration.Validate();
+        _securityConfiguration = configuration;
     }
 
     public ICommandDelegate CreateCommand(ICommandDescription commandDescription, IIoContext ioContext)
@@ -63,15 +77,53 @@ public class CommandFactory : ICommandFactory
 
         try
         {
+            var basePathRestriction = _securityConfiguration.EnforceBasePathRestriction
+                ? Path.GetDirectoryName(packagePath) ?? Directory.GetCurrentDirectory()
+                : ".";
+
+            // Enforce strict policy - NOTE this is not effective in Loader v2.1.0 due to limitations. Better enforcement in future versions.
+            var effectivePolicy = _securityConfiguration.AllowReflectionEmit
+                ? _securityConfiguration.SecurityPolicy
+                : AssemblySecurityPolicy.Strict;
+
             using var context = new AssemblyContext(
                 packagePath,
-                basePathRestriction: Path.GetDirectoryName(packagePath) ?? Directory.GetCurrentDirectory(),
-                securityPolicy: AssemblySecurityPolicy.Default);
+                basePathRestriction: basePathRestriction,
+                securityPolicy: effectivePolicy);
             return context.CreateInstance<ICommandDelegate>(fullTypeName);
         }
         catch (SecurityException ex)
         {
-            throw new InvalidOperationException($"Security violation loading command [{fullTypeName}] from [{packagePath}]: {ex.Message}", ex);
+            throw new InvalidOperationException(
+                $"Security violation loading command [{fullTypeName}] from [{packagePath}]: " +
+                $"Policy={( _securityConfiguration.AllowReflectionEmit ? _securityConfiguration.SecurityPolicy : AssemblySecurityPolicy.Strict )}, " +
+                $"PathRestriction={_securityConfiguration.EnforceBasePathRestriction}. " +
+                $"Details: {ex.Message}", ex);
         }
+        catch (Exception ex) when (ex is FileNotFoundException or FileLoadException or BadImageFormatException)
+        {
+            throw new InvalidOperationException(
+                $"Failed to load command [{fullTypeName}] from [{packagePath}]: {ex.GetType().Name}. " +
+                $"Verify plugin assembly exists and is valid. {ex.Message}", ex);
+        }
+    }
+
+    public async Task<ICommandDelegate> CreateCommandAsync(ICommandDescription commandDescription, IIoContext ioContext)
+    {
+        if (commandDescription == null) throw new ArgumentNullException(nameof(commandDescription));
+        if (ioContext == null) throw new ArgumentNullException(nameof(ioContext));
+
+        if (commandDescription.SubCommands.Count > 0 &&
+            ioContext.Parameters != null &&
+            ioContext.Parameters.Length > 0 &&
+            commandDescription.SubCommands.TryGetValue(ioContext.Parameters[0].ToUpper(), out var subCommandDescription) &&
+            subCommandDescription != null)
+        {
+            // Use async SetParameters to avoid blocking
+            await ioContext.SetParameters(ioContext.Parameters[1..]).ConfigureAwait(false);
+            return CreateCommand(subCommandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
+        }
+
+        return CreateCommand(commandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
     }
 }

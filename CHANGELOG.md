@@ -5,6 +5,165 @@ All notable changes to Xcaciv.Command will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-12-19 - Comprehensive v2.0 Maintenance Release
+
+### Overview
+
+Major version release completing 8 phases of systematic improvements targeting maintainability, trustworthiness, and reliability. All 150 tests passing with full backward compatibility through deprecated methods.
+
+**See [Migration Guide](docs/migration_guide_v2.0.md) for upgrade instructions.**
+
+---
+
+### 🔴 BREAKING CHANGES
+
+#### API Renames (Backward compatible via deprecation)
+- `EnableDefaultCommands()` → `RegisterBuiltInCommands()` [Deprecated in v2.0, removed in v3.0]
+- `GetHelp()` → `GetHelpAsync()` [Deprecated in v2.0, removed in v3.0]
+
+#### Security Defaults Changed
+- **Default SecurityPolicy:** `AssemblySecurityPolicy.Default` → `AssemblySecurityPolicy.Strict`
+- **Base Path Restriction:** Now enforced by default (prevents directory traversal)
+- **Reflection Emit:** Disabled by default (prevents runtime code generation)
+- **Impact:** Legacy plugins may fail to load - configure `AssemblySecurityConfiguration` explicitly
+
+---
+
+### Added - Phase 1: Auditing & Tracing
+
+- **`AuditEvent` class** - Structured audit event with correlation IDs, timestamps, package origins
+- **`AuditMaskingConfiguration` class** - Configure parameter masking patterns (e.g., passwords, tokens)
+- **`StructuredAuditLogger` class** - JSON-structured audit logging with configurable masking
+- **Correlation IDs** - Track command execution across pipeline stages
+- **Package origin metadata** - Log which package each command came from
+- **Parameter masking** - Redact sensitive values from audit logs
+
+### Added - Phase 2: Configuration & DI Support
+
+- **`CommandControllerOptions` class** - Configuration for controller initialization
+- **`PipelineOptions` class** - Configuration for pipeline behavior
+- **`CommandControllerFactory` class** - Factory pattern for creating controllers
+  - `Create()` - Creates controller without DI
+  - `Create(CommandControllerOptions)` - Creates controller with configuration
+- **`Xcaciv.Command.DependencyInjection` package** (separate) - Optional Microsoft.Extensions.DependencyInjection adapter
+  - `AddXcacivCommand()` extension method
+  - Scoped/Singleton lifetime support
+  - Configuration binding support
+
+### Added - Phase 3: Cancellation Token Propagation
+
+- **`CancellationToken` overloads:**
+  - `ICommandController.Run(commandLine, output, env, CancellationToken)`
+  - `IPipelineExecutor.ExecuteAsync(..., CancellationToken)`
+  - `ICommandExecutor.ExecuteAsync(..., CancellationToken)`
+- Cancellation propagates through: Controller → Pipeline → Executor → Commands
+- Commands can now be gracefully cancelled during long operations
+
+### Added - Phase 4: Registry & Factory Thread-Safety
+
+- **`CommandRegistry.GetCommandSnapshot()`** - Thread-safe snapshot for concurrent iteration
+- **`ICommandFactory.CreateCommandAsync()`** - Async factory method for command instantiation
+- **Thread-safe registry:** Replaced explicit locks with `ConcurrentDictionary<string, ICommandDescription>`
+- Lock-free reads, fine-grained writes
+
+### Added - Phase 5: Centralized Help System
+
+- **`IHelpService` interface** - Centralized help generation
+- **`HelpService` class** - Generates help from command attributes and metadata
+  - `BuildOneLineHelp()` - Single-line command summary
+  - `BuildDetailedHelp()` - Full command documentation
+  - `IsHelpRequest()` - Detects help flags (`--HELP`, `-?`, `/?`)
+- **Assembly.LoadFrom() fallback** - Fixes plugin type loading for help generation
+- Commands no longer need custom `Help()` implementations
+
+### Added - Phase 6: Pipeline Hardening
+
+- **`PipelineParser` class** - Formal grammar parser for command lines
+  - Supports double quotes: `"arg with spaces"`
+  - Supports single quotes: `'literal text'`
+  - Supports escape sequences: `\"`, `\'`, `\\`, `\|`
+  - Pipe delimiter `|` handling
+- **`PipelineConfiguration` enhancements:**
+  - `StageTimeoutSeconds` - Per-stage timeout (default: 0 = unlimited)
+  - `MaxStageOutputBytes` - Output byte limit per stage (default: 0 = unlimited)
+  - `MaxStageOutputItems` - Output item limit per stage (default: 0 = unlimited)
+  - `Validate()` - Configuration validation method
+- **Per-stage timeouts** - Individual pipeline stages can timeout independently
+
+### Added - Phase 7: Security Alignment
+
+- **`AssemblySecurityConfiguration` class** - Configurable plugin security policies
+  - `SecurityPolicy` - Defaults to `Strict` (was `Default`)
+  - `AllowReflectionEmit` - Defaults to `false` (disabled)
+  - `EnforceBasePathRestriction` - Defaults to `true` (enabled)
+  - `AllowedDependencyPrefixes` - Optional namespace allowlist
+  - `Validate()` - Configuration validation
+- **`CommandFactory.SetSecurityConfiguration()`** - Configure security policies
+- **`Crawler.SetSecurityPolicy()`** - Configure plugin discovery security
+- **Enhanced error messages** - Security violations include policy context
+
+### Added - Phase 8: Breaking API Changes
+
+- **`ICommandController.RegisterBuiltInCommands()`** - New primary method (replaces `EnableDefaultCommands`)
+- **`ICommandController.GetHelpAsync()`** - New async method (replaces `GetHelp`)
+- **`[Obsolete]` attributes** - Old methods marked for v3.0 removal
+- **Migration guide** - Comprehensive upgrade documentation
+
+---
+
+### Changed
+
+- **Security defaults:** Stricter plugin loading policies by default
+- **Registry implementation:** `ConcurrentDictionary` instead of explicit locks
+- **Help generation:** Centralized in `HelpService` instead of per-command
+- **Pipeline parsing:** Formal grammar instead of simple `string.Split()`
+- **Factory pattern:** `CommandControllerFactory` for non-DI scenarios
+
+---
+
+### Deprecated
+
+- **`ICommandController.EnableDefaultCommands()`** - Use `RegisterBuiltInCommands()` [Removed in v3.0]
+- **`CommandController.GetHelp()`** - Use `GetHelpAsync()` [Removed in v3.0]
+
+---
+
+### Fixed
+
+- Plugin type loading in help generation (Assembly.LoadFrom fallback)
+- Thread-safety issues in CommandRegistry (ConcurrentDictionary migration)
+- Pipeline parsing with quoted arguments and escape sequences
+- Security policy context in error messages
+
+---
+
+### Documentation
+
+- **`migration_guide_v2.0.md`** - Comprehensive upgrade guide
+- **`maintenance_v2.0_execution_plan.md`** - Detailed phase documentation
+- Updated XML documentation for all new APIs
+- Security policy guidance in SECURITY.md
+
+---
+
+### Testing
+
+- **150/150 tests passing** (100% pass rate)
+- All phases validated with full regression testing
+- 4 expected deprecation warnings from deprecated API usage
+
+---
+
+### Technical Metrics
+
+- **Build Status:** SUCCESS (0 errors)
+- **Test Coverage:** 150/150 passing
+- **Phases Complete:** 8/8 (100%)
+- **Compilation Warnings:** 4 (expected deprecation warnings)
+- **Dependencies:** Xcaciv.Loader 2.0.1, System.IO.Abstractions 21.0.2
+
+---
+
 ## [Unreleased] - SSEM Improvement Initiative (Phases 1-8)
 
 ### Overview

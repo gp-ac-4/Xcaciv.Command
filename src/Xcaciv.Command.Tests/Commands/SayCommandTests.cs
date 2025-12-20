@@ -1,4 +1,4 @@
-﻿using Xunit;
+using Xunit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +17,7 @@ namespace Xcaciv.Command.Tests.Commands
         public async Task HandleExecutionTest()
         {
             var commands = new CommandController(new Crawler(), AppContext.BaseDirectory);
-            commands.EnableDefaultCommands();
+            commands.RegisterBuiltInCommands();
 
             var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
@@ -45,7 +45,7 @@ namespace Xcaciv.Command.Tests.Commands
         public async Task HandleExecutionWithEnvTest()
         {
             var commands = new CommandController(new Crawler(), AppContext.BaseDirectory);
-            commands.EnableDefaultCommands();
+            commands.RegisterBuiltInCommands();
 
             var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
