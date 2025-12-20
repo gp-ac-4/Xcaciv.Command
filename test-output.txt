@@ -1,0 +1,31 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Xcaciv.Command.Interface -> G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Interface\bin\Debug\net8.0\Xcaciv.Command.Interface.dll
+  Xcaciv.Command.Core -> G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Core\bin\Debug\net8.0\Xcaciv.Command.Core.dll
+  Xcaciv.Command.Extensions.Commandline -> G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Extensions.Commandline\bin\Debug\net8.0\Xcaciv.Command.Extensions.Commandline.dll
+  Xcaciv.Command.FileLoader -> G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.FileLoader\bin\Debug\net8.0\Xcaciv.Command.FileLoader.dll
+  zTestCommandPackage -> G:\Xcaciv.Command\Xcaciv.Command\src\zTestCommandPackage\bin\Debug\net8.0\zTestCommandPackage.dll
+  Xcaciv.Command -> G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command\bin\Debug\net8.0\Xcaciv.Command.dll
+  Xcaciv.Command.FileLoaderTests -> G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.FileLoaderTests\bin\Debug\net8.0\Xcaciv.Command.FileLoaderTests.dll
+  Successfully created package 'G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Extensions.Commandline\bin\Debug\Xcaciv.Command.Extensions.Commandline.2.0.0.nupkg'.
+  Successfully created package 'G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Extensions.Commandline\bin\Debug\Xcaciv.Command.Extensions.Commandline.2.0.0.snupkg'.
+Test run for G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.FileLoaderTests\bin\Debug\net8.0\Xcaciv.Command.FileLoaderTests.dll (.NETCoreApp,Version=v8.0)
+  Xcaciv.Command.DependencyInjection -> G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.DependencyInjection\bin\Debug\net8.0\Xcaciv.Command.DependencyInjection.dll
+VSTest version 18.0.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Tests\CommandControllerTests.cs(103,13): warning CS0618: 'ICommandController.GetHelp(string, IIoContext, IEnvironmentContext)' is obsolete: 'Use GetHelpAsync() instead. This method will be removed in v3.0.' [G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Tests\Xcaciv.Command.Tests.csproj]
+G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Tests\CommandControllerTests.cs(120,13): warning CS0618: 'ICommandController.GetHelp(string, IIoContext, IEnvironmentContext)' is obsolete: 'Use GetHelpAsync() instead. This method will be removed in v3.0.' [G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Tests\Xcaciv.Command.Tests.csproj]
+G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Tests\CommandControllerTests.cs(138,13): warning CS0618: 'ICommandController.GetHelp(string, IIoContext, IEnvironmentContext)' is obsolete: 'Use GetHelpAsync() instead. This method will be removed in v3.0.' [G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Tests\Xcaciv.Command.Tests.csproj]
+G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Tests\LoaderMigrationTests.cs(153,13): warning CS0618: 'CommandController.GetHelp(string, IIoContext, IEnvironmentContext)' is obsolete: 'Use GetHelpAsync() instead. This method will be removed in v3.0.' [G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Tests\Xcaciv.Command.Tests.csproj]
+  Xcaciv.Command.Tests -> G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Tests\bin\Debug\net8.0\Xcaciv.Command.Tests.dll
+Test run for G:\Xcaciv.Command\Xcaciv.Command\src\Xcaciv.Command.Tests\bin\Debug\net8.0\Xcaciv.Command.Tests.dll (.NETCoreApp,Version=v8.0)
+VSTest version 18.0.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    12, Skipped:     0, Total:    12, Duration: 74 ms - Xcaciv.Command.FileLoaderTests.dll (net8.0)
+
+Passed!  - Failed:     0, Passed:   143, Skipped:     0, Total:   143, Duration: 170 ms - Xcaciv.Command.Tests.dll (net8.0)

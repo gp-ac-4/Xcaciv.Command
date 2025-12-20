@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xcaciv.Command.Core", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xcaciv.Command.DependencyInjection", "src\Xcaciv.Command.DependencyInjection\Xcaciv.Command.DependencyInjection.csproj", "{23B60EDA-B936-4B78-ABC6-6AB865D284CF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xcaciv.Command.Extensions.Commandline", "src\Xcaciv.Command.Extensions.Commandline\Xcaciv.Command.Extensions.Commandline.csproj", "{ACB9F79F-230B-46FF-A876-6CB15569CD54}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -137,6 +139,18 @@ Global
 		{23B60EDA-B936-4B78-ABC6-6AB865D284CF}.Release|x64.Build.0 = Release|Any CPU
 		{23B60EDA-B936-4B78-ABC6-6AB865D284CF}.Release|x86.ActiveCfg = Release|Any CPU
 		{23B60EDA-B936-4B78-ABC6-6AB865D284CF}.Release|x86.Build.0 = Release|Any CPU
+		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Debug|x64.Build.0 = Debug|Any CPU
+		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Debug|x86.Build.0 = Debug|Any CPU
+		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Release|x64.ActiveCfg = Release|Any CPU
+		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Release|x64.Build.0 = Release|Any CPU
+		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Release|x86.ActiveCfg = Release|Any CPU
+		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
