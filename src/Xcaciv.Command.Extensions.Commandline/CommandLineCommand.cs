@@ -56,54 +56,29 @@ namespace Xcaciv.Command.Extensions.Commandline
                 {
                     using var pipedReader = new StringReader(pipedInput);
                     Console.SetIn(pipedReader);
+                }
 
-                    // ioContext.Parameters are pre-tokenized strings from Xcaciv.Command framework.
-                    // System.CommandLine.Parse expects command-line arguments as they would appear
-                    // on the command line. The framework tokenizes the input, so values with spaces
-                    // are already separated into individual array elements, making them compatible
-                    // with System.CommandLine's parser expectations.
-                    var parseResult = command.Parse(ioContext.Parameters ?? Array.Empty<string>());
-                    var exitCode = await parseResult.InvokeAsync().ConfigureAwait(false);
+                // ioContext.Parameters are pre-tokenized strings from Xcaciv.Command framework.
+                // System.CommandLine.Parse expects command-line arguments as they would appear
+                // on the command line. The framework tokenizes the input, so values with spaces
+                // are already separated into individual array elements, making them compatible
+                // with System.CommandLine's parser expectations.
+                var parseResult = command.Parse(ioContext.Parameters ?? Array.Empty<string>());
+                var exitCode = await parseResult.InvokeAsync().ConfigureAwait(false);
 
-                    var output = standardOutWriter.ToString();
-                    var errorOutput = standardErrorWriter.ToString();
+                var output = standardOutWriter.ToString();
+                var errorOutput = standardErrorWriter.ToString();
 
-                    if (exitCode == 0)
-                    {
-                        yield return CommandResult<string>.Success(output);
-                    }
-                    else
-                    {
-                        var failureMessage = string.IsNullOrWhiteSpace(errorOutput)
-                            ? $"Command '{command.Name}' exited with code {exitCode}."
-                            : errorOutput;
-                        yield return CommandResult<string>.Failure(failureMessage);
-                    }
+                if (exitCode == 0)
+                {
+                    yield return CommandResult<string>.Success(output);
                 }
                 else
                 {
-                    // ioContext.Parameters are pre-tokenized strings from Xcaciv.Command framework.
-                    // System.CommandLine.Parse expects command-line arguments as they would appear
-                    // on the command line. The framework tokenizes the input, so values with spaces
-                    // are already separated into individual array elements, making them compatible
-                    // with System.CommandLine's parser expectations.
-                    var parseResult = command.Parse(ioContext.Parameters ?? Array.Empty<string>());
-                    var exitCode = await parseResult.InvokeAsync().ConfigureAwait(false);
-
-                    var output = standardOutWriter.ToString();
-                    var errorOutput = standardErrorWriter.ToString();
-
-                    if (exitCode == 0)
-                    {
-                        yield return CommandResult<string>.Success(output);
-                    }
-                    else
-                    {
-                        var failureMessage = string.IsNullOrWhiteSpace(errorOutput)
-                            ? $"Command '{command.Name}' exited with code {exitCode}."
-                            : errorOutput;
-                        yield return CommandResult<string>.Failure(failureMessage);
-                    }
+                    var failureMessage = string.IsNullOrWhiteSpace(errorOutput)
+                        ? $"Command '{command.Name}' exited with code {exitCode}."
+                        : errorOutput;
+                    yield return CommandResult<string>.Failure(failureMessage);
                 }
             }
             finally
@@ -130,6 +105,10 @@ namespace Xcaciv.Command.Extensions.Commandline
             var originalOut = Console.Out;
             var originalError = Console.Error;
 
+            // Using synchronous Wait() here because Help() is a synchronous method.
+            // The ICommandDelegate interface defines Help as string (not Task<string>),
+            // so we cannot use await. Synchronous blocking is acceptable here since
+            // help generation is a fast, non-I/O-bound operation.
             ConsoleRedirectionSemaphore.Wait();
             try
             {
