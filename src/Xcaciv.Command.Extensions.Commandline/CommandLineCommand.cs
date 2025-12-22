@@ -39,14 +39,14 @@ namespace Xcaciv.Command.Extensions.Commandline
 
             var pipedInput = await CollectPipedInput(ioContext).ConfigureAwait(false);
 
-            using var standardOutWriter = new StringWriter();
-            using var standardErrorWriter = new StringWriter();
+            var standardOutWriter = new StringWriter();
+            var standardErrorWriter = new StringWriter();
+            StringReader? standardInReader = null;
 
             var originalOut = Console.Out;
             var originalError = Console.Error;
             var originalIn = Console.In;
 
-            await ConsoleRedirectionSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
                 Console.SetOut(standardOutWriter);
@@ -54,8 +54,8 @@ namespace Xcaciv.Command.Extensions.Commandline
 
                 if (!string.IsNullOrEmpty(pipedInput))
                 {
-                    using var pipedReader = new StringReader(pipedInput);
-                    Console.SetIn(pipedReader);
+                    standardInReader = new StringReader(pipedInput);
+                    Console.SetIn(standardInReader);
                 }
 
                 // ioContext.Parameters are pre-tokenized strings from Xcaciv.Command framework.
@@ -86,7 +86,9 @@ namespace Xcaciv.Command.Extensions.Commandline
                 Console.SetOut(originalOut);
                 Console.SetError(originalError);
                 Console.SetIn(originalIn);
-                ConsoleRedirectionSemaphore.Release();
+                standardOutWriter.Dispose();
+                standardErrorWriter.Dispose();
+                standardInReader?.Dispose();
             }
         }
 

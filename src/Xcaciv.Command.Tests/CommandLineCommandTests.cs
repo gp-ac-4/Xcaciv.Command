@@ -83,7 +83,7 @@ namespace Xcaciv.Command.Tests
             }
 
             var resultEntry = Assert.Single(results);
-            Assert.True(resultEntry.IsSuccess);
+            Assert.True(resultEntry.IsSuccess, $"Expected success but got: {resultEntry.ErrorMessage}");
             Assert.Equal("pipe-value" + Environment.NewLine, resultEntry.Output);
         }
 
