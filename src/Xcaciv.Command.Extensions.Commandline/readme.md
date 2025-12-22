@@ -6,10 +6,9 @@
 
 ```csharp
 var systemCommand = new Command("greet", "Writes a greeting");
-systemCommand.SetHandler((InvocationContext context) =>
+systemCommand.SetAction((ParseResult parseResult) =>
 {
-    context.Console.Out.Write("hello");
-    return Task.CompletedTask;
+    Console.Out.Write("hello");
 });
 
 var adapter = new CommandLineCommand<Command>();

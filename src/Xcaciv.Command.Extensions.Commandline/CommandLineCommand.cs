@@ -5,14 +5,20 @@ using System.CommandLine.Help;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
 using SystemCommand = System.CommandLine.Command;
 
 namespace Xcaciv.Command.Extensions.Commandline
 {
+    /// <summary>
+    /// Wraps System.CommandLine.Command instances to work within the Xcaciv.Command pipeline.
+    /// Console redirection is synchronized across concurrent instances to prevent interference.
+    /// </summary>
     public class CommandLineCommand<T> : ICommandDelegate where T : SystemCommand
     {
+        private static readonly SemaphoreSlim ConsoleRedirectionSemaphore = new(1, 1);
         private T? command;
 
         protected T? WrappedCommand => command;
@@ -40,6 +46,7 @@ namespace Xcaciv.Command.Extensions.Commandline
             var originalError = Console.Error;
             var originalIn = Console.In;
 
+            await ConsoleRedirectionSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
                 Console.SetOut(standardOutWriter);
@@ -47,9 +54,15 @@ namespace Xcaciv.Command.Extensions.Commandline
 
                 if (!string.IsNullOrEmpty(pipedInput))
                 {
-                    Console.SetIn(new StringReader(pipedInput));
+                    using var pipedReader = new StringReader(pipedInput);
+                    Console.SetIn(pipedReader);
                 }
 
+                // ioContext.Parameters are pre-tokenized strings from Xcaciv.Command framework.
+                // System.CommandLine.Parse expects command-line arguments as they would appear
+                // on the command line. The framework tokenizes the input, so values with spaces
+                // are already separated into individual array elements, making them compatible
+                // with System.CommandLine's parser expectations.
                 var parseResult = command.Parse(ioContext.Parameters ?? Array.Empty<string>());
                 var exitCode = await parseResult.InvokeAsync().ConfigureAwait(false);
 
@@ -73,6 +86,7 @@ namespace Xcaciv.Command.Extensions.Commandline
                 Console.SetOut(originalOut);
                 Console.SetError(originalError);
                 Console.SetIn(originalIn);
+                ConsoleRedirectionSemaphore.Release();
             }
         }
 
@@ -91,6 +105,11 @@ namespace Xcaciv.Command.Extensions.Commandline
             var originalOut = Console.Out;
             var originalError = Console.Error;
 
+            // Using synchronous Wait() here because Help() is a synchronous method.
+            // The ICommandDelegate interface defines Help as string (not Task<string>),
+            // so we cannot use await. Synchronous blocking is acceptable here since
+            // help generation is a fast, non-I/O-bound operation.
+            ConsoleRedirectionSemaphore.Wait();
             try
             {
                 Console.SetOut(standardOutWriter);
@@ -108,6 +127,7 @@ namespace Xcaciv.Command.Extensions.Commandline
             {
                 Console.SetOut(originalOut);
                 Console.SetError(originalError);
+                ConsoleRedirectionSemaphore.Release();
             }
         }
 
@@ -146,7 +166,12 @@ namespace Xcaciv.Command.Extensions.Commandline
                     continue;
                 }
 
-                builder.AppendLine(chunk);
+                builder.Append(chunk);
+            }
+
+            if (builder.Length > 0)
+            {
+                builder.AppendLine();
             }
 
             return builder.ToString();
