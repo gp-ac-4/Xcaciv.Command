@@ -1,34 +1,67 @@
-using Xcaciv.Command.FileLoader;
-using Xunit;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Abstractions;
+using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO.Abstractions.TestingHelpers;
-using System.IO.Abstractions;
-using System.IO;
-using Xunit.Abstractions;
-using System.Runtime.Serialization;
+using Xcaciv.Command.FileLoader;
 using Xcaciv.Command.Interface;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Xcaciv.Command.FileLoaderTests;
 
 public class CrawlerTests
 {
     private ITestOutputHelper _testOutput;
-    private string commandPackageDir = @"..\..\..\..\zTestCommandPackage\bin\{1}\";
+    private string commandPackageDir = @"..\..\..\..\zTestCommandPackage\bin\{1}\net10.0\";
 
     public CrawlerTests(ITestOutputHelper output)
     {
         this._testOutput = output;
+
+        // Detect the target framework at runtime
+        var targetFramework = GetTargetFramework();
+        this._testOutput.WriteLine($"Tests running on {targetFramework}");
+
+        var buildMode = "Debug"; // Default to Debug
+
 #if DEBUG
-        this._testOutput.WriteLine("Tests in Debug mode");
-        this.commandPackageDir = commandPackageDir.Replace("{1}", "Debug");
+            this._testOutput.WriteLine("Tests in Debug mode");
 #else
-        this._testOutput.WriteLine("Tests in Release mode??");
-        this.commandPackageDir = commandPackageDir.Replace("{1}", "Release");
+        this._testOutput.WriteLine("Tests in Release mode");
+        buildMode = "Release";
 #endif
+        // Build paths using the detected framework
+        this.commandPackageDir = $@"..\..\..\..\zTestCommandPackage\bin\{buildMode}\{targetFramework}\";
+        this.commandPackageDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, this.commandPackageDir));
+    }
+
+    /// <summary>
+    /// Detects the target framework of the current assembly (net8.0, net10.0, etc.)
+    /// </summary>
+    private static string GetTargetFramework()
+    {
+        var targetFrameworkAttribute = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<System.Runtime.Versioning.TargetFrameworkAttribute>();
+
+        if (targetFrameworkAttribute != null)
+        {
+            var frameworkName = targetFrameworkAttribute.FrameworkName;
+            // Format: ".NETCoreApp,Version=v10.0" -> "net10.0"
+            if (frameworkName.Contains("Version=v"))
+            {
+                var version = frameworkName.Split("Version=v")[1];
+                return $"net{version}";
+            }
+        }
+
+        // Fallback to net10.0 if detection fails
+        return "net10.0";
     }
 
     private static string basePath = @"C:\Program\Commands\";

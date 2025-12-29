@@ -44,7 +44,7 @@
 [CmdletBinding()]
 param(
     [ValidateSet('Debug', 'Release')]
-    [string]$Configuration = 'Debug',  # Changed from 'Release' to 'Debug' for .NET 10 default
+    [string]$Configuration = 'Release',
     
     [string]$VersionSuffix,
     
@@ -355,7 +355,7 @@ try {
         Write-Host "Created local NuGet directory: $LocalNuGetDirectory" -ForegroundColor Gray
     }
 
-    $packagesToCopy = @($packageFiles + $symbolPackageFiles) | Where-Object { $_ }
+    $packagesToCopy = @($packageFiles) + @($symbolPackageFiles) | Where-Object { $_ }
     
     if ($packagesToCopy.Count -eq 0) {
         Write-ErrorMessage "No packages found to copy"

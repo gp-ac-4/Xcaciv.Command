@@ -201,7 +201,14 @@ public class Crawler : ICrawler
         foreach (var packageFilePath in binaryDirectories)
         {
             var fileName = fileSystem.Path.GetFileNameWithoutExtension(packageFilePath);
-            var uniqueId = fileSystem.Path.GetDirectoryName(packageFilePath)?.Remove(0, basePath.Length)?.Replace(@"\", String.Empty);
+            var directoryPath = fileSystem.Path.GetDirectoryName(packageFilePath);
+            var uniqueId = string.Empty;
+            
+            if (!string.IsNullOrEmpty(directoryPath) && directoryPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
+            {
+                uniqueId = directoryPath.Substring(basePath.Length).Replace(fileSystem.Path.DirectorySeparatorChar.ToString(), String.Empty);
+            }
+            
             var packageName = $"{fileName}-{uniqueId}";
             if (fileSystem.File.Exists(packageFilePath)) packageAction(packageName, packageFilePath);
         }
@@ -218,7 +225,14 @@ public class Crawler : ICrawler
         Parallel.ForEach(binaryDirectories, (packageFilePath) =>
         {
             var fileName = fileSystem.Path.GetFileNameWithoutExtension(packageFilePath);
-            var uniqueId = fileSystem.Path.GetDirectoryName(packageFilePath)?.Remove(0, basePath.Length)?.Replace(@"\", String.Empty);
+            var directoryPath = fileSystem.Path.GetDirectoryName(packageFilePath);
+            var uniqueId = string.Empty;
+            
+            if (!string.IsNullOrEmpty(directoryPath) && directoryPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
+            {
+                uniqueId = directoryPath.Substring(basePath.Length).Replace(fileSystem.Path.DirectorySeparatorChar.ToString(), String.Empty);
+            }
+            
             var packageName = $"{fileName}-{uniqueId}";
             if (fileSystem.File.Exists(packageFilePath)) packageAction(packageName, packageFilePath);
         });

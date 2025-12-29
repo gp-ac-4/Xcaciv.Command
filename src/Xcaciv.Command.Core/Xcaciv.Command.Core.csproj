@@ -20,7 +20,7 @@
 	  <Title>Xcaciv Command Core</Title>
   </PropertyGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
 		<ProjectReference Packge="True" Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
 	</ItemGroup>
 
@@ -28,7 +28,7 @@
 	  <None Include="readme.md" Pack="True" PackagePath="readme.md" />
 	</ItemGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(Configuration)' != 'Debug'">
 	  <PackageReference Include="Xcaciv.Command.Interface" />
 	</ItemGroup>
 
