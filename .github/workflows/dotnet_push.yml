@@ -22,7 +22,9 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: |
+          8.0.x
+          10.0.x
 
 
     - name: Configure Nuget Source - configure
@@ -47,10 +49,10 @@ jobs:
       
     - name: Release Build
       run: |
-        dotnet build $env:Nuget_Project_Path --configuration Release
+        dotnet build $env:Nuget_Project_Path --configuration Release -p:UseNet08=true
     - name: Nuget Package
       run: |
-        dotnet pack $env:Nuget_Project_Path --configuration Release
+        dotnet pack $env:Nuget_Project_Path --configuration Release -p:UseNet08=true
     - name: Nuget Push
       run: |
         dotnet nuget push **\*.nupkg -k ${{ secrets.NUGET_PAT }} -s "github" --skip-duplicate
