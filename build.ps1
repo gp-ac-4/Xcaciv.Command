@@ -332,17 +332,48 @@ try {
         Write-Host "Note: Package will contain assemblies for both net8.0 and net10.0" -ForegroundColor Yellow
     }
     
-    # Note: Not using --no-build because of project reference structure in Xcaciv.Command
-    $packArguments = @('pack', $packageProjectPath, '--configuration', $Configuration, '--output', $artifactDirectory, '--nologo')
+    # Define all projects that should be packed
+    $projectsToPack = @(
+        @{ Path = Join-Path $repositoryRoot 'src\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj'; Name = 'Xcaciv.Command.Interface' }
+        @{ Path = Join-Path $repositoryRoot 'src\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj'; Name = 'Xcaciv.Command.Core' }
+        @{ Path = Join-Path $repositoryRoot 'src\Xcaciv.Command\Xcaciv.Command.csproj'; Name = 'Xcaciv.Command' }
+        @{ Path = Join-Path $repositoryRoot 'src\Xcaciv.Command.Extensions.Commandline\Xcaciv.Command.Extensions.Commandline.csproj'; Name = 'Xcaciv.Command.Extensions.Commandline' }
+        @{ Path = Join-Path $repositoryRoot 'src\Xcaciv.Command.DependencyInjection\Xcaciv.Command.DependencyInjection.csproj'; Name = 'Xcaciv.Command.DependencyInjection' }
+    )
+    
+    $packedProjects = @()
+    
+    foreach ($project in $projectsToPack) {
+        if (Test-Path -Path $project.Path) {
+            Write-Host "Packing $($project.Name)..." -ForegroundColor Gray
+            
+            # Note: Not using --no-build because of project reference structure
+            $packArguments = @('pack', $project.Path, '--configuration', $Configuration, '--output', $artifactDirectory, '--nologo')
+            
+            if ($VersionSuffix) {
+                $packArguments += "--version-suffix", $VersionSuffix
+            }
+            
+            $packArguments += $msbuildProperties
+            
+            try {
+                Invoke-DotNet -Arguments $packArguments
+                $packedProjects += $project.Name
+            }
+            catch {
+                Write-Host "  Warning: Failed to pack $($project.Name)" -ForegroundColor Yellow
+            }
+        }
+        else {
+            Write-Host "  Warning: Project not found: $($project.Path)" -ForegroundColor Yellow
+        }
+    }
     
     if ($VersionSuffix) {
-        $packArguments += "--version-suffix", $VersionSuffix
         Write-Host "Version suffix: $VersionSuffix" -ForegroundColor Gray
     }
     
-    $packArguments += $msbuildProperties
-    Invoke-DotNet -Arguments $packArguments
-    Write-Success "Packages created"
+    Write-Success "Packages created for $($packedProjects.Count) project(s): $($packedProjects -join ', ')"
 
     # Step 5: Copy to local directory
     Write-BuildStep "Step 5: Copying Packages to Local Directory"
