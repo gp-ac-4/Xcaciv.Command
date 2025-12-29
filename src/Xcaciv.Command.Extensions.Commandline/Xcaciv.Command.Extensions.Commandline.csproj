@@ -4,12 +4,12 @@
     <TargetFrameworks>$(XcacivTargetFrameworks)</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>2.1.0</Version>
+    <Version>2.1.1</Version>
     <IsPublishable>True</IsPublishable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <AssemblyName>Xcaciv.Command.Extensions.Commandline</AssemblyName>
     <RootNamespace>Xcaciv.Command.Extensions.Commandline</RootNamespace>
-    <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
+    <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Xcaciv/Xcaciv.Command</PackageProjectUrl>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <RepositoryUrl>git@github.com:Xcaciv/Xcaciv.Command.git</RepositoryUrl>
