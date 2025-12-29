@@ -35,7 +35,7 @@ jobs:
       run: dotnet restore $env:Solution_Name
       
     - name: Debug Build
-      run: dotnet build $env:Solution_Name --no-restore --configuration Debug
+      run: dotnet build $env:Solution_Name --configuration Debug
     - name: Test with dotnet
       run: dotnet test $env:Solution_Name --no-build --logger trx --results-directory "TestResults-${{ matrix.dotnet-version }}"
     - name: Upload dotnet test results
@@ -47,7 +47,7 @@ jobs:
       
     - name: Release Build
       run: |
-        dotnet build $env:Nuget_Project_Path --no-restore --configuration Release
+        dotnet build $env:Nuget_Project_Path --configuration Release
     - name: Nuget Package
       run: |
         dotnet pack $env:Nuget_Project_Path --configuration Release
