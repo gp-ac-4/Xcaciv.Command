@@ -22,6 +22,10 @@ namespace Xcaciv.Command.Interface.Attributes
             set { _helpName = CommandDescription.GetValidCommandName(value, false); }
         }
         /// <summary>
+        /// Data type of the parameter
+        /// </summary>
+        public Type DataType { get; set; } = typeof(string);
+        /// <summary>
         /// format the help string
         /// </summary>
         /// <returns></returns>
