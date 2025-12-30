@@ -23,20 +23,27 @@ public class HelpService : IHelpService
     {
         if (command == null) throw new ArgumentNullException(nameof(command));
 
-        // For backward compatibility, if command has overridden Help(), use it
-        // This allows gradual migration to attribute-based help
-        var helpMethod = command.GetType().GetMethod("Help");
-        if (helpMethod != null && helpMethod.DeclaringType != typeof(object))
+        // Check if the command has a custom Help() implementation (not from AbstractCommand)
+        // by checking if the declaring type is not AbstractCommand
+        var commandType = command.GetType();
+        var helpMethod = commandType.GetMethod("Help", 
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        
+        if (helpMethod != null)
         {
-            var helpResult = command.Help(parameters, environment);
-            if (!string.IsNullOrEmpty(helpResult))
+            var declaringType = helpMethod.DeclaringType;
+            
+            // If Help() is declared on the command type itself (not AbstractCommand),
+            // use the custom implementation
+            if (declaringType != null && 
+                declaringType.FullName != "Xcaciv.Command.Core.AbstractCommand" &&
+                !declaringType.FullName!.StartsWith("System."))
             {
-                return helpResult;
+                return command.Help(parameters, environment);
             }
         }
 
         // Otherwise, build help from attributes
-        var commandType = command.GetType();
         var baseCommand = Attribute.GetCustomAttribute(commandType, typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
         
         if (baseCommand == null)

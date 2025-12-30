@@ -2,6 +2,7 @@ using System;
 using System.IO.Abstractions;
 using System.Threading.Tasks;
 using Xcaciv.Command.Commands;
+using Xcaciv.Command.Core;
 using Xcaciv.Command.FileLoader;
 using Xcaciv.Command.Interface;
 
@@ -109,6 +110,11 @@ public class CommandController : Interface.ICommandController
 
         _commandExecutor.HelpCommand = _helpCommand;
         _commandExecutor.AuditLogger = _auditLogger;
+
+        // Initialize the static help service for AbstractCommand instances.
+        // This allows all AbstractCommand subclasses to delegate help generation to IHelpService.
+        // For non-AbstractCommand implementations (ICommandDelegate), help logic remains custom.
+        AbstractCommand.SetHelpService(_helpService);
     }
 
     public string HelpCommand

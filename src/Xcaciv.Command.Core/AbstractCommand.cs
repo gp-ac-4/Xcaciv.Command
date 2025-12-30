@@ -13,6 +13,16 @@ namespace Xcaciv.Command.Core
 {
     public abstract class AbstractCommand : ICommandDelegate
     {
+        private static IHelpService? _helpService;
+
+        /// <summary>
+        /// Sets the help service used by all AbstractCommand instances for help formatting.
+        /// Should be set during application startup, typically by the CommandController.
+        /// </summary>
+        public static void SetHelpService(IHelpService helpService)
+        {
+            _helpService = helpService ?? throw new ArgumentNullException(nameof(helpService));
+        }
 
         /// <summary>
         /// this should be overwritten to dispose of any unmanaged items
@@ -22,14 +32,21 @@ namespace Xcaciv.Command.Core
         {
             return ValueTask.CompletedTask;
         }
+
         /// <summary>
         /// output full help
         /// </summary>
         /// <param name="parameters"></param>
         public virtual string Help(string[] parameters, IEnvironmentContext env)
         {
+            if (_helpService != null)
+            {
+                return _helpService.BuildHelp(this, parameters, env);
+            }
+
             return BuildHelpString(parameters, env);
         }
+
         /// <summary>
         /// single line help command description, used for listing all commands
         /// </summary>
@@ -51,13 +68,13 @@ namespace Xcaciv.Command.Core
             {
                 return $"{baseCommand.Command,-12} {baseCommand.Description}";
             }
-
-
         }
+
         /// <summary>
-        /// create a nicely formated
+        /// [Obsolete] Legacy help builder. Use IHelpService.BuildHelp() instead.
+        /// Kept for backward compatibility with commands that override this method.
         /// </summary>
-        /// <returns></returns>
+        [Obsolete("Use IHelpService.BuildHelp() instead. This method will be removed in v3.0.")]
         protected virtual string BuildHelpString(string[] parameters, IEnvironmentContext environment)
         {
             var thisType = GetType();
@@ -68,7 +85,6 @@ namespace Xcaciv.Command.Core
             var commandParametersSuffix = GetSuffixParameters(false);
             var helpRemarks = Attribute.GetCustomAttributes(thisType, typeof(CommandHelpRemarksAttribute)) as CommandHelpRemarksAttribute[];
 
-            // TODO: extract a help formatter so it can be customized
             var builder = new StringBuilder();
             if (Attribute.GetCustomAttribute(thisType, typeof(CommandRootAttribute)) is CommandRootAttribute rootCommand)
                 builder.Append($"{rootCommand.Command} ");            
@@ -79,8 +95,6 @@ namespace Xcaciv.Command.Core
             
             if (commandParametersOrdered.Length + commandParametersNamed.Length + commandParametersSuffix.Length + commandParametersFlag.Length > 0)
             {
-
-                // examine the parameters
                 var parameterBuilder = new StringBuilder();
                 var prototypeBuilder = new StringBuilder();
 
@@ -112,7 +126,6 @@ namespace Xcaciv.Command.Core
                     prototypeBuilder.Append($"{parameter.GetIndicator()} ");
                 }
 
-                // append parameter help
                 if (baseCommand?.Prototype.Equals("todo", StringComparison.OrdinalIgnoreCase) ?? false)
                 {
                     builder.AppendLine(prototypeBuilder.ToString());
@@ -127,7 +140,6 @@ namespace Xcaciv.Command.Core
                 builder.AppendLine(parameterBuilder.ToString());
             }
 
-            // append remarks
             if (helpRemarks != null && helpRemarks.Length > 0)
             {
                 builder.AppendLine("Remarks:");
@@ -141,7 +153,6 @@ namespace Xcaciv.Command.Core
             builder.AppendLine();
             return builder.ToString();
         }
-
 
         /// <summary>
         /// execute pipe and single input the same
@@ -161,9 +172,10 @@ namespace Xcaciv.Command.Core
             }
             else
             {
-                if (IsHelpRequest(io.Parameters))
+                var isHelp = _helpService?.IsHelpRequest(io.Parameters) ?? IsHelpRequest(io.Parameters);
+                if (isHelp)
                 {
-                    yield return CommandResult<string>.Success(BuildHelpString(io.Parameters, environment));
+                    yield return CommandResult<string>.Success(Help(io.Parameters, environment));
                 }
                 else
                 {
@@ -171,8 +183,9 @@ namespace Xcaciv.Command.Core
                 }
             }
         }
+
         /// <summary>
-        /// Use the parameter attributest to process the parameters into a dictionary
+        /// Use the parameter attributes to process the parameters into a dictionary
         /// </summary>
         /// <param name="parameters"></param>
         protected Dictionary<string, string> ProcessParameters(string[] parameters, bool hasPipedInput = false)
@@ -181,9 +194,7 @@ namespace Xcaciv.Command.Core
             var parameterList = parameters.ToList();
 
             var parameterLookup = new Dictionary<string, string>();
-            Type thisType = GetType();
-            CommandParameters.
-                        ProcessOrderedParameters(parameterList, parameterLookup, GetOrderedParameters(hasPipedInput));
+            CommandParameters.ProcessOrderedParameters(parameterList, parameterLookup, GetOrderedParameters(hasPipedInput));
             CommandParameters.ProcessFlags(parameterList, parameterLookup, GetFlagParameters());
             CommandParameters.ProcessNamedParameters(parameterList, parameterLookup, GetNamedParameters(hasPipedInput));
             CommandParameters.ProcessSuffixParameters(parameterList, parameterLookup, GetSuffixParameters(hasPipedInput));
@@ -206,6 +217,7 @@ namespace Xcaciv.Command.Core
 
             return ordered;
         }
+
         /// <summary>
         /// reads parameter description from the instance
         /// </summary>
@@ -220,6 +232,7 @@ namespace Xcaciv.Command.Core
             }
             return named;
         }
+
         /// <summary>
         /// reads parameter description from the instance
         /// </summary>
@@ -230,6 +243,7 @@ namespace Xcaciv.Command.Core
             var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandFlagAttribute)) as CommandFlagAttribute[] ?? ([]);
             return flags;
         }
+
         /// <summary>
         /// reads parameter description from the instance
         /// </summary>
@@ -245,6 +259,11 @@ namespace Xcaciv.Command.Core
             return flags;
         }
 
+        /// <summary>
+        /// [Obsolete] Legacy help request detector. Use IHelpService.IsHelpRequest() instead.
+        /// Kept for backward compatibility with commands that override this method.
+        /// </summary>
+        [Obsolete("Use IHelpService.IsHelpRequest() instead. This method will be removed in v3.0.")]
         protected static bool IsHelpRequest(string[] parameters)
         {
             if (parameters == null || parameters.Length == 0)
@@ -259,8 +278,6 @@ namespace Xcaciv.Command.Core
 
         public abstract string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env);
 
-
         public abstract string HandleExecution(string[] parameters, IEnvironmentContext env);
-
     }
 }
