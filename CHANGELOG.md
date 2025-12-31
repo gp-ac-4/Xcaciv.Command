@@ -5,6 +5,43 @@ All notable changes to Xcaciv.Command will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2025-01-XX
+
+### 🔴 BREAKING CHANGES
+
+This is a major version release that removes deprecated APIs that were marked for removal in v2.0.
+
+#### Removed APIs
+
+- **`EnableDefaultCommands()`** - REMOVED. Use `RegisterBuiltInCommands()` instead.
+- **`GetHelp()`** - REMOVED. Use `GetHelpAsync()` instead.
+
+#### Migration Required
+
+All code using deprecated methods must be updated:
+
+```csharp
+// OLD (v2.x) - NO LONGER WORKS
+controller.EnableDefaultCommands();
+controller.GetHelp("", ioContext, env);
+
+// NEW (v3.0) - REQUIRED
+controller.RegisterBuiltInCommands();
+await controller.GetHelpAsync("", ioContext, env);
+```
+
+### Changed
+
+- **Versions**: All packages bumped to 3.0.0
+- **API Surface**: Removed deprecated methods from `ICommandController`
+- **Documentation**: Updated to reflect current API state
+
+### Migration Guide
+
+See [Migration Guide v3.0](docs/migration_guide_v3.0.md) for detailed upgrade instructions.
+
+---
+
 ## [2.1.0] - 2025-12-25
 
 ### Changed

@@ -4,9 +4,9 @@ Excessively modular, async pipeable, command framework.
 
 ```csharp
     var controller = new Xc.Command.CommandController();
-    controller.EnableDefaultCommands();
+    controller.RegisterBuiltInCommands();
 
-    _ = controller.Run("Say Hello to my little friend");
+    _ = await controller.Run("Say Hello to my little friend", ioContext, env);
 
     // outputs: Hello to my little friend
 ```
@@ -17,15 +17,15 @@ Commands are .NET class libraries that contain implementations of the `Xc.Comman
 
 - **Async Pipeline Support**: Commands can be chained with `|` for threaded pipeline execution
 - **Plugin System**: Dynamic command loading from external assemblies
-- **Secure Plugin Loading**: Built on Xcaciv.Loader 2.1.0 with instance-based security policies
+- **Secure Plugin Loading**: Built on Xcaciv.Loader 2.1.2 with instance-based security policies
 - **Auto-Generated Help**: Comprehensive help generation from command attributes
 - **Sub-Commands**: Hierarchical command structure support
 - **Built-in Commands**: `SAY`, `SET`, `ENV`, and `REGIF` included
 
 ## Dependencies
 
-- **Xcaciv.Loader 2.1.0**: Assembly loading with instance-based security configuration
-- **System.IO.Abstractions 21.0.2**: File system abstraction for testability
+- **Xcaciv.Loader 2.1.2**: Assembly loading with instance-based security configuration
+- **System.IO.Abstractions 22.1.0**: File system abstraction for testability
 
 ## Security
 
@@ -72,10 +72,17 @@ See `SECURITY.md` for secure audit logging patterns.
 
 ## Version History
 
-### 2.1.0 (Current)
-- Bumped all package versions to 2.1.0
-- Documentation aligned to Xcaciv.Loader 2.1.0
-- Maintains .NET 8 targeting and security policies
+### 3.0.0 (Current)
+- **BREAKING:** Removed deprecated `EnableDefaultCommands()` - use `RegisterBuiltInCommands()`
+- **BREAKING:** Removed deprecated `GetHelp()` - use `await GetHelpAsync()`
+- Cleaned up API surface for better maintainability
+- See [Migration Guide v3.0](docs/migration_guide_v3.0.md) for upgrade instructions
+
+### 2.1.3 (Previous)
+- Bumped all package versions to 2.1.3
+- Updated to Xcaciv.Loader 2.1.2
+- Documentation improvements
+- Maintains .NET 10 targeting
 
 ## License
 
