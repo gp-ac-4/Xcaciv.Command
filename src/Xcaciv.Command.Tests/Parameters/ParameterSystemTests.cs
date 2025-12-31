@@ -1,0 +1,374 @@
+using Xunit;
+using Xcaciv.Command.Core.Parameters;
+using Xcaciv.Command.Interface.Parameters;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+
+namespace Xcaciv.Command.Tests.Parameters;
+
+public class DefaultParameterConverterTests
+{
+    private readonly DefaultParameterConverter _converter = new();
+
+    [Fact]
+    public void CanConvert_WithString_ReturnsTrue()
+    {
+        Assert.True(_converter.CanConvert(typeof(string)));
+    }
+
+    [Fact]
+    public void CanConvert_WithInt_ReturnsTrue()
+    {
+        Assert.True(_converter.CanConvert(typeof(int)));
+    }
+
+    [Fact]
+    public void CanConvert_WithFloat_ReturnsTrue()
+    {
+        Assert.True(_converter.CanConvert(typeof(float)));
+    }
+
+    [Fact]
+    public void CanConvert_WithGuid_ReturnsTrue()
+    {
+        Assert.True(_converter.CanConvert(typeof(Guid)));
+    }
+
+    [Fact]
+    public void CanConvert_WithJsonElement_ReturnsTrue()
+    {
+        Assert.True(_converter.CanConvert(typeof(JsonElement)));
+    }
+
+    [Fact]
+    public void CanConvert_WithUnsupportedType_ReturnsFalse()
+    {
+        Assert.False(_converter.CanConvert(typeof(object)));
+    }
+
+    [Fact]
+    public void Convert_StringValue_ReturnsString()
+    {
+        var result = _converter.Convert("hello", typeof(string));
+
+        Assert.True(result.IsSuccess, $"Expected success but got error: {result.ErrorMessage}");
+        Assert.Equal("hello", result.Value);
+    }
+
+    [Fact]
+    public void Convert_ValidInt_ReturnsInt()
+    {
+        var result = _converter.Convert("42", typeof(int));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(42, result.Value);
+    }
+
+    [Fact]
+    public void Convert_InvalidInt_ReturnsError()
+    {
+        var result = _converter.Convert("not-a-number", typeof(int));
+
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.ErrorMessage);
+    }
+
+    [Fact]
+    public void Convert_ValidFloat_ReturnsFloat()
+    {
+        var result = _converter.Convert("3.14", typeof(float));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(3.14f, (float)result.Value!, 2);
+    }
+
+    [Fact]
+    public void Convert_ValidBooleanTrue_ReturnsTrue()
+    {
+        var result = _converter.Convert("true", typeof(bool));
+
+        Assert.True(result.IsSuccess);
+        Assert.True((bool)result.Value!);
+    }
+
+    [Fact]
+    public void Convert_BooleanOne_ReturnsTrue()
+    {
+        var result = _converter.Convert("1", typeof(bool));
+
+        Assert.True(result.IsSuccess);
+        Assert.True((bool)result.Value!);
+    }
+
+    [Fact]
+    public void Convert_BooleanYes_ReturnsTrue()
+    {
+        var result = _converter.Convert("yes", typeof(bool));
+
+        Assert.True(result.IsSuccess);
+        Assert.True((bool)result.Value!);
+    }
+
+    [Fact]
+    public void Convert_BooleanFalse_ReturnsFalse()
+    {
+        var result = _converter.Convert("false", typeof(bool));
+
+        Assert.True(result.IsSuccess);
+        Assert.False((bool)result.Value!);
+    }
+
+    [Fact]
+    public void Convert_ValidGuid_ReturnsGuid()
+    {
+        var guid = "550e8400-e29b-41d4-a716-446655440000";
+        var result = _converter.Convert(guid, typeof(Guid));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(Guid.Parse(guid), result.Value);
+    }
+
+    [Fact]
+    public void Convert_InvalidGuid_ReturnsError()
+    {
+        var result = _converter.Convert("not-a-guid", typeof(Guid));
+
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.ErrorMessage);
+    }
+
+    [Fact]
+    public void Convert_ValidJsonObject_ReturnsJsonElement()
+    {
+        var json = @"{""name"":""test"",""value"":42}";
+        var result = _converter.Convert(json, typeof(JsonElement));
+
+        Assert.True(result.IsSuccess);
+        Assert.IsType<JsonElement>(result.Value);
+    }
+
+    [Fact]
+    public void Convert_InvalidJson_ReturnsError()
+    {
+        var result = _converter.Convert("{invalid json}", typeof(JsonElement));
+
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.ErrorMessage);
+    }
+
+    [Fact]
+    public void Convert_EmptyStringToInt_ReturnsError()
+    {
+        var result = _converter.Convert("", typeof(int));
+
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.ErrorMessage);
+    }
+}
+
+public class ParameterValueTests
+{
+    private readonly DefaultParameterConverter _converter = new();
+
+    [Fact]
+    public void Constructor_WithValidData_InitializesProperties()
+    {
+        var paramValue = new ParameterValue("name", "42", typeof(int), _converter);
+
+        Assert.Equal("name", paramValue.Name);
+        Assert.Equal("42", paramValue.RawValue);
+        Assert.Equal(typeof(int), paramValue.DataType);
+    }
+
+    [Fact]
+    public void Value_WithValidConversion_ReturnsConvertedValue()
+    {
+        var paramValue = new ParameterValue("count", "42", typeof(int), _converter);
+
+        Assert.True(paramValue.IsValid);
+        Assert.Equal(42, paramValue.Value);
+    }
+
+    [Fact]
+    public void Value_WithInvalidConversion_SetsValidationError()
+    {
+        var paramValue = new ParameterValue("count", "not-a-number", typeof(int), _converter);
+
+        Assert.False(paramValue.IsValid);
+        Assert.NotNull(paramValue.ValidationError);
+    }
+
+    [Fact]
+    public void As_WithCorrectType_ReturnsValue()
+    {
+        var paramValue = new ParameterValue("text", "hello", typeof(string), _converter);
+
+        var result = paramValue.As<string>();
+        Assert.Equal("hello", result);
+    }
+
+    [Fact]
+    public void AsValueType_WithCorrectType_ReturnsValue()
+    {
+        var paramValue = new ParameterValue("count", "42", typeof(int), _converter);
+
+        var result = paramValue.AsValueType<int>();
+        Assert.Equal(42, result);
+    }
+}
+
+public class ParameterCollectionTests
+{
+    private readonly DefaultParameterConverter _converter = new();
+
+    [Fact]
+    public void Constructor_CreatesDictionaryWithCaseInsensitivity()
+    {
+        var collection = new ParameterCollection();
+
+        var param = new ParameterValue("Name", "test", typeof(string), _converter);
+        collection["name"] = param;
+
+        // Should find by different case
+        Assert.NotNull(collection.GetParameter("NAME"));
+        Assert.NotNull(collection.GetParameter("Name"));
+    }
+
+    [Fact]
+    public void GetParameter_WithExistingParameter_ReturnsIt()
+    {
+        var converter = new DefaultParameterConverter();
+        var param = new ParameterValue("name", "test", typeof(string), converter);
+        var collection = new ParameterCollection { { "name", param } };
+
+        var result = collection.GetParameter("name");
+        Assert.NotNull(result);
+        Assert.Equal("test", result.Value);
+    }
+
+    [Fact]
+    public void GetParameter_WithNonExistent_ReturnsNull()
+    {
+        var collection = new ParameterCollection();
+
+        var result = collection.GetParameter("nonexistent");
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetParameterRequired_WithNonExistent_ThrowsException()
+    {
+        var collection = new ParameterCollection();
+
+        Assert.Throws<KeyNotFoundException>(() => collection.GetParameterRequired("nonexistent"));
+    }
+
+    [Fact]
+    public void GetAsValueType_WithValidParameter_ReturnsTypedValue()
+    {
+        var converter = new DefaultParameterConverter();
+        var param = new ParameterValue("count", "42", typeof(int), converter);
+        var collection = new ParameterCollection { { "count", param } };
+
+        var result = collection.GetAsValueType<int>("count");
+        Assert.Equal(42, result);
+    }
+
+    [Fact]
+    public void AreAllValid_WithValidParameters_ReturnsTrue()
+    {
+        var converter = new DefaultParameterConverter();
+        var param = new ParameterValue("count", "42", typeof(int), converter);
+        var collection = new ParameterCollection { { "count", param } };
+
+        Assert.True(collection.AreAllValid());
+    }
+
+    [Fact]
+    public void AreAllValid_WithInvalidParameter_ReturnsFalse()
+    {
+        var converter = new DefaultParameterConverter();
+        var param = new ParameterValue("count", "invalid", typeof(int), converter);
+        var collection = new ParameterCollection { { "count", param } };
+
+        Assert.False(collection.AreAllValid());
+    }
+}
+
+public class ParameterCollectionBuilderTests
+{
+    private readonly DefaultParameterConverter _converter = new();
+    private readonly ParameterCollectionBuilder _builder;
+
+    public ParameterCollectionBuilderTests()
+    {
+        _builder = new ParameterCollectionBuilder(_converter);
+    }
+
+    [Fact]
+    public void Build_WithValidParameters_CreatesCollection()
+    {
+        var dict = new Dictionary<string, string>
+        {
+            { "name", "test" },
+            { "count", "42" }
+        };
+        var attrs = new[]
+        {
+            new TestParameterAttribute("name", typeof(string)),
+            new TestParameterAttribute("count", typeof(int))
+        };
+
+        var collection = _builder.Build(dict, attrs);
+
+        Assert.Equal(2, collection.Count);
+        Assert.Equal("test", collection.GetParameter("name")?.Value);
+        Assert.Equal(42, collection.GetAsValueType<int>("count"));
+    }
+
+    [Fact]
+    public void Build_WithInvalidParameter_ThrowsAggregateException()
+    {
+        var dict = new Dictionary<string, string>
+        {
+            { "count", "invalid" }
+        };
+        var attrs = new[] { new TestParameterAttribute("count", typeof(int)) };
+
+        var ex = Assert.Throws<ArgumentException>(() => _builder.Build(dict, attrs));
+        Assert.Contains("Parameter validation failed", ex.Message);
+    }
+
+    [Fact]
+    public void BuildStrict_WithValidParameters_CreatesCollection()
+    {
+        var dict = new Dictionary<string, string> { { "count", "42" } };
+        var attr = new[] { new TestParameterAttribute("count", typeof(int)) };
+
+        var collection = _builder.BuildStrict(dict, attr);
+
+        Assert.Equal(1, collection.Count);
+        Assert.Equal(42, collection.GetAsValueType<int>("count"));
+    }
+
+    [Fact]
+    public void BuildStrict_WithInvalidParameter_ThrowsException()
+    {
+        var dict = new Dictionary<string, string> { { "count", "invalid" } };
+        var attr = new[] { new TestParameterAttribute("count", typeof(int)) };
+
+        Assert.Throws<ArgumentException>(() => _builder.BuildStrict(dict, attr));
+    }
+}
+
+// Test helper for parameter attributes
+public class TestParameterAttribute : Xcaciv.Command.Interface.Attributes.AbstractCommandParameter
+{
+    public TestParameterAttribute(string name, Type dataType)
+    {
+        Name = name;
+        DataType = dataType;
+    }
+}

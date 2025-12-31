@@ -1,9 +1,11 @@
 using Xunit;
 using Moq;
 using Xcaciv.Command.Commands;
+using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using System;
 using Xcaciv.Command.Interface.Attributes;
+using Xcaciv.Command.Interface.Parameters;
 
 namespace Xcaciv.Command.Tests
 {
@@ -22,11 +24,12 @@ namespace Xcaciv.Command.Tests
                 [new CommandParameterSuffixAttribute("unnamed", "a unnamed value")]);
 
             // Act
-            var result = command.HandleExecution(parameters, env);
+            var processedParams = command.ProcessParameters(parameters);
+            var result = command.HandleExecution(processedParams, env);
 
             // Assert
             Assert.Contains("first = param1", result);
-            Assert.Contains("flag = True", result);
+            Assert.Contains("flag = true", result);  // Changed to lowercase true from True
             Assert.Contains("name = John", result);
             Assert.Contains("unnamed = suffix", result);
         }
@@ -36,12 +39,15 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var pipedChunk = "piped chunk";
-            var parameters = new string[] { "param1", "-flag", "value", "--name", "John", "suffix" };
+            var parameters = new string[] { };
             var env = new Mock<IEnvironmentContext>().Object;
             var command = new Commands.ParameterTestCommand([], [], [], []);
 
-            // Act & Assert
-            Assert.Throws<NotImplementedException>(() => command.HandlePipedChunk(pipedChunk, parameters, env));
+            // Act
+            var processedParams = command.ProcessParameters(parameters);
+
+            // Assert
+            Assert.Throws<NotImplementedException>(() => command.HandlePipedChunk(pipedChunk, processedParams, env));
         }
     }
 }

@@ -7,27 +7,26 @@ using System.Threading.Tasks;
 using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
+using Xcaciv.Command.Interface.Parameters;
 
 namespace Xcaciv.Command.Commands
 {
     [CommandRegister("Say", "Like echo but more valley.", Prototype ="SAY <thing to print>")]
-    [CommandParameterOrdered("text", "Text to output")]
+    [CommandParameterSuffix("text", "Text to output")]
     [CommandHelpRemarks("Use double quotes to include environment variables in the format %var%.")]
     [CommandHelpRemarks("Piped input will be evalueated for env vars before being passed out.")]
     public class SayCommand : AbstractCommand
     {
-        public override string HandleExecution(string[] parameters, IEnvironmentContext env)
+        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
-            var builder = new StringBuilder();
-            foreach (var parameter in parameters)
+            // Get the text parameter which contains all arguments joined together
+            if (parameters.TryGetValue("text", out var textParam) && textParam.IsValid)
             {
-                var value = parameter.ToString();
+                var value = textParam.RawValue;
                 if (value.Contains('%')) value = ProcessEnvValues(value, env);
-                builder.Append(value);
-                builder.Append(' ');
+                return value;
             }
-            var result = builder.ToString();
-            return (result.Length > 1) ? result[..^1] : String.Empty;
+            return string.Empty;
         }
 
         public static string ProcessEnvValues(string value, IEnvironmentContext env)
@@ -48,10 +47,9 @@ namespace Xcaciv.Command.Commands
             });
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
+        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             return ProcessEnvValues(pipedChunk, env);
         }
-
     }
 }

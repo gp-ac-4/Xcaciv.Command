@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
+using Xcaciv.Command.Interface.Parameters;
 
 namespace Xcaciv.Command.Packages
 {
@@ -16,14 +17,16 @@ namespace Xcaciv.Command.Packages
     [CommandParameterOrdered("packagename", "The unique name of the package to install", IsRequired = true)]
     public class InstallCommand : AbstractCommand
     {
-        public override string HandleExecution(string[] parameters, IEnvironmentContext env)
+        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
-            return "Not installing " + String.Join(',', parameters);
+            var paramNames = string.Join(',', parameters.Keys);
+            return "Not installing " + paramNames;
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
+        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
-            return $"Not installing {pipedChunk} " + String.Join(',', parameters);
+            var paramNames = string.Join(',', parameters.Keys);
+            return $"Not installing {pipedChunk} " + paramNames;
         }
     }
 }

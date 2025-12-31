@@ -5,8 +5,10 @@ using System.Threading.Tasks;
 using Xunit;
 using Xcaciv.Command.Interface.Attributes;
 using Xcaciv.Command.Interface;
+using Xcaciv.Command.Interface.Parameters;
 using Xcaciv.Command.Tests.TestImpementations;
 using Xcaciv.Command.Core;
+using System.Linq;
 
 namespace Xcaciv.Command.Tests;
 
@@ -96,9 +98,9 @@ public class PipelineChannelCompletionTests
     [CommandRegister("PIPECHANNELPRODUCER", "Emits deterministic pipeline output")]
     private sealed class PipelineChannelProducerCommand : AbstractCommand
     {
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env) => pipedChunk;
+        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => pipedChunk;
 
-        public override string HandleExecution(string[] parameters, IEnvironmentContext env) => string.Join(' ', parameters ?? Array.Empty<string>());
+        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => string.Join(' ', parameters.Values.Select(p => p.RawValue));
 
         public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {
@@ -126,9 +128,9 @@ public class PipelineChannelCompletionTests
             _onCompleted = onCompleted;
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env) => pipedChunk;
+        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => pipedChunk;
 
-        public override string HandleExecution(string[] parameters, IEnvironmentContext env) => string.Empty;
+        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => string.Empty;
 
         public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {
@@ -157,9 +159,9 @@ public class PipelineChannelCompletionTests
             _onCompleted = onCompleted;
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env) => pipedChunk;
+        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => pipedChunk;
 
-        public override string HandleExecution(string[] parameters, IEnvironmentContext env) => string.Empty;
+        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => string.Empty;
 
         public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {
@@ -247,9 +249,9 @@ public class PipelineChannelCompletionTests
             _cancellationRequested = cancellationRequested;
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env) => pipedChunk;
+        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => pipedChunk;
 
-        public override string HandleExecution(string[] parameters, IEnvironmentContext env) => string.Empty;
+        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => string.Empty;
 
         public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {
