@@ -249,10 +249,10 @@ public static class CommandParameters
     /// <summary>
     /// Helper method to create a ParameterValue using the converter.
     /// </summary>
-    private static ParameterValue CreateParameterValue(string name, string rawValue, Type targetType)
+    private static IParameterValue CreateParameterValue(string name, string rawValue, Type targetType)
     {
         var convertedValue = DefaultConverter.ValidateAndConvert(name, rawValue, targetType, out var validationError, out var isValid);
-        return new ParameterValue(name, rawValue, convertedValue, targetType, isValid, validationError);
+        return ParameterValue.Create(name, rawValue, convertedValue, targetType, isValid, validationError);
     }
 
     private static void ProcessTypedFlags(

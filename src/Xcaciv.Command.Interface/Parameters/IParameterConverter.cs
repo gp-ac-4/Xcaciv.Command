@@ -44,6 +44,11 @@ public interface IParameterConverter
     /// <exception cref="ArgumentException">Thrown when converter doesn't support the target type.</exception>
     /// <exception cref="InvalidOperationException">Thrown when type safety is violated.</exception>
     object ValidateAndConvert(string parameterName, string rawValue, Type targetType, out string validationError, out bool isValid);
+
+    /// <summary>
+    /// Generic overload that enforces compile-time type expectations while preserving validation diagnostics.
+    /// </summary>
+    T ValidateAndConvert<T>(string parameterName, string rawValue, out string validationError, out bool isValid);
 }
 
 /// <summary>

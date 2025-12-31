@@ -67,10 +67,10 @@ namespace Xcaciv.Command.Interface.Parameters
         /// <summary>
         /// Gets a parameter by name, or null if not found.
         /// </summary>
-        public ParameterValue? GetParameter(string name)
+        public IParameterValue? GetParameter(string name)
         {
             if (_parameters.TryGetValue(name, out var parameter))
-                return parameter as ParameterValue;
+                return parameter;
 
             return null;
         }
@@ -78,12 +78,12 @@ namespace Xcaciv.Command.Interface.Parameters
         /// <summary>
         /// Gets a parameter by name, throwing if not found.
         /// </summary>
-        public ParameterValue GetParameterRequired(string name)
+        public IParameterValue GetParameterRequired(string name)
         {
             if (!_parameters.TryGetValue(name, out var parameter))
                 throw new KeyNotFoundException($"Parameter '{name}' not found.");
 
-            return (ParameterValue)parameter;
+            return parameter;
         }
 
         /// <summary>
@@ -126,8 +126,7 @@ namespace Xcaciv.Command.Interface.Parameters
                     $"Parameter '{name}' has validation error: {parameter.ValidationError}");
             }
 
-            // Delegate to As<T>() for consistent type handling
-            return parameter.As<T>();
+            return parameter.GetValue<T>();
         }
 
         /// <summary>
@@ -136,7 +135,7 @@ namespace Xcaciv.Command.Interface.Parameters
         public T GetAsValueType<T>(string name) where T : struct
         {
             var parameter = GetParameterRequired(name);
-            return parameter.As<T>();
+            return parameter.GetValue<T>();
         }
 
         /// <summary>
@@ -148,7 +147,7 @@ namespace Xcaciv.Command.Interface.Parameters
                 return defaultValue;
 
             if (parameter is IParameterValue<T> typedParam && typedParam.IsValid)
-                return typedParam.Value;
+                return typedParam.GetValue();
 
             return defaultValue;
         }

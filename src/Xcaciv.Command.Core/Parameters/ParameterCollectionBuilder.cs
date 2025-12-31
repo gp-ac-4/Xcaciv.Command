@@ -99,9 +99,9 @@ public class ParameterCollectionBuilder
     /// <summary>
     /// Creates a parameter value with type conversion and validation.
     /// </summary>
-    private ParameterValue CreateParameterValue(string name, string rawValue, Type targetType)
+    private IParameterValue CreateParameterValue(string name, string rawValue, Type targetType)
     {
         var convertedValue = _converter.ValidateAndConvert(name, rawValue, targetType, out var validationError, out var isValid);
-        return new ParameterValue(name, rawValue, convertedValue, targetType, isValid, validationError);
+        return ParameterValue.Create(name, rawValue, convertedValue, targetType, isValid, validationError);
     }
 }

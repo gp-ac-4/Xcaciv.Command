@@ -151,6 +151,9 @@ public class DefaultParameterConverter : IParameterConverter
 
     public object ConvertWithValidation(string rawValue, Type targetType, out string? error)
     {
+        if (targetType == null)
+            throw new ArgumentNullException(nameof(targetType));
+
         error = null;
         
         // String passthrough
@@ -215,6 +218,25 @@ public class DefaultParameterConverter : IParameterConverter
         }
         
         return convertedValue;
+    }
+
+    public T ValidateAndConvert<T>(string parameterName, string rawValue, out string validationError, out bool isValid)
+    {
+        var convertedValue = ValidateAndConvert(parameterName, rawValue, typeof(T), out validationError, out isValid);
+
+        if (!isValid)
+        {
+            return default!;
+        }
+
+        if (convertedValue is T typedValue)
+        {
+            return typedValue;
+        }
+
+        var actualType = convertedValue?.GetType().Name ?? "null";
+        throw new InvalidOperationException(
+            $"Type safety violation: Converter returned {actualType} but parameter '{parameterName}' expects {typeof(T).Name}.");
     }
 
     /// <summary>
