@@ -175,7 +175,7 @@ public class ParameterValueTests
     [Fact]
     public void Constructor_WithValidData_InitializesProperties()
     {
-        var paramValue = new ParameterValue("name", "42", typeof(int), _converter);
+        var paramValue = CreateParameterValue("name", "42", typeof(int));
 
         Assert.Equal("name", paramValue.Name);
         Assert.Equal("42", paramValue.RawValue);
@@ -185,7 +185,7 @@ public class ParameterValueTests
     [Fact]
     public void Value_WithValidConversion_ReturnsConvertedValue()
     {
-        var paramValue = new ParameterValue("count", "42", typeof(int), _converter);
+        var paramValue = CreateParameterValue("count", "42", typeof(int));
 
         Assert.True(paramValue.IsValid);
         Assert.Equal(42, paramValue.Value);
@@ -194,7 +194,7 @@ public class ParameterValueTests
     [Fact]
     public void Value_WithInvalidConversion_SetsValidationError()
     {
-        var paramValue = new ParameterValue("count", "not-a-number", typeof(int), _converter);
+        var paramValue = CreateParameterValue("count", "not-a-number", typeof(int));
 
         Assert.False(paramValue.IsValid);
         Assert.NotNull(paramValue.ValidationError);
@@ -203,7 +203,7 @@ public class ParameterValueTests
     [Fact]
     public void As_WithCorrectType_ReturnsValue()
     {
-        var paramValue = new ParameterValue("text", "hello", typeof(string), _converter);
+        var paramValue = CreateParameterValue("text", "hello", typeof(string));
 
         var result = paramValue.As<string>();
         Assert.Equal("hello", result);
@@ -212,10 +212,16 @@ public class ParameterValueTests
     [Fact]
     public void As_WithValueType_ReturnsValue()
     {
-        var paramValue = new ParameterValue("count", "42", typeof(int), _converter);
+        var paramValue = CreateParameterValue("count", "42", typeof(int));
 
         var result = paramValue.As<int>();
         Assert.Equal(42, result);
+    }
+
+    private ParameterValue CreateParameterValue(string name, string rawValue, Type targetType)
+    {
+        var convertedValue = _converter.ValidateAndConvert(name, rawValue, targetType, out var validationError, out var isValid);
+        return new ParameterValue(name, rawValue, convertedValue, targetType, isValid, validationError);
     }
 }
 
@@ -228,7 +234,7 @@ public class ParameterCollectionTests
     {
         var collection = new ParameterCollection();
 
-        var param = new ParameterValue("Name", "test", typeof(string), _converter);
+        var param = CreateParameterValue("Name", "test", typeof(string));
         collection["name"] = param;
 
         // Should find by different case
@@ -239,8 +245,7 @@ public class ParameterCollectionTests
     [Fact]
     public void GetParameter_WithExistingParameter_ReturnsIt()
     {
-        var converter = new DefaultParameterConverter();
-        var param = new ParameterValue("name", "test", typeof(string), converter);
+        var param = CreateParameterValue("name", "test", typeof(string));
         var collection = new ParameterCollection { { "name", param } };
 
         var result = collection.GetParameter("name");
@@ -268,8 +273,7 @@ public class ParameterCollectionTests
     [Fact]
     public void GetAsValueType_WithValidParameter_ReturnsTypedValue()
     {
-        var converter = new DefaultParameterConverter();
-        var param = new ParameterValue("count", "42", typeof(int), converter);
+        var param = CreateParameterValue("count", "42", typeof(int));
         var collection = new ParameterCollection { { "count", param } };
 
         var result = collection.GetAsValueType<int>("count");
@@ -279,8 +283,7 @@ public class ParameterCollectionTests
     [Fact]
     public void AreAllValid_WithValidParameters_ReturnsTrue()
     {
-        var converter = new DefaultParameterConverter();
-        var param = new ParameterValue("count", "42", typeof(int), converter);
+        var param = CreateParameterValue("count", "42", typeof(int));
         var collection = new ParameterCollection { { "count", param } };
 
         Assert.True(collection.AreAllValid());
@@ -289,11 +292,16 @@ public class ParameterCollectionTests
     [Fact]
     public void AreAllValid_WithInvalidParameter_ReturnsFalse()
     {
-        var converter = new DefaultParameterConverter();
-        var param = new ParameterValue("count", "invalid", typeof(int), converter);
+        var param = CreateParameterValue("count", "invalid", typeof(int));
         var collection = new ParameterCollection { { "count", param } };
 
         Assert.False(collection.AreAllValid());
+    }
+
+    private ParameterValue CreateParameterValue(string name, string rawValue, Type targetType)
+    {
+        var convertedValue = _converter.ValidateAndConvert(name, rawValue, targetType, out var validationError, out var isValid);
+        return new ParameterValue(name, rawValue, convertedValue, targetType, isValid, validationError);
     }
 }
 
@@ -380,7 +388,7 @@ public class ParameterValueTypeConsistencyTests
     [Fact]
     public void Constructor_WithInvalidConversion_StoresSentinelNotString()
     {
-        var param = new ParameterValue("count", "invalid", typeof(int), _converter);
+        var param = CreateParameterValue("count", "invalid", typeof(int));
 
         Assert.False(param.IsValid);
         Assert.NotNull(param.ValidationError);
@@ -393,7 +401,7 @@ public class ParameterValueTypeConsistencyTests
     [Fact]
     public void As_WithInvalidParameter_ThrowsWithDetailedMessage()
     {
-        var param = new ParameterValue("count", "invalid", typeof(int), _converter);
+        var param = CreateParameterValue("count", "invalid", typeof(int));
 
         var ex = Assert.Throws<InvalidOperationException>(() => param.As<int>());
         
@@ -405,7 +413,7 @@ public class ParameterValueTypeConsistencyTests
     [Fact]
     public void As_WithWrongTypeRequest_ThrowsWithDiagnostics()
     {
-        var param = new ParameterValue("count", "42", typeof(int), _converter);
+        var param = CreateParameterValue("count", "42", typeof(int));
 
         var ex = Assert.Throws<InvalidCastException>(() => param.As<string>());
         
@@ -418,14 +426,14 @@ public class ParameterValueTypeConsistencyTests
     public void Constructor_WithUnsupportedType_Throws()
     {
         Assert.Throws<ArgumentException>(() => 
-            new ParameterValue("obj", "test", typeof(object), _converter));
+            CreateParameterValue("obj", "test", typeof(object)));
     }
 
     [Fact]
     public void GetValue_WithValidParameter_ReturnsCorrectType()
     {
         var collection = new ParameterCollection();
-        collection["count"] = new ParameterValue("count", "42", typeof(int), _converter);
+        collection["count"] = CreateParameterValue("count", "42", typeof(int));
 
         int count = collection.GetValue<int>("count");
         
@@ -436,11 +444,17 @@ public class ParameterValueTypeConsistencyTests
     public void GetValue_WithInvalidParameter_ThrowsInvalidOperation()
     {
         var collection = new ParameterCollection();
-        collection["count"] = new ParameterValue("count", "invalid", typeof(int), _converter);
+        collection["count"] = CreateParameterValue("count", "invalid", typeof(int));
 
         var ex = Assert.Throws<InvalidOperationException>(() => 
             collection.GetValue<int>("count"));
         
         Assert.Contains("validation error", ex.Message);
+    }
+
+    private ParameterValue CreateParameterValue(string name, string rawValue, Type targetType)
+    {
+        var convertedValue = _converter.ValidateAndConvert(name, rawValue, targetType, out var validationError, out var isValid);
+        return new ParameterValue(name, rawValue, convertedValue, targetType, isValid, validationError);
     }
 }

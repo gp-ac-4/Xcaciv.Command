@@ -40,17 +40,17 @@ public class ParameterCollectionBuilder
             .Where(a => parametersDict.ContainsKey(a.Name)))
         {
             var rawValue = parametersDict[attr.Name];
-            var paramValue = new ParameterValue(attr.Name, rawValue, attr.DataType, _converter);
-            
-            // Validate before adding
-            if (!paramValue.IsValid)
-            {
-                errors.Add($"Parameter '{attr.Name}': {paramValue.ValidationError}");
-                continue;
-            }
+                var paramValue = CreateParameterValue(attr.Name, rawValue, attr.DataType);
+                
+                // Validate before adding
+                if (!paramValue.IsValid)
+                {
+                    errors.Add($"Parameter '{attr.Name}': {paramValue.ValidationError}");
+                    continue;
+                }
 
-            collection[attr.Name] = paramValue;
-        }
+                collection[attr.Name] = paramValue;
+            }
 
         // If there are any validation errors, throw a single exception with all details
         if (errors.Count > 0)
@@ -81,18 +81,27 @@ public class ParameterCollectionBuilder
             .Where(a => parametersDict.ContainsKey(a.Name)))
         {
             var rawValue = parametersDict[attr.Name];
-            var paramValue = new ParameterValue(attr.Name, rawValue, attr.DataType, _converter);
-            
-            // Fail fast on first validation error
-            if (!paramValue.IsValid)
-            {
-                throw new ArgumentException(
-                    $"Parameter '{attr.Name}' validation failed: {paramValue.ValidationError}");
+                var paramValue = CreateParameterValue(attr.Name, rawValue, attr.DataType);
+                
+                // Fail fast on first validation error
+                if (!paramValue.IsValid)
+                {
+                    throw new ArgumentException(
+                        $"Parameter '{attr.Name}' validation failed: {paramValue.ValidationError}");
+                }
+
+                collection[attr.Name] = paramValue;
             }
 
-            collection[attr.Name] = paramValue;
-        }
-
         return collection;
+    }
+
+    /// <summary>
+    /// Creates a parameter value with type conversion and validation.
+    /// </summary>
+    private ParameterValue CreateParameterValue(string name, string rawValue, Type targetType)
+    {
+        var convertedValue = _converter.ValidateAndConvert(name, rawValue, targetType, out var validationError, out var isValid);
+        return new ParameterValue(name, rawValue, convertedValue, targetType, isValid, validationError);
     }
 }

@@ -9,6 +9,9 @@ namespace Xcaciv.Command.Interface.Parameters
     {
         public Type DataType { get; }
 
+        /// <summary>
+        /// Creates a simple string parameter value.
+        /// </summary>
         public ParameterValue(string name, string raw, string value, bool isValid, string validationError)
             : base(name, raw, value, isValid, validationError)
         {
@@ -16,16 +19,13 @@ namespace Xcaciv.Command.Interface.Parameters
         }
 
         /// <summary>
-        /// Creates a parameter value with automatic type conversion.
+        /// Creates a parameter value with a converted value and type information.
+        /// This constructor is typically called by factory methods that handle conversion.
         /// </summary>
-        public ParameterValue(string name, string raw, Type targetType, IParameterConverter converter)
-            : base(name, raw, 
-                (converter ?? throw new ArgumentNullException(nameof(converter)))
-                    .ValidateAndConvert(name, raw, targetType, out var validationError, out var isValid), 
-                isValid, 
-                validationError)
+        public ParameterValue(string name, string raw, object value, Type dataType, bool isValid, string validationError)
+            : base(name, raw, value, isValid, validationError)
         {
-            DataType = targetType;
+            DataType = dataType ?? throw new ArgumentNullException(nameof(dataType));
         }
 
         /// <summary>
