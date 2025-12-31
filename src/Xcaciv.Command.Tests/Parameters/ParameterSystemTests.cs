@@ -178,8 +178,9 @@ public class ParameterValueTests
         var paramValue = CreateParameterValue("name", "42", typeof(int));
 
         Assert.Equal("name", paramValue.Name);
-        Assert.Equal("42", paramValue.RawValue);
         Assert.Equal(typeof(int), paramValue.DataType);
+        // RawValue is no longer public - it's stored internally for error messages only
+        Assert.Equal(42, paramValue.GetValue<int>()); // Verify converted value instead
     }
 
     [Fact]

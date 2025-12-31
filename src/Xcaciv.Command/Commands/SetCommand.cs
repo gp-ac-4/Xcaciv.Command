@@ -18,8 +18,8 @@ namespace Xcaciv.Command.Commands
     {
         public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
-            var key = parameters.TryGetValue("key", out var keyParam) && keyParam.IsValid ? keyParam.RawValue : string.Empty;
-            var value = parameters.TryGetValue("value", out var valueParam) && valueParam.IsValid ? valueParam.RawValue : string.Empty;
+            var key = parameters.TryGetValue("key", out var keyParam) && keyParam.IsValid ? keyParam.GetValue<string>() : string.Empty;
+            var value = parameters.TryGetValue("value", out var valueParam) && valueParam.IsValid ? valueParam.GetValue<string>() : string.Empty;
 
             if (!String.IsNullOrEmpty(key) && !String.IsNullOrEmpty(value))
             {

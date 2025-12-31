@@ -22,11 +22,6 @@ public interface IParameterValue
     string Name { get; }
 
     /// <summary>
-    /// Gets the raw string value as provided by the user.
-    /// </summary>
-    string RawValue { get; }
-
-    /// <summary>
     /// Gets the declared parameter data type (non-null).
     /// </summary>
     Type DataType { get; }

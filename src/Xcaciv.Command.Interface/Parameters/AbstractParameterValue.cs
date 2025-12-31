@@ -38,12 +38,25 @@ namespace Xcaciv.Command.Interface.Parameters
 
         public TResult GetValue<TResult>()
         {
+            // fail quickly if invalid - suggest to check first
             if (!IsValid)
             {
                 throw new InvalidOperationException(
                     $"Cannot access parameter '{Name}' due to validation error: {ValidationError}\n" +
                     $"Raw value: '{RawValue}'\n" +
-                    $"Expected type: {DataType.Name}");
+                    $"Expected type: {DataType.Name}" +
+                    "Hint: only access value if valid.");
+            }
+
+            // Check requested type against stored datatype
+            if (DataType != typeof(TResult))
+            {
+                throw new InvalidCastException(
+                    $"Type mismatch for parameter '{Name}':\n" +
+                    $"  Stored as: {DataType.Name}\n" +
+                    $"  Requested as: {typeof(TResult).Name}\n" +
+                    $"  Raw value: '{RawValue}'\n" +
+                    "Hint: Ensure you're requesting the correct type.");
             }
 
             if (_boxedValue == null)
@@ -55,12 +68,6 @@ namespace Xcaciv.Command.Interface.Parameters
                 }
 
                 return default!;
-            }
-
-            if (_boxedValue is InvalidParameterValue)
-            {
-                throw new InvalidOperationException(
-                    $"Parameter '{Name}' is invalid and cannot be accessed. Validation error: {ValidationError}");
             }
 
             if (_boxedValue is TResult requested)

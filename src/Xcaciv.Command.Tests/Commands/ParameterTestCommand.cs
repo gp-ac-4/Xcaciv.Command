@@ -24,7 +24,12 @@ namespace Xcaciv.Command.Tests.Commands
 
             foreach (var pair in parameters)
             {
-                builder.AppendLine($"{pair.Key} = {pair.Value.RawValue}");
+                // Get the value as string representation, handling different types
+                var valueStr = pair.Value.DataType == typeof(bool)
+                    ? pair.Value.GetValue<bool>().ToString().ToLowerInvariant()
+                    : pair.Value.UntypedValue?.ToString() ?? string.Empty;
+                
+                builder.AppendLine($"{pair.Key} = {valueStr}");
             }
 
             return builder.ToString();
