@@ -210,11 +210,11 @@ public class ParameterValueTests
     }
 
     [Fact]
-    public void AsValueType_WithCorrectType_ReturnsValue()
+    public void As_WithValueType_ReturnsValue()
     {
         var paramValue = new ParameterValue("count", "42", typeof(int), _converter);
 
-        var result = paramValue.AsValueType<int>();
+        var result = paramValue.As<int>();
         Assert.Equal(42, result);
     }
 }

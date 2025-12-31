@@ -129,7 +129,7 @@ namespace Xcaciv.Command.Interface.Parameters
         public T GetAsValueType<T>(string name) where T : struct
         {
             var parameter = GetParameterRequired(name);
-            return parameter.AsValueType<T>();
+            return parameter.As<T>();
         }
 
         /// <summary>

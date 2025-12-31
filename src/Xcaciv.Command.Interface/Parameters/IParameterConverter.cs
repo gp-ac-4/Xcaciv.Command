@@ -21,6 +21,15 @@ public interface IParameterConverter
     /// <param name="targetType">The target type.</param>
     /// <returns>A result object indicating success/failure and the converted value.</returns>
     ParameterConversionResult Convert(string value, Type targetType);
+
+    /// <summary>
+    /// Converts a string value to the target type and extracts validation information.
+    /// </summary>
+    /// <param name="rawValue">The string value to convert.</param>
+    /// <param name="targetType">The target type.</param>
+    /// <param name="error">The error message if conversion fails, null otherwise.</param>
+    /// <returns>The converted value if successful, or the raw string if conversion failed.</returns>
+    object ConvertWithValidation(string rawValue, Type targetType, out string? error);
 }
 
 /// <summary>

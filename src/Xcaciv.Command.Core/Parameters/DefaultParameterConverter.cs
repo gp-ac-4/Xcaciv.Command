@@ -148,4 +148,23 @@ public class DefaultParameterConverter : IParameterConverter
             return new ParameterConversionResult($"Conversion failed: {ex.Message}");
         }
     }
+
+    public object ConvertWithValidation(string rawValue, Type targetType, out string? error)
+    {
+        error = null;
+        
+        if (targetType == typeof(string))
+        {
+            return rawValue;
+        }
+
+        var result = Convert(rawValue, targetType);
+        if (!result.IsSuccess)
+        {
+            error = result.ErrorMessage;
+            return rawValue;
+        }
+
+        return result.Value ?? string.Empty;
+    }
 }
