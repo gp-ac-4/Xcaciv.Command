@@ -108,19 +108,26 @@ namespace Xcaciv.Command.Interface.Parameters
         /// <summary>
         /// Gets a strongly-typed parameter value.
         /// </summary>
+        /// <typeparam name="T">The target type.</typeparam>
+        /// <param name="name">The parameter name.</param>
+        /// <returns>The typed parameter value.</returns>
+        /// <exception cref="KeyNotFoundException">Parameter not found.</exception>
+        /// <exception cref="InvalidOperationException">Parameter has validation errors.</exception>
+        /// <exception cref="InvalidCastException">Type conversion failed.</exception>
         public T GetValue<T>(string name)
         {
-            var parameter = Get(name);
+            // Get as ParameterValue (our concrete type)
+            var parameter = GetParameterRequired(name);
             
-            if (parameter is IParameterValue<T> typedParam)
+            // Check validity
+            if (!parameter.IsValid)
             {
-                if (!typedParam.IsValid)
-                    throw new InvalidOperationException($"Parameter '{name}' has validation error: {typedParam.ValidationError}");
-
-                return typedParam.Value;
+                throw new InvalidOperationException(
+                    $"Parameter '{name}' has validation error: {parameter.ValidationError}");
             }
 
-            throw new InvalidCastException($"Parameter '{name}' is not of type {typeof(T).Name}");
+            // Delegate to As<T>() for consistent type handling
+            return parameter.As<T>();
         }
 
         /// <summary>

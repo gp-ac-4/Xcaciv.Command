@@ -19,7 +19,11 @@ namespace Xcaciv.Command.Interface.Parameters
         /// Creates a parameter value with automatic type conversion.
         /// </summary>
         public ParameterValue(string name, string raw, Type targetType, IParameterConverter converter)
-            : base(name, raw, converter.ConvertWithValidation(raw, targetType, out var error), error == null, error ?? string.Empty)
+            : base(name, raw, 
+                (converter ?? throw new ArgumentNullException(nameof(converter)))
+                    .ValidateAndConvert(name, raw, targetType, out var validationError, out var isValid), 
+                isValid, 
+                validationError)
         {
             DataType = targetType;
         }
@@ -27,15 +31,49 @@ namespace Xcaciv.Command.Interface.Parameters
         /// <summary>
         /// Gets the value as the specified type.
         /// </summary>
+        /// <typeparam name="T">The target type to retrieve.</typeparam>
+        /// <returns>The parameter value cast to type T.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when parameter has validation errors.</exception>
+        /// <exception cref="InvalidCastException">Thrown when type conversion is impossible.</exception>
         public T As<T>()
         {
             if (!IsValid)
-                throw new InvalidOperationException($"Parameter '{Name}' has validation error: {ValidationError}");
+            {
+                throw new InvalidOperationException(
+                    $"Cannot access parameter '{Name}' due to validation error: {ValidationError}\n" +
+                    $"Raw value: '{RawValue}'\n" +
+                    $"Expected type: {DataType.Name}");
+            }
 
+            // Handle null for reference types
+            if (Value == null)
+            {
+                if (typeof(T).IsValueType && Nullable.GetUnderlyingType(typeof(T)) == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Cannot convert null to non-nullable value type {typeof(T).Name} " +
+                        $"for parameter '{Name}'.");
+                }
+                return default!;
+            }
+
+            // Attempt direct cast
             if (Value is T typedValue)
+            {
                 return typedValue;
+            }
 
-            throw new InvalidCastException($"Cannot cast parameter '{Name}' to type {typeof(T).Name}");
+            // Provide detailed diagnostic for cast failure
+            var actualType = Value.GetType();
+            var requestedType = typeof(T);
+            
+            throw new InvalidCastException(
+                $"Type mismatch for parameter '{Name}':\n" +
+                $"  Stored as: {actualType.Name} (value: {Value})\n" +
+                $"  Requested as: {requestedType.Name}\n" +
+                $"  DataType indicates: {DataType.Name}\n" +
+                $"  Raw value: '{RawValue}'\n" +
+                $"Hint: Ensure parameter conversion succeeded and you're requesting the correct type.");
         }
     }
 }

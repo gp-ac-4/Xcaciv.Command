@@ -153,18 +153,83 @@ public class DefaultParameterConverter : IParameterConverter
     {
         error = null;
         
+        // String passthrough
         if (targetType == typeof(string))
         {
             return rawValue;
         }
 
+        // Attempt conversion
         var result = Convert(rawValue, targetType);
         if (!result.IsSuccess)
         {
             error = result.ErrorMessage;
-            return rawValue;
+            // Return sentinel instead of raw string
+            return InvalidParameterValue.Instance;
         }
 
-        return result.Value ?? string.Empty;
+        // Return proper default for target type instead of empty string
+        if (result.Value == null)
+        {
+            return GetDefaultValue(targetType);
+        }
+
+        return result.Value;
+    }
+
+    public object ValidateAndConvert(string parameterName, string rawValue, Type targetType, out string validationError, out bool isValid)
+    {
+        if (string.IsNullOrEmpty(parameterName))
+            throw new ArgumentException("Parameter name cannot be null or empty.", nameof(parameterName));
+        
+        if (targetType == null)
+            throw new ArgumentNullException(nameof(targetType));
+        
+        if (!CanConvert(targetType))
+            throw new ArgumentException(
+                $"Converter does not support type '{targetType.Name}' for parameter '{parameterName}'.", 
+                nameof(targetType));
+
+        var convertedValue = ConvertWithValidation(rawValue, targetType, out var error);
+        isValid = error == null;
+        validationError = error ?? string.Empty;
+        
+        // Validate type consistency for successful conversions
+        if (isValid && convertedValue != null && convertedValue is not InvalidParameterValue)
+        {
+            var actualType = convertedValue.GetType();
+            
+            // Allow exact match or assignable types (handles boxing)
+            if (actualType != targetType && !targetType.IsAssignableFrom(actualType))
+            {
+                // Check if it's a boxed value type matching the target
+                var underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+                
+                if (actualType != underlyingType)
+                {
+                    throw new InvalidOperationException(
+                        $"Type safety violation: Converter returned {actualType.Name} " +
+                        $"but parameter '{parameterName}' expects {targetType.Name}.");
+                }
+            }
+        }
+        
+        return convertedValue;
+    }
+
+    /// <summary>
+    /// Gets the default value for a type (default(T) equivalent).
+    /// </summary>
+    private static object GetDefaultValue(Type type)
+    {
+        if (type == null)
+            throw new ArgumentNullException(nameof(type));
+        
+        if (type.IsValueType)
+        {
+            return Activator.CreateInstance(type)!;
+        }
+        
+        return InvalidParameterValue.Instance;  // For reference types
     }
 }

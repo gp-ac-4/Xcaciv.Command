@@ -372,3 +372,75 @@ public class TestParameterAttribute : Xcaciv.Command.Interface.Attributes.Abstra
         DataType = dataType;
     }
 }
+
+public class ParameterValueTypeConsistencyTests
+{
+    private readonly DefaultParameterConverter _converter = new();
+
+    [Fact]
+    public void Constructor_WithInvalidConversion_StoresSentinelNotString()
+    {
+        var param = new ParameterValue("count", "invalid", typeof(int), _converter);
+
+        Assert.False(param.IsValid);
+        Assert.NotNull(param.ValidationError);
+        
+        // Value should be sentinel, not the raw string
+        Assert.IsNotType<string>(param.Value);
+        Assert.IsType<InvalidParameterValue>(param.Value);
+    }
+
+    [Fact]
+    public void As_WithInvalidParameter_ThrowsWithDetailedMessage()
+    {
+        var param = new ParameterValue("count", "invalid", typeof(int), _converter);
+
+        var ex = Assert.Throws<InvalidOperationException>(() => param.As<int>());
+        
+        Assert.Contains("validation error", ex.Message);
+        Assert.Contains("count", ex.Message);
+        Assert.Contains("invalid", ex.Message);  // Raw value in error
+    }
+
+    [Fact]
+    public void As_WithWrongTypeRequest_ThrowsWithDiagnostics()
+    {
+        var param = new ParameterValue("count", "42", typeof(int), _converter);
+
+        var ex = Assert.Throws<InvalidCastException>(() => param.As<string>());
+        
+        Assert.Contains("Type mismatch", ex.Message);
+        Assert.Contains("Stored as: Int32", ex.Message);
+        Assert.Contains("Requested as: String", ex.Message);
+    }
+
+    [Fact]
+    public void Constructor_WithUnsupportedType_Throws()
+    {
+        Assert.Throws<ArgumentException>(() => 
+            new ParameterValue("obj", "test", typeof(object), _converter));
+    }
+
+    [Fact]
+    public void GetValue_WithValidParameter_ReturnsCorrectType()
+    {
+        var collection = new ParameterCollection();
+        collection["count"] = new ParameterValue("count", "42", typeof(int), _converter);
+
+        int count = collection.GetValue<int>("count");
+        
+        Assert.Equal(42, count);
+    }
+
+    [Fact]
+    public void GetValue_WithInvalidParameter_ThrowsInvalidOperation()
+    {
+        var collection = new ParameterCollection();
+        collection["count"] = new ParameterValue("count", "invalid", typeof(int), _converter);
+
+        var ex = Assert.Throws<InvalidOperationException>(() => 
+            collection.GetValue<int>("count"));
+        
+        Assert.Contains("validation error", ex.Message);
+    }
+}
