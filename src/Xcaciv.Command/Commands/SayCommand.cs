@@ -12,23 +12,21 @@ using Xcaciv.Command.Interface.Parameters;
 namespace Xcaciv.Command.Commands
 {
     [CommandRegister("Say", "Like echo but more valley.", Prototype ="SAY <thing to print>")]
-    [CommandParameterOrdered("text", "Text to output")]
+    [CommandParameterSuffix("text", "Text to output")]
     [CommandHelpRemarks("Use double quotes to include environment variables in the format %var%.")]
     [CommandHelpRemarks("Piped input will be evalueated for env vars before being passed out.")]
     public class SayCommand : AbstractCommand
     {
         public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
-            var builder = new StringBuilder();
+            // Get the text parameter which contains all arguments joined together
             if (parameters.TryGetValue("text", out var textParam) && textParam.IsValid)
             {
-                var value = ((IParameterValue<string>)textParam)?.Value ?? string.Empty;
+                var value = textParam.RawValue;
                 if (value.Contains('%')) value = ProcessEnvValues(value, env);
-                builder.Append(value);
-                builder.Append(' ');
+                return value;
             }
-            var result = builder.ToString();
-            return (result.Length > 1) ? result[..^1] : String.Empty;
+            return string.Empty;
         }
 
         public static string ProcessEnvValues(string value, IEnvironmentContext env)
@@ -53,6 +51,5 @@ namespace Xcaciv.Command.Commands
         {
             return ProcessEnvValues(pipedChunk, env);
         }
-
     }
 }

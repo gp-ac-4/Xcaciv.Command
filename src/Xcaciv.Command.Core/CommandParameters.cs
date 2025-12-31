@@ -416,8 +416,10 @@ public static class CommandParameters
                 continue;
             }
 
-            parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, parameterList[0], parameter.DataType, DefaultConverter);
-            parameterList.RemoveAt(0);
+            // Join all remaining parameters into a single string
+            var combinedValue = string.Join(" ", parameterList);
+            parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, combinedValue, parameter.DataType, DefaultConverter);
+            parameterList.Clear(); // Remove all items since they're all combined into one parameter
         }
     }
 }

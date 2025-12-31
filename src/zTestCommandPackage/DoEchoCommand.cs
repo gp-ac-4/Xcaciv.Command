@@ -12,10 +12,15 @@ namespace zTestCommandPackage
 {
     [CommandRoot("do", "does stuff")]
     [CommandRegister("ECHO", "SUB DO echo")]
+    [CommandParameterSuffix("text", "Text to echo")]
     public class DoEchoCommand : AbstractCommand, ICommandDelegate
     {
         public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
+            if (parameters.ContainsKey("text"))
+            {
+                return parameters["text"].RawValue;
+            }
             return String.Join(' ', parameters.Values.Select(p => p.RawValue));
         }
 

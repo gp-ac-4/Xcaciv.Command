@@ -192,7 +192,7 @@ namespace Xcaciv.Command.Core
         /// Use the parameter attributes to process the parameters into a typed dictionary
         /// </summary>
         /// <param name="parameters"></param>
-        protected Dictionary<string, IParameterValue> ProcessParameters(string[] parameters, bool hasPipedInput = false)
+        public Dictionary<string, IParameterValue> ProcessParameters(string[] parameters, bool hasPipedInput = false)
         {
             if (parameters.Length == 0) return new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
 
@@ -208,7 +208,7 @@ namespace Xcaciv.Command.Core
         /// reads parameter description from the instance
         /// </summary>
         /// <returns></returns>
-        protected CommandParameterOrderedAttribute[] GetOrderedParameters(bool hasPipedInput)
+        protected virtual CommandParameterOrderedAttribute[] GetOrderedParameters(bool hasPipedInput)
         {
             var thisType = GetType();
             var ordered = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterOrderedAttribute)) as CommandParameterOrderedAttribute[] ?? ([]);
@@ -224,7 +224,7 @@ namespace Xcaciv.Command.Core
         /// reads parameter description from the instance
         /// </summary>
         /// <returns></returns>
-        protected CommandParameterNamedAttribute[] GetNamedParameters(bool hasPipedInput)
+        protected virtual CommandParameterNamedAttribute[] GetNamedParameters(bool hasPipedInput)
         {
             var thisType = GetType();
             var named = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterNamedAttribute)) as CommandParameterNamedAttribute[] ?? ([]);
@@ -239,7 +239,7 @@ namespace Xcaciv.Command.Core
         /// reads parameter description from the instance
         /// </summary>
         /// <returns></returns>
-        protected CommandFlagAttribute[] GetFlagParameters()
+        protected virtual CommandFlagAttribute[] GetFlagParameters()
         {
             var thisType = GetType();
             var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandFlagAttribute)) as CommandFlagAttribute[] ?? ([]);
@@ -250,7 +250,7 @@ namespace Xcaciv.Command.Core
         /// reads parameter description from the instance
         /// </summary>
         /// <returns></returns>
-        protected CommandParameterSuffixAttribute[] GetSuffixParameters(bool hasPipedInput)
+        protected virtual CommandParameterSuffixAttribute[] GetSuffixParameters(bool hasPipedInput)
         {
             var thisType = GetType();
             var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterSuffixAttribute)) as CommandParameterSuffixAttribute[] ?? ([]);

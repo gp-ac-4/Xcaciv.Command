@@ -71,7 +71,7 @@ namespace Xcaciv.Command.Tests.Commands
         public void ParameterAttributeTest()
         {
 
-            var attributes = Attribute.GetCustomAttributes(typeof(SayCommand), typeof(CommandParameterOrderedAttribute)) as CommandParameterOrderedAttribute[];
+            var attributes = Attribute.GetCustomAttributes(typeof(SayCommand), typeof(CommandParameterSuffixAttribute)) as CommandParameterSuffixAttribute[];
 
             Assert.NotNull(attributes);
             Assert.NotEmpty(attributes);
