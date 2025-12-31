@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
+using Xcaciv.Command.Interface.Parameters;
 
 namespace Xcaciv.Command.Commands
 {
@@ -22,33 +23,39 @@ namespace Xcaciv.Command.Commands
 
         protected string regex { get; set; } = string.Empty;
 
-        public override string HandleExecution(string[] parameters, IEnvironmentContext status)
+        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext status)
         {
-            
-
             var output = new StringBuilder();
-            setRegexExpression(parameters);
-            foreach (var stringToCheck in parameters.Skip(1))
+            
+            if (parameters.TryGetValue("regex", out var regexParam) && regexParam.IsValid)
             {
-                if (this.expression?.IsMatch(stringToCheck) ?? false)
+                this.expression = new Regex(regexParam.RawValue);
+                
+                // Check if there's a string parameter
+                if (parameters.TryGetValue("string", out var stringParam) && stringParam.IsValid)
                 {
-                    output.Append(" ");
-                    output.Append(parameters[1]);
+                    if (this.expression.IsMatch(stringParam.RawValue))
+                    {
+                        output.Append(stringParam.RawValue);
+                    }
                 }
             }
             return output.ToString().Trim();
         }
 
-        public override string HandlePipedChunk(string stringToCheck, string[] parameters, IEnvironmentContext status)
+        public override string HandlePipedChunk(string stringToCheck, Dictionary<string, IParameterValue> parameters, IEnvironmentContext status)
         {
-            var arguments = this.ProcessParameters(parameters, true);
-
-            if (parameters.Length > 0)
+            if (parameters.TryGetValue("regex", out var regexParam) && regexParam.IsValid)
             {
-                setRegexExpression(parameters);
+                if (this.expression == null)
+                {
+                    this.expression = new Regex(regexParam.RawValue);
+                }
+
+                return (this.expression?.IsMatch(stringToCheck) ?? false) ? stringToCheck : string.Empty;
             }
 
-            return (this.expression?.IsMatch(stringToCheck) ?? false) ? stringToCheck : string.Empty;
+            return string.Empty;
         }
         /// <summary>
         /// setup the regex object

@@ -9,6 +9,7 @@ using Xunit.Abstractions;
 using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
+using Xcaciv.Command.Interface.Parameters;
 
 namespace Xcaciv.Command.Tests
 {
@@ -319,13 +320,13 @@ namespace Xcaciv.Command.Tests
             _delayMs = delayMs;
         }
 
-        public override string HandleExecution(string[] parameters, IEnvironmentContext env)
+        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             // Not used in this test scenario
             return string.Empty;
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
+        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             // Producer command does not consume piped input
             return string.Empty;
@@ -359,13 +360,13 @@ namespace Xcaciv.Command.Tests
             _delayMs = delayMs;
         }
 
-        public override string HandleExecution(string[] parameters, IEnvironmentContext env)
+        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             // Not used in this test scenario
             return string.Empty;
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
+        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             ProcessedCount++;
             return pipedChunk;
@@ -382,7 +383,7 @@ namespace Xcaciv.Command.Tests
                     // Simulate slow processing
                     await Task.Delay(_delayMs);
                     
-                    yield return CommandResult<string>.Success(HandlePipedChunk(chunk, ioContext.Parameters, env));
+                    yield return CommandResult<string>.Success(HandlePipedChunk(chunk, ProcessParameters(ioContext.Parameters), env));
                 }
             }
         }

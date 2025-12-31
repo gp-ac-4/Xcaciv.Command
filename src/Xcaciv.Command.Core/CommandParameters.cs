@@ -3,11 +3,14 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
+using Xcaciv.Command.Interface.Parameters;
+using Xcaciv.Command.Core.Parameters;
 
 namespace Xcaciv.Command.Core;
 
 public static class CommandParameters
 {
+    private static readonly IParameterConverter DefaultConverter = new DefaultParameterConverter();
 
     public static void ProcessFlags(List<string> parameterList, Dictionary<string, string> parameterLookup, CommandFlagAttribute[] commandFlagAttributes)
     {
@@ -223,5 +226,198 @@ public static class CommandParameters
             throw new InvalidOperationException($"{commandType.FullName} implements ICommandDelegate but does not have BaseCommandAttribute. Unable to automatically register.");
         }
 
+    }
+
+    public static Dictionary<string, IParameterValue> ProcessTypedParameters(
+        string[] parameters,
+        CommandParameterOrderedAttribute[] orderedAttrs,
+        CommandFlagAttribute[] flagAttrs,
+        CommandParameterNamedAttribute[] namedAttrs,
+        CommandParameterSuffixAttribute[] suffixAttrs)
+    {
+        var parameterLookup = new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
+        var parameterList = parameters.ToList();
+
+        ProcessTypedOrderedParameters(parameterList, parameterLookup, orderedAttrs);
+        ProcessTypedFlags(parameterList, parameterLookup, flagAttrs);
+        ProcessTypedNamedParameters(parameterList, parameterLookup, namedAttrs);
+        ProcessTypedSuffixParameters(parameterList, parameterLookup, suffixAttrs);
+
+        return parameterLookup;
+    }
+
+    private static void ProcessTypedFlags(
+        List<string> parameterList,
+        Dictionary<string, IParameterValue> parameterLookup,
+        CommandFlagAttribute[] commandFlagAttributes)
+    {
+        foreach (var parameter in commandFlagAttributes ?? Array.Empty<CommandFlagAttribute>())
+        {
+            var index = 0;
+            Regex fullName = new Regex("-{1,2}" + parameter.Name);
+            Regex abbrName = string.IsNullOrEmpty(parameter.ShortAlias) ? new Regex("^$") :
+                new Regex("-{1,2}" + parameter.ShortAlias);
+
+            var found = false;
+
+            foreach (var value in parameterList)
+            {
+                if (value.StartsWith("-") && (fullName.IsMatch(value) || abbrName.IsMatch(value)))
+                {
+                    found = true;
+                    parameterList.RemoveAt(index);
+                    break;
+                }
+                index++;
+            }
+
+            var boolValue = found ? "true" : "false";
+            parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, boolValue, typeof(bool), DefaultConverter);
+        }
+    }
+
+    private static void ProcessTypedNamedParameters(
+        List<string> parameterList,
+        Dictionary<string, IParameterValue> parameterLookup,
+        CommandParameterNamedAttribute[] commandParametersNamed)
+    {
+        foreach (var parameter in commandParametersNamed ?? Array.Empty<CommandParameterNamedAttribute>())
+        {
+            var index = 0;
+            Regex fullName = new Regex("-{1,2}" + parameter.Name);
+            Regex abbrName = string.IsNullOrEmpty(parameter.ShortAlias) ? new Regex("^$") :
+                new Regex("-{1,2}" + parameter.ShortAlias);
+
+            var found = false;
+            var foundValue = string.Empty;
+
+            foreach (var value in parameterList)
+            {
+                if (value.StartsWith("-") && (fullName.IsMatch(value) || abbrName.IsMatch(value)))
+                {
+                    var valueIndex = index + 1;
+                    foundValue = parameterList[valueIndex];
+                    parameterList.RemoveAt(valueIndex);
+                    parameterList.RemoveAt(index);
+                    found = true;
+                    break;
+                }
+                index++;
+            }
+
+            if (!found)
+            {
+                if (parameter.DefaultValue != string.Empty)
+                {
+                    foundValue = parameter.DefaultValue;
+                }
+                else if (parameter.IsRequired)
+                {
+                    throw new ArgumentException($"Missing required parameter {parameter.Name}");
+                }
+            }
+
+            if (parameter.AllowedValues.Count() > 0 &&
+                !parameter.AllowedValues.Contains(foundValue, StringComparer.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException($"Invalid value for parameter {parameter.Name}, this parameter has an allow list.");
+            }
+
+            parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, foundValue, parameter.DataType, DefaultConverter);
+        }
+    }
+
+    private static void ProcessTypedOrderedParameters(
+        List<string> parameterList,
+        Dictionary<string, IParameterValue> parameterLookup,
+        CommandParameterOrderedAttribute[] commandParametersOrdered)
+    {
+        foreach (var parameter in commandParametersOrdered ?? Array.Empty<CommandParameterOrderedAttribute>())
+        {
+            // Check if parameter list is empty before accessing index 0
+            if (parameterList.Count == 0)
+            {
+                if (!parameter.IsRequired && !string.IsNullOrEmpty(parameter.DefaultValue))
+                {
+                    parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, parameter.DefaultValue, parameter.DataType, DefaultConverter);
+                    continue;
+                }
+                else if (parameter.IsRequired)
+                {
+                    throw new ArgumentException($"Missing required parameter {parameter.Name}");
+                }
+                continue;
+            }
+
+            var foundValue = parameterList[0];
+            if (String.IsNullOrEmpty(foundValue) && !String.IsNullOrEmpty(parameter.DefaultValue))
+            {
+                foundValue = parameter.DefaultValue;
+            }
+
+            // If the current parameter is a named parameter, then need to check if we have any unsatisfied
+            // named parameters. This does preclude any negative numbers as valid unnamed parameters.
+            if (foundValue.StartsWith('-'))
+            {
+                if (String.IsNullOrEmpty(parameter.DefaultValue) && parameter.IsRequired)
+                {
+                    throw new ArgumentException($"Missing required parameter {parameter.Name}");
+                }
+            }
+            else
+            {
+                if (parameter.AllowedValues.Count() > 0 &&
+                    !parameter.AllowedValues.Contains(foundValue, StringComparer.OrdinalIgnoreCase))
+                {
+                    throw new ArgumentException($"Invalid value for parameter {parameter.Name}, this parameter has an allow list.");
+                }
+
+                parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, foundValue, parameter.DataType, DefaultConverter);
+                parameterList.RemoveAt(0);
+            }
+        }
+    }
+
+    private static void ProcessTypedSuffixParameters(
+        List<string> parameterList,
+        Dictionary<string, IParameterValue> parameterLookup,
+        CommandParameterSuffixAttribute[] commandParametersSuffix)
+    {
+        foreach (var parameter in commandParametersSuffix ?? Array.Empty<CommandParameterSuffixAttribute>())
+        {
+            // Check if parameter list is empty before accessing index 0
+            if (parameterList.Count == 0)
+            {
+                if (!parameter.IsRequired && !string.IsNullOrEmpty(parameter.DefaultValue))
+                {
+                    parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, parameter.DefaultValue, parameter.DataType, DefaultConverter);
+                    continue;
+                }
+                else if (parameter.IsRequired)
+                {
+                    throw new ArgumentException($"Missing required parameter {parameter.Name}");
+                }
+                continue;
+            }
+
+            // if the current parameter is a named parameter, then need to check if we have any
+            // unsatisfied named parameters
+            if (parameterList[0].StartsWith("-"))
+            {
+                if (parameter.DefaultValue != string.Empty)
+                {
+                    parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, parameter.DefaultValue, parameter.DataType, DefaultConverter);
+                }
+                else if (parameter.IsRequired)
+                {
+                    throw new ArgumentException($"Missing required parameter {parameter.Name}");
+                }
+
+                continue;
+            }
+
+            parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, parameterList[0], parameter.DataType, DefaultConverter);
+            parameterList.RemoveAt(0);
+        }
     }
 }

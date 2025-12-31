@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
+using Xcaciv.Command.Interface.Parameters;
 
 namespace zTestCommandPackage
 {
@@ -13,12 +14,12 @@ namespace zTestCommandPackage
     [CommandRegister("ECHO", "SUB DO echo")]
     public class DoEchoCommand : AbstractCommand, ICommandDelegate
     {
-        public override string HandleExecution(string[] parameters, IEnvironmentContext env)
+        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
-            return String.Join(' ', parameters);
+            return String.Join(' ', parameters.Values.Select(p => p.RawValue));
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
+        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             return pipedChunk;
         }

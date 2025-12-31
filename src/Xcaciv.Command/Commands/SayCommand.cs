@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
+using Xcaciv.Command.Interface.Parameters;
 
 namespace Xcaciv.Command.Commands
 {
@@ -16,12 +17,12 @@ namespace Xcaciv.Command.Commands
     [CommandHelpRemarks("Piped input will be evalueated for env vars before being passed out.")]
     public class SayCommand : AbstractCommand
     {
-        public override string HandleExecution(string[] parameters, IEnvironmentContext env)
+        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             var builder = new StringBuilder();
-            foreach (var parameter in parameters)
+            if (parameters.TryGetValue("text", out var textParam) && textParam.IsValid)
             {
-                var value = parameter.ToString();
+                var value = ((IParameterValue<string>)textParam)?.Value ?? string.Empty;
                 if (value.Contains('%')) value = ProcessEnvValues(value, env);
                 builder.Append(value);
                 builder.Append(' ');
@@ -48,7 +49,7 @@ namespace Xcaciv.Command.Commands
             });
         }
 
-        public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
+        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             return ProcessEnvValues(pipedChunk, env);
         }

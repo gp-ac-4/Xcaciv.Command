@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
+using Xcaciv.Command.Interface.Parameters;
 
 namespace Xcaciv.Command.Core
 {
@@ -162,44 +163,45 @@ namespace Xcaciv.Command.Core
         /// <returns></returns>
         public virtual async IAsyncEnumerable<IResult<string>> Main(IIoContext io, IEnvironmentContext environment)
         {
+            var processedParameters = ProcessParameters(io.Parameters, io.HasPipedInput);
+
             if (io.HasPipedInput)
             {
                 await foreach (var pipedChunk in io.ReadInputPipeChunks())
                 {
                     if (string.IsNullOrEmpty(pipedChunk)) continue;
-                    yield return CommandResult<string>.Success(HandlePipedChunk(pipedChunk, io.Parameters, environment));
+                    yield return CommandResult<string>.Success(HandlePipedChunk(pipedChunk, processedParameters, environment));
                 }
             }
             else
             {
-                var isHelp = _helpService?.IsHelpRequest(io.Parameters) ?? IsHelpRequest(io.Parameters);
+                var parameterArray = io.Parameters ?? Array.Empty<string>();
+                var isHelp = _helpService?.IsHelpRequest(parameterArray) ?? IsHelpRequest(parameterArray);
                 if (isHelp)
                 {
-                    yield return CommandResult<string>.Success(Help(io.Parameters, environment));
+                    yield return CommandResult<string>.Success(Help(parameterArray, environment));
                 }
                 else
                 {
-                    yield return CommandResult<string>.Success(HandleExecution(io.Parameters, environment));
+                    yield return CommandResult<string>. Success(HandleExecution(processedParameters, environment));
                 }
             }
         }
 
         /// <summary>
-        /// Use the parameter attributes to process the parameters into a dictionary
+        /// Use the parameter attributes to process the parameters into a typed dictionary
         /// </summary>
         /// <param name="parameters"></param>
-        protected Dictionary<string, string> ProcessParameters(string[] parameters, bool hasPipedInput = false)
+        protected Dictionary<string, IParameterValue> ProcessParameters(string[] parameters, bool hasPipedInput = false)
         {
-            if (parameters.Length == 0) return new Dictionary<string, string>();
-            var parameterList = parameters.ToList();
+            if (parameters.Length == 0) return new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
 
-            var parameterLookup = new Dictionary<string, string>();
-            CommandParameters.ProcessOrderedParameters(parameterList, parameterLookup, GetOrderedParameters(hasPipedInput));
-            CommandParameters.ProcessFlags(parameterList, parameterLookup, GetFlagParameters());
-            CommandParameters.ProcessNamedParameters(parameterList, parameterLookup, GetNamedParameters(hasPipedInput));
-            CommandParameters.ProcessSuffixParameters(parameterList, parameterLookup, GetSuffixParameters(hasPipedInput));
-
-            return parameterLookup;
+            return CommandParameters.ProcessTypedParameters(
+                parameters,
+                GetOrderedParameters(hasPipedInput),
+                GetFlagParameters(),
+                GetNamedParameters(hasPipedInput),
+                GetSuffixParameters(hasPipedInput));
         }
 
         /// <summary>
@@ -276,8 +278,8 @@ namespace Xcaciv.Command.Core
                                       p.Equals("/?", StringComparison.OrdinalIgnoreCase));
         }
 
-        public abstract string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env);
+        public abstract string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
 
-        public abstract string HandleExecution(string[] parameters, IEnvironmentContext env);
+        public abstract string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
     }
 }
