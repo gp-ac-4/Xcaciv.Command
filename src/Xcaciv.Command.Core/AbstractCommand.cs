@@ -188,7 +188,7 @@ namespace Xcaciv.Command.Core
                 }
                 else
                 {
-                    yield return CommandResult<string>. Success(HandleExecution(processedParameters, environment));
+                    yield return CommandResult<string>.Success(HandleExecution(processedParameters, environment));
                 }
             }
         }
