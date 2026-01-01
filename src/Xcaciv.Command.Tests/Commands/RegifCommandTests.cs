@@ -71,12 +71,11 @@ namespace Xcaciv.Command.Tests.Commands
 
             var env = new EnvironmentContext();
             var textio = new TestImpementations.TestTextIo();
-            // simulate user input
+            // simulate user input - pipeline sets variable but produces no output
             await commands.Run("echo 'what is up' | regif is | set found", textio, env);
 
-            // verify the output of the first run
-            // by looking at the output of the second output line
-            Assert.Equal("is", textio.ToString().Trim());
+            // Assert - verify the variable was set correctly
+            Assert.Equal("is", env.GetValue("found"));
         }
     }
 }
