@@ -248,6 +248,43 @@ try {
         }
     }
 
+    # Step 0: Clean Build Directories
+    Write-BuildStep "Step 0: Cleaning Build Directories"
+    
+    $binDirectories = Get-ChildItem -Path $repositoryRoot -Directory -Recurse -Filter 'bin' -ErrorAction SilentlyContinue
+    $objDirectories = Get-ChildItem -Path $repositoryRoot -Directory -Recurse -Filter 'obj' -ErrorAction SilentlyContinue
+    
+    $cleanCount = 0
+    
+    foreach ($directory in $binDirectories) {
+        try {
+            Remove-Item -Path $directory.FullName -Recurse -Force -ErrorAction Stop
+            Write-Host "  Removed: $($directory.FullName)" -ForegroundColor Gray
+            $cleanCount++
+        }
+        catch {
+            Write-Host "  Warning: Could not remove $($directory.FullName): $($_.Exception.Message)" -ForegroundColor Yellow
+        }
+    }
+    
+    foreach ($directory in $objDirectories) {
+        try {
+            Remove-Item -Path $directory.FullName -Recurse -Force -ErrorAction Stop
+            Write-Host "  Removed: $($directory.FullName)" -ForegroundColor Gray
+            $cleanCount++
+        }
+        catch {
+            Write-Host "  Warning: Could not remove $($directory.FullName): $($_.Exception.Message)" -ForegroundColor Yellow
+        }
+    }
+    
+    if ($cleanCount -eq 0) {
+        Write-Host "No bin or obj directories found to clean" -ForegroundColor Gray
+    }
+    else {
+        Write-Success "Cleaned $cleanCount director$(if ($cleanCount -eq 1) { 'y' } else { 'ies' })"
+    }
+
     # Step 1: Restore
     Write-BuildStep "Step 1: Restoring Dependencies"
     
