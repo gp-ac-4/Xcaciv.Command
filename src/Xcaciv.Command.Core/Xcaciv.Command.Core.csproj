@@ -22,7 +22,7 @@
   </PropertyGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
-		<ProjectReference Packge="True" Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
+		<ProjectReference Package="True" Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)' != 'Debug'">
