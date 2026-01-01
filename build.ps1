@@ -48,7 +48,7 @@ param(
     
     [string]$VersionSuffix,
     
-    [string]$NuGetSource = 'https://api.nuget.org/v3/index.json',
+    [string]$NuGetSource = 'https://nuget.pkg.github.com/xcaciv',
     
     [string]$NuGetApiKey,
     
@@ -327,52 +327,80 @@ try {
 
     # Step 4: Pack
     Write-BuildStep "Step 4: Creating NuGet Packages"
-    
+
     if ($UseNet08.IsPresent) {
         Write-Host "Note: Package will contain assemblies for both net8.0 and net10.0" -ForegroundColor Yellow
     }
-    
-    # Define all projects that should be packed
-    $projectsToPack = @(
+
+    # Use ordered restore/pack with local artifacts first so Release builds consume freshly built packages
+    $packageSources = @($artifactDirectory, 'https://api.nuget.org/v3/index.json', $NuGetSource) | Where-Object { $_ } | Select-Object -Unique
+
+    function Restore-ProjectForPacking {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$ProjectPath
+        )
+
+        $restoreArguments = @('restore', $ProjectPath, '--nologo', '--disable-parallel')
+        foreach ($source in $packageSources) {
+            $restoreArguments += @('--source', $source)
+        }
+        $restoreArguments += $msbuildProperties
+        Invoke-DotNet -Arguments $restoreArguments
+    }
+
+    function Pack-ProjectInOrder {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$ProjectPath,
+
+            [Parameter(Mandatory = $true)]
+            [string]$ProjectName
+        )
+
+        Restore-ProjectForPacking -ProjectPath $ProjectPath
+
+        $packArguments = @('pack', $ProjectPath, '--configuration', $Configuration, '--no-restore', '--output', $artifactDirectory, '--nologo')
+        if ($VersionSuffix) {
+            $packArguments += '--version-suffix'
+            $packArguments += $VersionSuffix
+        }
+        $packArguments += $msbuildProperties
+
+        Invoke-DotNet -Arguments $packArguments
+        Write-Host "Packed $ProjectName" -ForegroundColor Gray
+        return $ProjectName
+    }
+
+    $orderedProjects = @(
         @{ Path = Join-Path $repositoryRoot 'src\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj'; Name = 'Xcaciv.Command.Interface' }
         @{ Path = Join-Path $repositoryRoot 'src\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj'; Name = 'Xcaciv.Command.Core' }
+        @{ Path = Join-Path $repositoryRoot 'src\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj'; Name = 'Xcaciv.Command.FileLoader' }
         @{ Path = Join-Path $repositoryRoot 'src\Xcaciv.Command\Xcaciv.Command.csproj'; Name = 'Xcaciv.Command' }
-        @{ Path = Join-Path $repositoryRoot 'src\Xcaciv.Command.Extensions.Commandline\Xcaciv.Command.Extensions.Commandline.csproj'; Name = 'Xcaciv.Command.Extensions.Commandline' }
         @{ Path = Join-Path $repositoryRoot 'src\Xcaciv.Command.DependencyInjection\Xcaciv.Command.DependencyInjection.csproj'; Name = 'Xcaciv.Command.DependencyInjection' }
+        @{ Path = Join-Path $repositoryRoot 'src\Xcaciv.Command.Extensions.Commandline\Xcaciv.Command.Extensions.Commandline.csproj'; Name = 'Xcaciv.Command.Extensions.Commandline' }
     )
-    
+
     $packedProjects = @()
-    
-    foreach ($project in $projectsToPack) {
-        if (Test-Path -Path $project.Path) {
-            Write-Host "Packing $($project.Name)..." -ForegroundColor Gray
-            
-            # Note: Not using --no-build because of project reference structure
-            $packArguments = @('pack', $project.Path, '--configuration', $Configuration, '--output', $artifactDirectory, '--nologo')
-            
-            if ($VersionSuffix) {
-                $packArguments += "--version-suffix", $VersionSuffix
-            }
-            
-            $packArguments += $msbuildProperties
-            
-            try {
-                Invoke-DotNet -Arguments $packArguments
-                $packedProjects += $project.Name
-            }
-            catch {
-                Write-Host "  Warning: Failed to pack $($project.Name)" -ForegroundColor Yellow
-            }
-        }
-        else {
+
+    foreach ($project in $orderedProjects) {
+        if (-not (Test-Path -Path $project.Path)) {
             Write-Host "  Warning: Project not found: $($project.Path)" -ForegroundColor Yellow
+            continue
+        }
+
+        try {
+            $packedProjects += (Pack-ProjectInOrder -ProjectPath $project.Path -ProjectName $project.Name)
+        }
+        catch {
+            Write-Host "  Warning: Failed to pack $($project.Name)" -ForegroundColor Yellow
         }
     }
-    
+
     if ($VersionSuffix) {
         Write-Host "Version suffix: $VersionSuffix" -ForegroundColor Gray
     }
-    
+
     Write-Success "Packages created for $($packedProjects.Count) project(s): $($packedProjects -join ', ')"
 
     # Step 5: Copy to local directory
