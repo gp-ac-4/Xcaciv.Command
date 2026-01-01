@@ -20,9 +20,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
     <PackageReference Include="System.CommandLine" />
   </ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' != 'Debug'">
+		<PackageReference Include="Xcaciv.Command.Interface" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+		<ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
+	</ItemGroup>
 
   <ItemGroup>
     <None Include="readme.md" Pack="True" PackagePath="readme.md" />

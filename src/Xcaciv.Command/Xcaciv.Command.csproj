@@ -26,19 +26,11 @@
     <PackageReference Include="Xcaciv.Loader" />
   </ItemGroup>
 
-	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+	<ItemGroup>
 		<!-- Project references included for compilation; packaging handled by CopyProjectReferencesToPackage target -->
 		<ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj" PrivateAssets="all" />
 		<ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" PrivateAssets="all" />
 		<ProjectReference Include="..\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj" PrivateAssets="all" />
-	</ItemGroup>
-	<ItemGroup Condition="'$(Configuration)' != 'Debug'">
-		<PackageReference Include="Xcaciv.Command.Interface" />
-		<PackageReference Include="Xcaciv.Command.Core" />
-	</ItemGroup>
-	<ItemGroup Condition="'$(Configuration)' != 'Debug'">
-		<!-- Project references included for compilation; packaging handled by CopyProjectReferencesToPackage target -->
-		<ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj" PrivateAssets="all" />
 	</ItemGroup>
   
   <ItemGroup>
