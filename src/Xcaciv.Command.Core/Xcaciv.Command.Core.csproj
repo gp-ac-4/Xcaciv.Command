@@ -3,7 +3,7 @@
   <PropertyGroup>
 	  <ImplicitUsings>enable</ImplicitUsings>
 	  <Nullable>enable</Nullable>
-	  <Version>3.0.0</Version>
+	  <Version>3.1.0</Version>
 	  <AssemblyName>Xcaciv.Command.Core</AssemblyName>
 	  <RootNamespace>Xcaciv.Command.Core</RootNamespace>
 	  <IsPublishable>True</IsPublishable>
@@ -18,6 +18,7 @@
 	  <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	  <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 	  <Title>Xcaciv Command Core</Title>
+	  <Description>Core functionality for Xcaciv.Command including AbstractCommand base class, type-safe parameter processing with DefaultParameterConverter, and ParameterCollectionBuilder for validated parameter collections.</Description>
   </PropertyGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'Debug'">

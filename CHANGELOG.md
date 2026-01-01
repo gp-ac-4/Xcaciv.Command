@@ -5,6 +5,96 @@ All notable changes to Xcaciv.Command will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2025-01-XX
+
+### Added
+
+#### Type-Safe Parameter System
+- **`IParameterValue<T>` generic interface** - Strongly-typed parameter values with compile-time type safety
+- **`AbstractParameterValue<T>` base class** - Generic implementation with boxed storage for invalid sentinel support
+- **`ParameterValue<T>` class** - Concrete implementation of typed parameter values
+- **`ParameterValue.Create()` factory** - Runtime factory for creating typed parameters when type is only known at runtime
+- **`IParameterConverter` interface** - Pluggable parameter conversion strategy
+- **`DefaultParameterConverter` class** - Supports string, int, float, double, decimal, bool, Guid, DateTime, DateTimeOffset, TimeSpan, JsonElement, and nullable variants
+- **`ParameterCollectionBuilder` class** - Builds validated parameter collections with two strategies:
+  - `Build()` - Aggregates all validation errors
+  - `BuildStrict()` - Fails on first validation error
+- **`ParameterCollection` class** - Case-insensitive dictionary-based collection with convenient access methods
+- **`InvalidParameterValue` sentinel** - Type-safe sentinel for conversion failures
+
+#### Enhanced Diagnostics
+- **Rich type mismatch errors** - Detailed messages showing stored type, requested type, DataType, and raw value
+- **Validation error messages** - Clear conversion failure messages with input value context
+- **Parameter name tracking** - All errors include parameter name for easy debugging
+
+#### Breaking API Changes (v3.x)
+- **`IParameterValue.DataType`** - New property exposing the target data type (non-null)
+- **`IParameterValue.UntypedValue`** - New property exposing boxed converted value
+- **`IParameterValue.GetValue<T>()`** - New generic method for type-safe value retrieval
+- **`IParameterValue.TryGetValue<T>()`** - New Try pattern method for safe retrieval
+- **Removed `IParameterValue.RawValue`** - Made internal to prevent bypassing type system
+- **Command signature change** - `HandleExecution()` and `HandlePipedChunk()` now receive `Dictionary<string, IParameterValue>` instead of `string[]`
+
+### Changed
+
+- **Parameter processing** - Commands now receive pre-validated, strongly-typed parameters
+- **Error handling** - Parameter validation errors are caught early in `ProcessParameters()`
+- **Type safety** - Compile-time type checking for parameter access via generics
+- **Command implementations** - All built-in commands updated to use `IParameterValue.GetValue<T>()`
+
+### Enhanced
+
+- **Test coverage** - Comprehensive test suites added:
+  - `SetCommandTests.cs` - 14 tests for SET command behavior
+  - `EnvCommandTests.cs` - 13 tests for ENV command behavior
+  - `ParameterSystemTests.cs` - 25+ tests for parameter conversion and validation
+- **Documentation** - New parameter system documentation:
+  - `PARAMETER_SYSTEM_IMPLEMENTATION.md` - Implementation details
+  - `RAWVALUE_REMOVAL_COMPLETE.md` - RawValue removal summary
+  - `COMMAND_TEST_COVERAGE_COMPLETE.md` - Test coverage report
+
+### Security
+
+- **Type safety enforcement** - Commands cannot bypass validation by accessing raw strings
+- **Input validation** - All parameters validated and converted before command execution
+- **Reduced attack surface** - Removed direct access to unconverted input data
+
+### Migration Notes
+
+**Breaking Changes:**
+1. **Command implementations** must use `IParameterValue.GetValue<T>()` instead of accessing raw strings
+2. **Custom commands** need to update `HandleExecution()` signature if not already using `Dictionary<string, IParameterValue>`
+
+**Migration Pattern:**
+```csharp
+// Before (v3.0)
+public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+{
+    var text = parameters["text"].RawValue; // ❌ No longer available
+    return text;
+}
+
+// After (v3.1)
+public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+{
+    var text = parameters["text"].GetValue<string>(); // ✅ Type-safe
+    return text;
+}
+```
+
+See [Parameter System Summary](docs/PARAMETER_SYSTEM_IMPLEMENTATION.md) for comprehensive migration guide.
+
+### Test Results
+
+- **Total Tests:** 232 tests passing (196 existing + 36 new command tests)
+- **SetCommandTests:** 14/14 ✅
+- **EnvCommandTests:** 13/13 ✅
+- **ParameterSystemTests:** 25/25 ✅
+- **All Other Tests:** 196/196 ✅
+- **Pass Rate:** 100%
+
+---
+
 ## [3.0.0] - 2025-01-01
 
 ### 🔴 BREAKING CHANGES

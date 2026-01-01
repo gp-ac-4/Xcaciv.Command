@@ -167,19 +167,21 @@ namespace Xcaciv.Command.Core
 
             if (io.HasPipedInput)
             {
+                OnStartPipe(processedParameters, environment);
+
                 await foreach (var pipedChunk in io.ReadInputPipeChunks())
                 {
                     if (string.IsNullOrEmpty(pipedChunk)) continue;
                     yield return CommandResult<string>.Success(HandlePipedChunk(pipedChunk, processedParameters, environment));
                 }
+
+                OnEndPipe(processedParameters, environment);
+
             }
             else
             {
                 var parameterArray = io.Parameters ?? Array.Empty<string>();
-                var isHelp = _helpService?.IsHelpRequest(parameterArray) ?? 
-                    parameterArray.Any(p => p.Equals("--HELP", StringComparison.OrdinalIgnoreCase) ||
-                                           p.Equals("-?", StringComparison.OrdinalIgnoreCase) ||
-                                           p.Equals("/?", StringComparison.OrdinalIgnoreCase));
+                var isHelp = _helpService?.IsHelpRequest(parameterArray) ?? false;
                 if (isHelp)
                 {
                     yield return CommandResult<string>.Success(Help(parameterArray, environment));
@@ -265,6 +267,33 @@ namespace Xcaciv.Command.Core
         }
 
         public abstract string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
+
+        /// <summary>
+        /// Invoked when a pipe operation is starting, allowing derived classes to perform custom initialization or
+        /// setup.
+        /// </summary>
+        /// <param name="processedParameters">A dictionary containing the processed parameter values for the pipe operation. Keys represent parameter
+        /// names; values provide the corresponding parameter values. Cannot be null.</param>
+        /// <param name="environment">The environment context in which the pipe is being started. Provides access to environment-specific
+        /// information and services. Cannot be null.</param>
+        protected virtual void OnStartPipe(Dictionary<string, IParameterValue> processedParameters, IEnvironmentContext environment)
+        {
+            // handle start for pipes
+        }
+        /// <summary>
+        /// Invoked when the pipe processing has completed, allowing for custom post-processing or cleanup.
+        /// </summary>
+        /// <remarks>Override this method in a derived class to implement custom logic that should run
+        /// after the pipe has finished processing. This method is called after all parameters have been
+        /// processed.</remarks>
+        /// <param name="processedParameters">A dictionary containing the parameters that were processed during the pipe execution. Keys represent
+        /// parameter names; values are the corresponding processed values.</param>
+        /// <param name="environment">The environment context in which the pipe was executed. Provides access to environment-specific information
+        /// and services.</param>
+        protected virtual void OnEndPipe(Dictionary<string, IParameterValue> processedParameters, IEnvironmentContext environment)
+        {
+            // handle end for pipes
+        }
 
         public abstract string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
     }

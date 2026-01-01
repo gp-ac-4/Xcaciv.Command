@@ -67,10 +67,10 @@ namespace Xcaciv.Command.Interface.Parameters
         /// <summary>
         /// Gets a parameter by name, or null if not found.
         /// </summary>
-        public ParameterValue? GetParameter(string name)
+        public IParameterValue? GetParameter(string name)
         {
             if (_parameters.TryGetValue(name, out var parameter))
-                return parameter as ParameterValue;
+                return parameter;
 
             return null;
         }
@@ -78,12 +78,12 @@ namespace Xcaciv.Command.Interface.Parameters
         /// <summary>
         /// Gets a parameter by name, throwing if not found.
         /// </summary>
-        public ParameterValue GetParameterRequired(string name)
+        public IParameterValue GetParameterRequired(string name)
         {
             if (!_parameters.TryGetValue(name, out var parameter))
                 throw new KeyNotFoundException($"Parameter '{name}' not found.");
 
-            return (ParameterValue)parameter;
+            return parameter;
         }
 
         /// <summary>
@@ -108,19 +108,25 @@ namespace Xcaciv.Command.Interface.Parameters
         /// <summary>
         /// Gets a strongly-typed parameter value.
         /// </summary>
+        /// <typeparam name="T">The target type.</typeparam>
+        /// <param name="name">The parameter name.</param>
+        /// <returns>The typed parameter value.</returns>
+        /// <exception cref="KeyNotFoundException">Parameter not found.</exception>
+        /// <exception cref="InvalidOperationException">Parameter has validation errors.</exception>
+        /// <exception cref="InvalidCastException">Type conversion failed.</exception>
         public T GetValue<T>(string name)
         {
-            var parameter = Get(name);
+            // Get as ParameterValue (our concrete type)
+            var parameter = GetParameterRequired(name);
             
-            if (parameter is IParameterValue<T> typedParam)
+            // Check validity
+            if (!parameter.IsValid)
             {
-                if (!typedParam.IsValid)
-                    throw new InvalidOperationException($"Parameter '{name}' has validation error: {typedParam.ValidationError}");
-
-                return typedParam.Value;
+                throw new InvalidOperationException(
+                    $"Parameter '{name}' has validation error: {parameter.ValidationError}");
             }
 
-            throw new InvalidCastException($"Parameter '{name}' is not of type {typeof(T).Name}");
+            return parameter.GetValue<T>();
         }
 
         /// <summary>
@@ -129,7 +135,7 @@ namespace Xcaciv.Command.Interface.Parameters
         public T GetAsValueType<T>(string name) where T : struct
         {
             var parameter = GetParameterRequired(name);
-            return parameter.AsValueType<T>();
+            return parameter.GetValue<T>();
         }
 
         /// <summary>
@@ -141,7 +147,7 @@ namespace Xcaciv.Command.Interface.Parameters
                 return defaultValue;
 
             if (parameter is IParameterValue<T> typedParam && typedParam.IsValid)
-                return typedParam.Value;
+                return typedParam.GetValue();
 
             return defaultValue;
         }

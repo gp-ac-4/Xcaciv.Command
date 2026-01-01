@@ -19,14 +19,14 @@ namespace zTestCommandPackage
         {
             if (parameters.TryGetValue("text", out var textParam) && textParam.IsValid)
             {
-                return textParam.RawValue;
+                return textParam.GetValue<string>();
             }
-            return String.Join(' ', parameters.Values.Select(p => p.RawValue));
+            return String.Join(' ', parameters.Values.Select(p => p.GetValue<string>()));
         }
 
         public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
-            return pipedChunk + String.Join(' ', parameters.Values.Select(p => p.RawValue));
+            return pipedChunk + String.Join(' ', parameters.Values.Select(p => p.GetValue<string>()));
         }
     }
 }

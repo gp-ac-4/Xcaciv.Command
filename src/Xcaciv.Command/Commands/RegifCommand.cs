@@ -26,17 +26,19 @@ namespace Xcaciv.Command.Commands
         public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext status)
         {
             var output = new StringBuilder();
-            
+
             if (parameters.TryGetValue("regex", out var regexParam) && regexParam.IsValid)
             {
-                this.expression = new Regex(regexParam.RawValue);
-                
+                this.expression = new Regex(regexParam.GetValue<string>());
+
                 // Check if there's a string parameter
-                if (parameters.TryGetValue("string", out var stringParam) && 
-                    stringParam.IsValid && 
-                    this.expression.IsMatch(stringParam.RawValue))
+                if (parameters.TryGetValue("string", out var stringParam) && stringParam.IsValid)
                 {
-                    output.Append(stringParam.RawValue);
+                    var stringValue = stringParam.GetValue<string>();
+                    if (this.expression.IsMatch(stringValue))
+                    {
+                        output.Append(stringValue);
+                    }
                 }
             }
             return output.ToString().Trim();
@@ -48,7 +50,7 @@ namespace Xcaciv.Command.Commands
             {
                 if (this.expression == null)
                 {
-                    this.expression = new Regex(regexParam.RawValue);
+                    this.expression = new Regex(regexParam.GetValue<string>());
                 }
 
                 return (this.expression?.IsMatch(stringToCheck) ?? false) ? stringToCheck : string.Empty;
@@ -56,18 +58,5 @@ namespace Xcaciv.Command.Commands
 
             return string.Empty;
         }
-        /// <summary>
-        /// setup the regex object
-        /// </summary>
-        /// <param name="parameters"></param>
-        private void setRegexExpression(string[] parameters)
-        {
-            if (this.expression == null && parameters.Length >0)
-            {
-                this.expression = new Regex(parameters[0]);
-            }
-        }
-
-
     }
 }

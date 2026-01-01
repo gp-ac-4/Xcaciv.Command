@@ -246,6 +246,15 @@ public static class CommandParameters
         return parameterLookup;
     }
 
+    /// <summary>
+    /// Helper method to create a ParameterValue using the converter.
+    /// </summary>
+    private static IParameterValue CreateParameterValue(string name, string rawValue, Type targetType)
+    {
+        var convertedValue = DefaultConverter.ValidateAndConvert(name, rawValue, targetType, out var validationError, out var isValid);
+        return ParameterValue.Create(name, rawValue, convertedValue, targetType, isValid, validationError);
+    }
+
     private static void ProcessTypedFlags(
         List<string> parameterList,
         Dictionary<string, IParameterValue> parameterLookup,
@@ -272,7 +281,7 @@ public static class CommandParameters
             }
 
             var boolValue = found ? "true" : "false";
-            parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, boolValue, typeof(bool), DefaultConverter);
+            parameterLookup[parameter.Name] = CreateParameterValue(parameter.Name, boolValue, typeof(bool));
         }
     }
 
@@ -323,7 +332,7 @@ public static class CommandParameters
                 throw new ArgumentException($"Invalid value for parameter {parameter.Name}, this parameter has an allow list.");
             }
 
-            parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, foundValue, parameter.DataType, DefaultConverter);
+            parameterLookup[parameter.Name] = CreateParameterValue(parameter.Name, foundValue, parameter.DataType);
         }
     }
 
@@ -339,7 +348,7 @@ public static class CommandParameters
             {
                 if (!parameter.IsRequired && !string.IsNullOrEmpty(parameter.DefaultValue))
                 {
-                    parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, parameter.DefaultValue, parameter.DataType, DefaultConverter);
+                    parameterLookup[parameter.Name] = CreateParameterValue(parameter.Name, parameter.DefaultValue, parameter.DataType);
                     continue;
                 }
                 else if (parameter.IsRequired)
@@ -372,7 +381,7 @@ public static class CommandParameters
                     throw new ArgumentException($"Invalid value for parameter {parameter.Name}, this parameter has an allow list.");
                 }
 
-                parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, foundValue, parameter.DataType, DefaultConverter);
+                parameterLookup[parameter.Name] = CreateParameterValue(parameter.Name, foundValue, parameter.DataType);
                 parameterList.RemoveAt(0);
             }
         }
@@ -390,7 +399,7 @@ public static class CommandParameters
             {
                 if (!parameter.IsRequired && !string.IsNullOrEmpty(parameter.DefaultValue))
                 {
-                    parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, parameter.DefaultValue, parameter.DataType, DefaultConverter);
+                    parameterLookup[parameter.Name] = CreateParameterValue(parameter.Name, parameter.DefaultValue, parameter.DataType);
                     continue;
                 }
                 else if (parameter.IsRequired)
@@ -406,7 +415,7 @@ public static class CommandParameters
             {
                 if (parameter.DefaultValue != string.Empty)
                 {
-                    parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, parameter.DefaultValue, parameter.DataType, DefaultConverter);
+                    parameterLookup[parameter.Name] = CreateParameterValue(parameter.Name, parameter.DefaultValue, parameter.DataType);
                 }
                 else if (parameter.IsRequired)
                 {
@@ -418,7 +427,7 @@ public static class CommandParameters
 
             // Join all remaining parameters into a single string
             var combinedValue = string.Join(" ", parameterList);
-            parameterLookup[parameter.Name] = new ParameterValue(parameter.Name, combinedValue, parameter.DataType, DefaultConverter);
+            parameterLookup[parameter.Name] = CreateParameterValue(parameter.Name, combinedValue, parameter.DataType);
             parameterList.Clear(); // Remove all items since they're all combined into one parameter
         }
     }

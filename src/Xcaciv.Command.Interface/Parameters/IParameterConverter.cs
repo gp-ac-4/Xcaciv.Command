@@ -21,6 +21,34 @@ public interface IParameterConverter
     /// <param name="targetType">The target type.</param>
     /// <returns>A result object indicating success/failure and the converted value.</returns>
     ParameterConversionResult Convert(string value, Type targetType);
+
+    /// <summary>
+    /// Converts a string value to the target type and extracts validation information.
+    /// </summary>
+    /// <param name="rawValue">The string value to convert.</param>
+    /// <param name="targetType">The target type.</param>
+    /// <param name="error">The error message if conversion fails, null otherwise.</param>
+    /// <returns>The converted value if successful, or sentinel value if conversion failed.</returns>
+    object ConvertWithValidation(string rawValue, Type targetType, out string? error);
+
+    /// <summary>
+    /// Validates and converts a string value to the target type with full type consistency checks.
+    /// This method performs comprehensive validation including type support checking and type consistency verification.
+    /// </summary>
+    /// <param name="parameterName">The parameter name for error messages.</param>
+    /// <param name="rawValue">The string value to convert.</param>
+    /// <param name="targetType">The target type.</param>
+    /// <param name="validationError">The validation error message if validation/conversion fails, null otherwise.</param>
+    /// <param name="isValid">Indicates whether the conversion was successful.</param>
+    /// <returns>The converted value if successful, or sentinel value if conversion failed.</returns>
+    /// <exception cref="ArgumentException">Thrown when converter doesn't support the target type.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when type safety is violated.</exception>
+    object ValidateAndConvert(string parameterName, string rawValue, Type targetType, out string validationError, out bool isValid);
+
+    /// <summary>
+    /// Generic overload that enforces compile-time type expectations while preserving validation diagnostics.
+    /// </summary>
+    T ValidateAndConvert<T>(string parameterName, string rawValue, out string validationError, out bool isValid);
 }
 
 /// <summary>

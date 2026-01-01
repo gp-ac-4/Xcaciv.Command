@@ -100,7 +100,7 @@ public class PipelineChannelCompletionTests
     {
         public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => pipedChunk;
 
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => string.Join(' ', parameters.Values.Select(p => p.RawValue));
+        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => string.Join(' ', parameters.Values.Select(p => p.GetValue<string>()));
 
         public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {

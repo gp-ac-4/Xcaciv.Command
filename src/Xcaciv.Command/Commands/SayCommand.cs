@@ -22,7 +22,7 @@ namespace Xcaciv.Command.Commands
             // Get the text parameter which contains all arguments joined together
             if (parameters.TryGetValue("text", out var textParam) && textParam.IsValid)
             {
-                var value = textParam.RawValue;
+                var value = textParam.GetValue<string>();
                 if (value.Contains('%')) value = ProcessEnvValues(value, env);
                 return value;
             }
