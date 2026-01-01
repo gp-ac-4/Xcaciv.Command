@@ -15,14 +15,16 @@ Commands are .NET class libraries that contain implementations of the `Xc.Comman
 
 ## Features
 
-- **Strongly-Typed Parameters**: Generic parameter values with compile-time type safety and early validation
+- **Strongly-Typed Parameters**: Generic `IParameterValue<T>` with compile-time type safety and pre-validation
+- **Type-Safe Parameter Access**: `GetValue<T>()` method prevents accessing unconverted strings
+- **Rich Type Support**: String, numeric types, bool, Guid, DateTime, JsonElement with nullable variants
+- **Enhanced Diagnostics**: Detailed type mismatch and validation error messages with parameter context
 - **Async Pipeline Support**: Commands can be chained with `|` for threaded pipeline execution
 - **Plugin System**: Dynamic command loading from external assemblies
 - **Secure Plugin Loading**: Built on Xcaciv.Loader 2.1.2 with instance-based security policies
 - **Auto-Generated Help**: Comprehensive help generation from command attributes
 - **Sub-Commands**: Hierarchical command structure support
 - **Built-in Commands**: `SAY`, `SET`, `ENV`, and `REGIF` included
-- **Rich Type Support**: String, numeric types, bool, Guid, DateTime, JsonElement with nullable variants
 
 ## Dependencies
 
@@ -36,6 +38,7 @@ This framework uses Xcaciv.Loader 2.1.0's instance-based security policies:
 - **No Wildcard Access**: Replaces v1.x wildcard (`*`) restrictions with proper path-based security
 - **Security Exception Handling**: Graceful handling of security violations with detailed logging
 - **Per-Instance Configuration**: Each AssemblyContext has independent security settings
+- **Type Safety**: Parameters validated and converted before command execution prevents injection attacks
 
 For detailed security model, plugin development guidelines, and vulnerability reporting procedures, see `SECURITY.md`.
 
@@ -46,7 +49,7 @@ Command execution and environment changes can be logged via `IAuditLogger`:
 ```csharp
 // Example: Using audit logging
 var controller = new CommandController();
-controller.EnableDefaultCommands();
+controller.RegisterBuiltInCommands();
 var env = new EnvironmentContext();
 
 // Provide an audit logger implementation
@@ -71,17 +74,17 @@ See `SECURITY.md` for secure audit logging patterns.
 - [X] Sub-command structure
 - [X] Auto generated help
 - [X] Migrate to Xcaciv.Loader 2.1.0 with instance-based security
+- [X] Type-safe parameter system with generics
 
 ## Version History
 
 ### 3.1.0 (Current)
-- **Generic Parameter System:** Fully generic `ParameterValue<T>` with compile-time type safety
-- **Breaking:** `IParameterValue` adds `DataType`, `UntypedValue`, `GetValue<T>()`, `TryGetValue<T>()`
-- **Breaking:** Removed `As<T>()` and `Value` property - use `GetValue<T>()`
-- **Factory Creation:** Runtime `ParameterValue.Create()` for dynamic type instantiation
-- **Enhanced Diagnostics:** Rich type mismatch and validation error messages
-- **InvalidParameterValue Sentinel:** Maintained for conversion failure handling
-- See [Parameter System Summary](docs/parameter-system-summary.md) for details
+- **Type-Safe Parameter System:** Fully generic `IParameterValue<T>` with compile-time type safety
+- **Enhanced Security:** Parameters validated before execution, no direct raw string access
+- **Breaking:** Commands use `GetValue<T>()` instead of `RawValue`
+- **Comprehensive Tests:** 36 new tests for built-in commands (232 total passing)
+- **Rich Diagnostics:** Detailed type mismatch and validation error messages
+- See [CHANGELOG](CHANGELOG.md#310) for full details
 
 ### 3.0.0
 - **BREAKING:** Removed deprecated `EnableDefaultCommands()` - use `RegisterBuiltInCommands()`
@@ -97,8 +100,10 @@ See `SECURITY.md` for secure audit logging patterns.
 
 ## Documentation
 
-- [Parameter System Summary](docs/parameter-system-summary.md) - Generic parameter implementation guide
-- [Project History](docs/project-history.md) - Development history and architectural decisions
+- [CHANGELOG](CHANGELOG.md) - Complete version history and release notes
+- [Parameter System Implementation](PARAMETER_SYSTEM_IMPLEMENTATION.md) - Type-safe parameter guide
+- [Command Test Coverage](COMMAND_TEST_COVERAGE_COMPLETE.md) - Test coverage report
+- [RawValue Removal](RAWVALUE_REMOVAL_COMPLETE.md) - Security improvement details
 - [Migration Guide v3.0](docs/migration_guide_v3.0.md) - Upgrade instructions
 - [Build Guide](BUILD.md) - Build script usage and configuration
 - [Security Policy](SECURITY.md) - Security model and vulnerability reporting

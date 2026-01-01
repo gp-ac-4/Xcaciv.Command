@@ -2,7 +2,7 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>3.0.0</Version>
+    <Version>3.1.0</Version>
     <AssemblyName>Xcaciv.Command</AssemblyName>
     <RootNamespace>Xcaciv.Command</RootNamespace>
     <IsPublishable>True</IsPublishable>
@@ -16,7 +16,8 @@
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-    <Title>Xcaciv Command</Title>
+    <Title>Xcaciv Command Framework</Title>
+    <Description>Excessively modular, async pipeable command framework with strongly-typed parameter support. Features include type-safe IParameterValue&lt;T&gt;, pluggable commands, secure plugin loading, auto-generated help, and built-in commands (SAY, SET, ENV, REGIF).</Description>
     <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
  
@@ -54,7 +55,7 @@
 
   <Target DependsOnTargets="ResolveReferences" Name="CopyProjectReferencesToPackage">
     <ItemGroup>
-      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
     </ItemGroup>
   </Target>
 </Project>

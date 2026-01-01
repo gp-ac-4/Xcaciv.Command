@@ -3,10 +3,11 @@
     <TargetFrameworks>$(XcacivTargetFrameworks)</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>3.0.0</Version>
+    <Version>3.1.0</Version>
     <AssemblyName>Xcaciv.Command.FileLoader</AssemblyName>
     <RootNamespace>Xcaciv.Command.FileLoader</RootNamespace>
     <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
+    <Description>Plugin discovery and loading functionality for Xcaciv.Command with secure assembly loading via Xcaciv.Loader.</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.IO.Abstractions" />

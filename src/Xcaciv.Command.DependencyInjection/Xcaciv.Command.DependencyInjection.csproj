@@ -2,7 +2,7 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>3.0.0</Version>
+    <Version>3.1.0</Version>
     <TargetFrameworks>$(XcacivTargetFrameworks)</TargetFrameworks>
     <AssemblyName>Xcaciv.Command.DependencyInjection</AssemblyName>
     <RootNamespace>Xcaciv.Command.DependencyInjection</RootNamespace>
@@ -10,7 +10,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
     <Title>Xcaciv Command DI Adapter</Title>
-    <Description>Optional adapter for wiring Xcaciv.Command into Microsoft.Extensions.DependencyInjection</Description>
+    <Description>Optional adapter for wiring Xcaciv.Command into Microsoft.Extensions.DependencyInjection with support for scoped/singleton lifetimes and configuration binding.</Description>
   </PropertyGroup>
 
   <ItemGroup>

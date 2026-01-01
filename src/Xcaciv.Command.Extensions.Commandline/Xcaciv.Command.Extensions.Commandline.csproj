@@ -4,7 +4,7 @@
     <TargetFrameworks>$(XcacivTargetFrameworks)</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>3.0.0</Version>
+    <Version>3.1.0</Version>
     <IsPublishable>True</IsPublishable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <AssemblyName>Xcaciv.Command.Extensions.Commandline</AssemblyName>
@@ -15,7 +15,7 @@
     <RepositoryUrl>git@github.com:Xcaciv/Xcaciv.Command.git</RepositoryUrl>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Description>Wraps System.CommandLine commands for execution via the Xcaciv.Command pipeline.</Description>
+    <Description>Wraps System.CommandLine commands for execution via the Xcaciv.Command pipeline with support for piped input and async execution.</Description>
     <Title>Xcaciv Command Extensions for System.CommandLine</Title>
   </PropertyGroup>
 
