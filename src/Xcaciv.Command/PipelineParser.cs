@@ -28,6 +28,9 @@ public class PipelineParser
             return Array.Empty<string>();
         }
 
+        // devide string on pipeline seperator
+        // validate quoted strings
+
         var segments = new List<string>();
         var currentSegment = new StringBuilder();
         var i = 0;

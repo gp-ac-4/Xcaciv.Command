@@ -42,5 +42,41 @@ namespace Xcaciv.Command.Tests.Commands
             // by looking at the output of the second output line
             Assert.Equal("is", textio.ToString().Trim());
         }
+
+        [Fact()]
+        public async Task HandleExecutionWithQuotesTestAsync()
+        {
+            var commands = new CommandController(new Crawler(), @"..\..\..\..\..\");
+            commands.AddPackageDirectory(commandPackageDir);
+            commands.RegisterBuiltInCommands();
+            commands.LoadCommands(string.Empty);
+
+            var env = new EnvironmentContext();
+            var textio = new TestImpementations.TestTextIo();
+            // simulate user input
+            await commands.Run("echo 'what is | up' | regif is", textio, env);
+
+            // verify the output of the first run
+            // by looking at the output of the second output line
+            Assert.Equal("is", textio.ToString().Trim());
+        }
+
+        [Fact()]
+        public async Task HandleExecutionWithSetTestAsync()
+        {
+            var commands = new CommandController(new Crawler(), @"..\..\..\..\..\");
+            commands.AddPackageDirectory(commandPackageDir);
+            commands.RegisterBuiltInCommands();
+            commands.LoadCommands(string.Empty);
+
+            var env = new EnvironmentContext();
+            var textio = new TestImpementations.TestTextIo();
+            // simulate user input
+            await commands.Run("echo 'what is up' | regif is | set found", textio, env);
+
+            // verify the output of the first run
+            // by looking at the output of the second output line
+            Assert.Equal("is", textio.ToString().Trim());
+        }
     }
 }

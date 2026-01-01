@@ -12,7 +12,7 @@ namespace Xcaciv.Command.Commands
 {
     [CommandRegister("Set", "Set environment values", Prototype = "SET <varname> <value>")]
     [CommandParameterOrdered("Key", "Key used to access value")]
-    [CommandParameterOrdered("Value", "Value stored for accessing")]
+    [CommandParameterOrdered("Value", "Value stored for accessing", UsePipe = true)]
     [CommandHelpRemarks("This is a special command that is able to modify the Env outside its own context.")]
     internal class SetCommand : AbstractCommand
     {
@@ -29,9 +29,23 @@ namespace Xcaciv.Command.Commands
             return String.Empty;
         }
 
-        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext status)
+        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
-            throw new NotImplementedException();
+            var key = parameters.TryGetValue("key", out var keyParam) && keyParam.IsValid ? keyParam.GetValue<string>() : string.Empty;
+            if (!String.IsNullOrEmpty(key) && !String.IsNullOrEmpty(pipedChunk))
+            {
+                var newValue = env.GetValue(key) + pipedChunk;
+                env.SetValue(key, newValue);
+            }
+            // nothing to display
+            return String.Empty;
+        }
+
+        protected override void OnStartPipe(Dictionary<string, IParameterValue> processedParameters, IEnvironmentContext environment)
+        {
+            var key = processedParameters.TryGetValue("key", out var keyParam) && keyParam.IsValid ? keyParam.GetValue<string>() : string.Empty;
+            environment.SetValue(key, String.Empty);
+            base.OnStartPipe(processedParameters, environment);
         }
     }
 }
