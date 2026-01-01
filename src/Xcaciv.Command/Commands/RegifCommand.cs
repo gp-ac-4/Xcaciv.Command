@@ -26,15 +26,13 @@ namespace Xcaciv.Command.Commands
         public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext status)
         {
             var output = new StringBuilder();
-            
+
             if (parameters.TryGetValue("regex", out var regexParam) && regexParam.IsValid)
             {
                 this.expression = new Regex(regexParam.GetValue<string>());
-                
+
                 // Check if there's a string parameter
-                if (parameters.TryGetValue("string", out var stringParam) && 
-                    stringParam.IsValid && 
-                    this.expression.IsMatch(stringParam.RawValue))
+                if (parameters.TryGetValue("string", out var stringParam) && stringParam.IsValid)
                 {
                     var stringValue = stringParam.GetValue<string>();
                     if (this.expression.IsMatch(stringValue))
@@ -42,6 +40,7 @@ namespace Xcaciv.Command.Commands
                         output.Append(stringValue);
                     }
                 }
+            }
             return output.ToString().Trim();
         }
 
