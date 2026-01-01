@@ -44,7 +44,7 @@ namespace Xcaciv.Command.Interface.Parameters
                 throw new InvalidOperationException(
                     $"Cannot access parameter '{Name}' due to validation error: {ValidationError}\n" +
                     $"Raw value: '{RawValue}'\n" +
-                    $"Expected type: {DataType.Name}" +
+                    $"Expected type: {DataType.Name}\n" +
                     "Hint: only access value if valid.");
             }
 
