@@ -1,5 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <!-- 
+      This project file property references a custom MSBuild variable 'XcacivTargetFrameworks' 
+      to specify the target frameworks for compilation. This allows centralized management of 
+      target framework versions across the Xcaciv.Command solution, ensuring consistency and 
+      simplifying updates to supported .NET versions project-wide.
+    -->
     <TargetFrameworks>$(XcacivTargetFrameworks)</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
