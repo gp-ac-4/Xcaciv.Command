@@ -21,12 +21,8 @@
 	  <Description>Core functionality for Xcaciv.Command including AbstractCommand base class, type-safe parameter processing with DefaultParameterConverter, and ParameterCollectionBuilder for validated parameter collections.</Description>
   </PropertyGroup>
 
-	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+	<ItemGroup>
 		<ProjectReference Package="True" Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(Configuration)' != 'Debug'">
-		<PackageReference Include="Xcaciv.Command.Interface" />
 	</ItemGroup>
 
 	<ItemGroup>
