@@ -31,7 +31,6 @@ jobs:
       - name: Remove local NuGet sources
         run: |
           dotnet nuget remove source local --configfile $env:Nuget_Config_Path
-          dotnet nuget remove source local-artifacts --configfile $env:Nuget_Config_Path
         continue-on-error: true
 
       - name: Configure Nuget Source - configure
