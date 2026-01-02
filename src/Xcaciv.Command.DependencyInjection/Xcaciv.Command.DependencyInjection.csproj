@@ -13,11 +13,7 @@
     <Description>Optional adapter for wiring Xcaciv.Command into Microsoft.Extensions.DependencyInjection with support for scoped/singleton lifetimes and configuration binding.</Description>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
-    <ProjectReference Include="..\Xcaciv.Command\Xcaciv.Command.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(Configuration)' != 'Debug'">
+  <ItemGroup>
     <PackageReference Include="Xcaciv.Command" />
     <PackageReference Include="Xcaciv.Command.Interface" />
     <PackageReference Include="Xcaciv.Command.FileLoader" />
