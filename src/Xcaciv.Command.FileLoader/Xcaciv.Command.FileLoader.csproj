@@ -13,12 +13,7 @@
     <PackageReference Include="System.IO.Abstractions" />
     <PackageReference Include="Xcaciv.Loader" />
   </ItemGroup>
-  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+  <ItemGroup>
     <ProjectReference Include="..\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj" />
-    <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
   </ItemGroup>
-    <ItemGroup Condition="'$(Configuration)' != 'Debug'">
-		<PackageReference Include="Xcaciv.Command.Interface" />
-		<PackageReference Include="Xcaciv.Command.Core" />
-    </ItemGroup>
 </Project>
