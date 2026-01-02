@@ -14,13 +14,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Xcaciv.Command" />
-    <PackageReference Include="Xcaciv.Command.Interface" />
-    <PackageReference Include="Xcaciv.Command.FileLoader" />
-    <PackageReference Include="Xcaciv.Command.Core" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
@@ -28,7 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj" />
     <ProjectReference Include="..\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj" />
     <ProjectReference Include="..\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj" />
+    <ProjectReference Include="..\Xcaciv.Command\Xcaciv.Command.csproj" />
   </ItemGroup>
 </Project>
