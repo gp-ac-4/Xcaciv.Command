@@ -9,13 +9,12 @@ namespace Xcaciv.Command.Interface.Attributes
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public class CommandRegisterAttribute : Attribute
     {
-        private string _command = "";
         /// <summary>
         /// define how this command is to be called
         /// </summary>
         /// <param name="command"></param>
         /// <param name="description"></param>
-        public CommandRegisterAttribute(string command = "", string description = "") 
+        public CommandRegisterAttribute(string command, string description) 
         { 
             this.Command = command;
             this.Description = description;
@@ -25,10 +24,9 @@ namespace Xcaciv.Command.Interface.Attributes
         /// </summary>
         /// <example>DIR</example>
         public string Command { 
-            get
-            { return this._command; }
+            get;
             set
-            { this._command = CommandDescription.GetValidCommandName(value); }
+            { field = CommandDescription.GetValidCommandName(value); }
         }
         /// <summary>
         /// version of the command
@@ -37,12 +35,12 @@ namespace Xcaciv.Command.Interface.Attributes
         /// <summary>
         /// What does this command do
         /// </summary>
-        public string Description { get; set; } = "TODO";
+        public string Description { get; set; }
         /// <summary>
         /// Prototype/example of how to call the command with parameters parameters
         /// </summary>
         /// <example>CMD [-A | -U] [-Q] [-D] [-E ON | OFF]</example>
-        public string Prototype { get; set; } = "TODO";
+        public string Prototype { get; set; } = "";
         /// <summary>
         /// a short name for the command
         /// eg. "ls" for "list"
