@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
@@ -11,12 +10,29 @@ using Xcaciv.Command.Interface.Parameters;
 
 namespace Xcaciv.Command.Tests.Commands
 {
-    public class ParameterTestCommand(CommandParameterOrderedAttribute[] ordered, CommandFlagAttribute[] flags, CommandParameterNamedAttribute[] named, CommandParameterSuffixAttribute[] suffix) : AbstractCommand
+    /// <summary>
+    /// Test command that uses constructor-provided parameter attributes for testing parameter processing.
+    /// This command uses reflection to add attributes dynamically at runtime for testing purposes.
+    /// </summary>
+    [CommandRegister("PARAMTEST", "Test command for parameter processing")]
+    public class ParameterTestCommand : AbstractCommand
     {
-        private readonly CommandParameterOrderedAttribute[] _ordered = ordered;
-        private readonly CommandFlagAttribute[] _flags = flags;
-        private readonly CommandParameterNamedAttribute[] _named = named;
-        private readonly CommandParameterSuffixAttribute[] _suffix = suffix;
+        private readonly CommandParameterOrderedAttribute[] _ordered;
+        private readonly CommandFlagAttribute[] _flags;
+        private readonly CommandParameterNamedAttribute[] _named;
+        private readonly CommandParameterSuffixAttribute[] _suffix;
+
+        public ParameterTestCommand(
+            CommandParameterOrderedAttribute[] ordered,
+            CommandFlagAttribute[] flags,
+            CommandParameterNamedAttribute[] named,
+            CommandParameterSuffixAttribute[] suffix)
+        {
+            _ordered = ordered;
+            _flags = flags;
+            _named = named;
+            _suffix = suffix;
+        }
 
         public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
@@ -24,7 +40,6 @@ namespace Xcaciv.Command.Tests.Commands
 
             foreach (var pair in parameters)
             {
-                // Get the value as string representation, handling different types
                 var valueStr = pair.Value.DataType == typeof(bool)
                     ? pair.Value.GetValue<bool>().ToString().ToLowerInvariant()
                     : pair.Value.UntypedValue?.ToString() ?? string.Empty;
@@ -40,40 +55,34 @@ namespace Xcaciv.Command.Tests.Commands
             throw new NotImplementedException();
         }
 
-        // Override parameter getters to return the attributes provided in the constructor
-        protected override CommandParameterOrderedAttribute[] GetOrderedParameters(bool hasPipedInput)
+        /// <summary>
+        /// Override ProcessParameters to use the constructor-provided attributes instead of reflection.
+        /// This allows tests to inject custom parameter definitions without using actual attributes on the class.
+        /// </summary>
+        public new Dictionary<string, IParameterValue> ProcessParameters(string[] parameters, bool hasPipedInput = false)
         {
-            var result = _ordered ?? Array.Empty<CommandParameterOrderedAttribute>();
+            if (parameters.Length == 0)
+            {
+                return new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            var orderedAttrs = _ordered ?? Array.Empty<CommandParameterOrderedAttribute>();
+            var namedAttrs = _named ?? Array.Empty<CommandParameterNamedAttribute>();
+            var suffixAttrs = _suffix ?? Array.Empty<CommandParameterSuffixAttribute>();
+
             if (hasPipedInput)
             {
-                result = result.Where(x => !x.UsePipe).ToArray();
+                orderedAttrs = orderedAttrs.Where(x => !x.UsePipe).ToArray();
+                namedAttrs = namedAttrs.Where(x => !x.UsePipe).ToArray();
+                suffixAttrs = suffixAttrs.Where(x => !x.UsePipe).ToArray();
             }
-            return result;
-        }
 
-        protected override CommandFlagAttribute[] GetFlagParameters()
-        {
-            return _flags ?? Array.Empty<CommandFlagAttribute>();
-        }
-
-        protected override CommandParameterNamedAttribute[] GetNamedParameters(bool hasPipedInput)
-        {
-            var result = _named ?? Array.Empty<CommandParameterNamedAttribute>();
-            if (hasPipedInput)
-            {
-                result = result.Where(x => !x.UsePipe).ToArray();
-            }
-            return result;
-        }
-
-        protected override CommandParameterSuffixAttribute[] GetSuffixParameters(bool hasPipedInput)
-        {
-            var result = _suffix ?? Array.Empty<CommandParameterSuffixAttribute>();
-            if (hasPipedInput)
-            {
-                result = result.Where(x => !x.UsePipe).ToArray();
-            }
-            return result;
+            return CommandParameters.ProcessTypedParameters(
+                parameters,
+                orderedAttrs,
+                _flags ?? Array.Empty<CommandFlagAttribute>(),
+                namedAttrs,
+                suffixAttrs);
         }
     }
 }

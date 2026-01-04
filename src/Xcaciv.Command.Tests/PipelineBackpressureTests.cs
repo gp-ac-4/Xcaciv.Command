@@ -307,9 +307,9 @@ namespace Xcaciv.Command.Tests
 
     /// <summary>
     /// Test command that produces a configurable number of items with optional delay.
+    /// Implements ICommandDelegate directly for full control over Main method.
     /// </summary>
-    [CommandRegister("TestProducer", "Produces test items for backpressure testing")]
-    internal class TestProducerCommand : AbstractCommand
+    internal class TestProducerCommand : ICommandDelegate
     {
         private readonly int _itemCount;
         private readonly int _delayMs;
@@ -320,19 +320,7 @@ namespace Xcaciv.Command.Tests
             _delayMs = delayMs;
         }
 
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
-        {
-            // Not used in this test scenario
-            return string.Empty;
-        }
-
-        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
-        {
-            // Producer command does not consume piped input
-            return string.Empty;
-        }
-
-        public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
+        public async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {
             for (int i = 0; i < _itemCount; i++)
             {
@@ -344,13 +332,17 @@ namespace Xcaciv.Command.Tests
                 yield return CommandResult<string>.Success($"Item-{i}");
             }
         }
+
+        public string Help(string[] parameters, IEnvironmentContext env) => "Test producer command";
+        public string OneLineHelp(string[] parameters) => "TestProducer    Produces test items for backpressure testing";
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     /// <summary>
     /// Test command that consumes piped input slowly to create backpressure.
+    /// Implements ICommandDelegate directly for full control over Main method.
     /// </summary>
-    [CommandRegister("TestSlowConsumer", "Consumes input slowly for backpressure testing")]
-    internal class TestSlowConsumerCommand : AbstractCommand
+    internal class TestSlowConsumerCommand : ICommandDelegate
     {
         private readonly int _delayMs;
         public int ProcessedCount { get; private set; }
@@ -360,19 +352,7 @@ namespace Xcaciv.Command.Tests
             _delayMs = delayMs;
         }
 
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
-        {
-            // Not used in this test scenario
-            return string.Empty;
-        }
-
-        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
-        {
-            ProcessedCount++;
-            return pipedChunk;
-        }
-
-        public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
+        public async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {
             if (ioContext.HasPipedInput)
             {
@@ -382,10 +362,15 @@ namespace Xcaciv.Command.Tests
 
                     // Simulate slow processing
                     await Task.Delay(_delayMs);
+                    ProcessedCount++;
                     
-                    yield return CommandResult<string>.Success(HandlePipedChunk(chunk, ProcessParameters(ioContext.Parameters), env));
+                    yield return CommandResult<string>.Success(chunk);
                 }
             }
         }
+
+        public string Help(string[] parameters, IEnvironmentContext env) => "Test slow consumer command";
+        public string OneLineHelp(string[] parameters) => "TestSlowConsumer Consumes input slowly for backpressure testing";
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }
