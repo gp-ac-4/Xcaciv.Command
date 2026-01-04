@@ -11,6 +11,8 @@ namespace Xcaciv.Command.Interface
         public string CorrelationId { get; init; } = Guid.NewGuid().ToString();
         public T? Output { get; init; }
 
+        public ResultFormat OutputFormat { get; init; } = ResultFormat.General;
+
         public static CommandResult<T> Success(T? output) => new()
         {
             IsSuccess = true,

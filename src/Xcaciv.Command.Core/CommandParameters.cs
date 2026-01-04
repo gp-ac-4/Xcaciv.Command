@@ -8,10 +8,21 @@ using Xcaciv.Command.Core.Parameters;
 
 namespace Xcaciv.Command.Core;
 
+/// <summary>
+/// Provides attribute-driven command parameter parsing and normalization for ordered, flag, named, and suffix parameters.
+/// This utility is used by command implementations to transform raw argument arrays into typed parameter dictionaries.
+/// </summary>
 public static class CommandParameters
 {
     private static readonly IParameterConverter DefaultConverter = new DefaultParameterConverter();
 
+    /// <summary>
+    /// Extracts boolean flag values from the raw parameter list and records their presence in the lookup map.
+    /// Modifies <paramref name="parameterList"/> by removing matched flag tokens.
+    /// </summary>
+    /// <param name="parameterList">Mutable list of raw parameters to scan and mutate.</param>
+    /// <param name="parameterLookup">Destination map that records flag presence as string values.</param>
+    /// <param name="commandFlagAttributes">Flag definitions from command attributes.</param>
     public static void ProcessFlags(List<string> parameterList, Dictionary<string, string> parameterLookup, CommandFlagAttribute[] commandFlagAttributes)
     {
         foreach (var parameter in commandFlagAttributes)
@@ -38,6 +49,10 @@ public static class CommandParameters
         }
     }
 
+    /// <summary>
+    /// Parses named key/value parameters from the raw parameter list, applying defaults and required checks.
+    /// Removes consumed tokens from <paramref name="parameterList"/> and populates the lookup map.
+    /// </summary>
     public static void ProcessNamedParameters(List<string> parameterList, Dictionary<string, string> parameterLookup, CommandParameterNamedAttribute[] commandParametersNamed)
     {
         foreach (var parameter in commandParametersNamed)
@@ -86,6 +101,10 @@ public static class CommandParameters
         }
     }
 
+    /// <summary>
+    /// Parses ordered (positional) parameters from the front of the parameter list, applying defaults and allow-list validation.
+    /// Mutates <paramref name="parameterList"/> as ordered values are consumed.
+    /// </summary>
     public static void ProcessOrderedParameters(List<string> parameterList, Dictionary<string, string> parameterLookup, CommandParameterOrderedAttribute[] commandParametersOrdered)
     {
         foreach (var parameter in commandParametersOrdered)
@@ -134,6 +153,9 @@ public static class CommandParameters
         }
     }
 
+    /// <summary>
+    /// Captures trailing arguments (suffix parameters), handling defaults and required enforcement. Consumes remaining parameters.
+    /// </summary>
     public static void ProcessSuffixParameters(List<string> parameterList, Dictionary<string, string> parameterLookup, CommandParameterSuffixAttribute[] commandParametersSuffix)
     {
         foreach (var parameter in commandParametersSuffix)
@@ -174,6 +196,10 @@ public static class CommandParameters
         }
     }
 
+    /// <summary>
+    /// Builds a command description from attributes for registration, optionally populating an existing description when handling sub-commands.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when the command type lacks a required <see cref="CommandRegisterAttribute"/>.</exception>
     public static ICommandDescription CreatePackageDescription(Type commandType, PackageDescription packagDesc, ICommandDescription? description = null)
     {
         // required to have BaseCommandAttribute, 
@@ -228,6 +254,15 @@ public static class CommandParameters
 
     }
 
+    /// <summary>
+    /// Parses raw parameters into typed parameter values using command parameter attributes for ordered, flag, named, and suffix arguments.
+    /// </summary>
+    /// <param name="parameters">Raw parameter array from the caller.</param>
+    /// <param name="orderedAttrs">Ordered parameter definitions.</param>
+    /// <param name="flagAttrs">Flag parameter definitions.</param>
+    /// <param name="namedAttrs">Named parameter definitions.</param>
+    /// <param name="suffixAttrs">Suffix parameter definitions.</param>
+    /// <returns>Dictionary keyed by parameter name with typed values and validation metadata.</returns>
     public static Dictionary<string, IParameterValue> ProcessTypedParameters(
         string[] parameters,
         CommandParameterOrderedAttribute[] orderedAttrs,
@@ -255,6 +290,9 @@ public static class CommandParameters
         return ParameterValue.Create(name, rawValue, convertedValue, targetType, isValid, validationError);
     }
 
+    /// <summary>
+    /// Parses boolean flags and records typed values in the lookup dictionary. Consumes matched tokens from the working list.
+    /// </summary>
     private static void ProcessTypedFlags(
         List<string> parameterList,
         Dictionary<string, IParameterValue> parameterLookup,
@@ -285,6 +323,9 @@ public static class CommandParameters
         }
     }
 
+    /// <summary>
+    /// Parses named parameters into typed values, validating required/default behavior and allow lists.
+    /// </summary>
     private static void ProcessTypedNamedParameters(
         List<string> parameterList,
         Dictionary<string, IParameterValue> parameterLookup,
@@ -336,6 +377,9 @@ public static class CommandParameters
         }
     }
 
+    /// <summary>
+    /// Parses ordered parameters into typed values, validating required/default behavior and allow lists.
+    /// </summary>
     private static void ProcessTypedOrderedParameters(
         List<string> parameterList,
         Dictionary<string, IParameterValue> parameterLookup,
@@ -387,6 +431,9 @@ public static class CommandParameters
         }
     }
 
+    /// <summary>
+    /// Parses suffix parameters into typed values, collapsing remaining arguments into a single value when appropriate.
+    /// </summary>
     private static void ProcessTypedSuffixParameters(
         List<string> parameterList,
         Dictionary<string, IParameterValue> parameterLookup,
