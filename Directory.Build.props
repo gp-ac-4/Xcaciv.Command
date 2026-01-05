@@ -5,6 +5,5 @@
     <XcacivBaseTargetFramework>net10.0</XcacivBaseTargetFramework>
     <XcacivTargetFrameworks>$(XcacivBaseTargetFramework)</XcacivTargetFrameworks>
     <XcacivTargetFrameworks Condition="'$(UseNet08)' == 'true'">net8.0;$(XcacivBaseTargetFramework)</XcacivTargetFrameworks>
-    <LangVersion>14.0</LangVersion>
   </PropertyGroup>
 </Project>
