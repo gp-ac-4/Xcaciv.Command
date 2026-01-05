@@ -12,6 +12,8 @@ namespace Xcaciv.Command.Core
     {
         private static IHelpService? _helpService;
 
+        public ResultFormat OutputFormat { get; protected set; } = ResultFormat.General;
+
         /// <summary>
         /// Sets the help service used by all AbstractCommand instances for help formatting.
         /// Should be set during application startup, typically by the CommandController.
@@ -84,7 +86,7 @@ namespace Xcaciv.Command.Core
                 await foreach (var pipedChunk in io.ReadInputPipeChunks())
                 {
                     if (string.IsNullOrEmpty(pipedChunk)) continue;
-                    yield return CommandResult<string>.Success(HandlePipedChunk(pipedChunk, processedParameters, environment));
+                    yield return CommandResult<string>.Success(HandlePipedChunk(pipedChunk, processedParameters, environment), this.OutputFormat);
                 }
 
                 OnEndPipe(processedParameters, environment);
@@ -95,11 +97,11 @@ namespace Xcaciv.Command.Core
                 var isHelp = _helpService?.IsHelpRequest(parameterArray) ?? false;
                 if (isHelp)
                 {
-                    yield return CommandResult<string>.Success(Help(parameterArray, environment));
+                    yield return CommandResult<string>.Success(Help(parameterArray, environment), ResultFormat.General);
                 }
                 else
                 {
-                    yield return CommandResult<string>.Success(HandleExecution(processedParameters, environment));
+                    yield return CommandResult<string>.Success(HandleExecution(processedParameters, environment), this.OutputFormat);
                 }
             }
         }
