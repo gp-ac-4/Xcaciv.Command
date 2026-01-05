@@ -14,6 +14,25 @@ This document provides a template and guidelines for implementing new commands i
 | `CommandHelpRemarksAttribute` | Additional help information | Multiple remarks can be added |
 | `CommandRootAttribute` | Multi-level sub-commands | For commands with sub-commands |
 
+## Interface Alignment
+
+- `AbstractCommand` implements `ICommandDelegate` (which includes `Main`, `Help`, and `OneLineHelp`) and `IAsyncDisposable`; most commands only override `HandleExecution` and `HandlePipedChunk`.
+- Use `OutputFormat` to declare the serialization shape of your output (defaults to `ResultFormat.General`).
+- Override `DisposeAsync` when your command owns disposable resources. Add `using System.Threading.Tasks;` and `using Xcaciv.Command.Interface;` when you override it.
+
+```csharp
+public MyCommand()
+{
+    OutputFormat = ResultFormat.General; // Or ResultFormat.JSON/CSV/TDL/YAML
+}
+
+public override ValueTask DisposeAsync()
+{
+    // Release disposable resources here.
+    return base.DisposeAsync();
+}
+```
+
 ## Basic Command Template
 
 ```csharp
@@ -28,7 +47,8 @@ namespace Xcaciv.Command.Commands
 {
     [CommandRegister("MyCommand", "Description of what the command does", Prototype = "MYCOMMAND <param1> <param2>")]
     [CommandParameterOrdered("param1", "Description of first parameter")]
-    [CommandParameterOrdered("param2", "Description of second parameter")]
+    [CommandParameterOrdered("param2", "Description of second parameter", DataType = typeof(int))]
+    [CommandParameterNamed("param3", "Description of named parameter", IsRequired = false, AllowedValues: ["value1", "value2"])]
     internal class MyCommand : AbstractCommand
     {
         public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
@@ -42,8 +62,12 @@ namespace Xcaciv.Command.Commands
                 ? p2.GetValue<string>() 
                 : string.Empty;
 
+            var param3 = parameters.TryGetValue("param3", out var p3) && p3.IsValid 
+                ? p3.GetValue<string>() 
+                : "default";
+
             // Execute command logic
-            var result = $"Processed: {param1}, {param2}";
+            var result = $"Processed: {param1}, {param2}, {param3}";
             
             return result;
         }
@@ -103,6 +127,8 @@ internal class AddCommand : AbstractCommand
     }
 }
 ```
+
+TODO: review all code samples for correctness and consistency.
 
 ### 3. Command with Named Parameters
 
@@ -410,6 +436,10 @@ internal class ConditionalCommand : AbstractCommand
 ### CSV Output Format
 
 ```csharp
+using System.Collections.Generic;
+using System.Text;
+using Xcaciv.Command.Interface;
+
 [CommandRegister("ListCsv", "Output data in CSV format", Prototype = "LISTCSV")]
 internal class ListCsvCommand : AbstractCommand
 {
@@ -418,6 +448,11 @@ internal class ListCsvCommand : AbstractCommand
         public string Name { get; set; }
         public int Age { get; set; }
         public string Email { get; set; }
+    }
+
+    public ListCsvCommand()
+    {
+        OutputFormat = ResultFormat.CSV;
     }
 
     public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
@@ -463,6 +498,10 @@ internal class ListCsvCommand : AbstractCommand
 ### TSV (Tab-Separated Values) / TDL Output Format
 
 ```csharp
+using System.Collections.Generic;
+using System.Text;
+using Xcaciv.Command.Interface;
+
 [CommandRegister("ListTsv", "Output data in TSV/TDL format", Prototype = "LISTTSV")]
 internal class ListTsvCommand : AbstractCommand
 {
@@ -471,6 +510,11 @@ internal class ListTsvCommand : AbstractCommand
         public string Name { get; set; }
         public int Age { get; set; }
         public string City { get; set; }
+    }
+
+    public ListTsvCommand()
+    {
+        OutputFormat = ResultFormat.TDL;
     }
 
     public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
@@ -506,6 +550,7 @@ internal class ListTsvCommand : AbstractCommand
 
 ```csharp
 using System.Text.Json;
+using Xcaciv.Command.Interface;
 
 [CommandRegister("ListJson", "Output data in JSON format", Prototype = "LISTJSON [-pretty]")]
 [CommandFlag("Pretty", "Pretty-print JSON output")]
@@ -516,6 +561,11 @@ internal class ListJsonCommand : AbstractCommand
         public string Name { get; set; }
         public int Age { get; set; }
         public string Email { get; set; }
+    }
+
+    public ListJsonCommand()
+    {
+        OutputFormat = ResultFormat.JSON;
     }
 
     public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
@@ -551,6 +601,7 @@ internal class ListJsonCommand : AbstractCommand
 ```csharp
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Xcaciv.Command.Interface;
 
 [CommandRegister("DataExport", "Export data with metadata in JSON", Prototype = "DATAEXPORT [-format json|compact]")]
 [CommandParameterNamed("Format", "Output format", DefaultValue = "json", AllowedValues = new[] { "json", "compact" })]
@@ -566,6 +617,11 @@ internal class DataExportCommand : AbstractCommand
         
         [JsonPropertyName("count")]
         public int Count { get; set; }
+    }
+
+    public DataExportCommand()
+    {
+        OutputFormat = ResultFormat.JSON;
     }
 
     public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
@@ -670,7 +726,9 @@ internal class ReportCommand : AbstractCommand
 ## Key Implementation Guidelines
 
 ### Parameter Extraction Pattern
+
 Always use the safe pattern for parameter extraction:
+
 ```csharp
 var paramValue = parameters.TryGetValue("paramname", out var param) && param.IsValid 
     ? param.GetValue<DesiredType>() 
@@ -678,23 +736,39 @@ var paramValue = parameters.TryGetValue("paramname", out var param) && param.IsV
 ```
 
 This pattern:
+
 - Uses `TryGetValue` for safe dictionary access
 - Checks `IsValid` to ensure the parameter was successfully parsed
 - Uses `GetValue<T>()` for type-safe access
 - Provides a default value fallback
 
 ### Return Values
+
 - **HandleExecution**: Return the command output as a string. Return `string.Empty` if no output.
 - **HandlePipedChunk**: Process one chunk of piped input and return the result.
 - Both methods should never return null; use `string.Empty` instead.
 
+### Output Format Hint
+
+- Set `OutputFormat` when your command emits structured output so downstream encoders and consumers can format correctly. Defaults to `ResultFormat.General`.
+
+```csharp
+public ListJsonCommand()
+{
+    OutputFormat = ResultFormat.JSON;
+}
+```
+
 ### Piped Input Support
+
 To support piped input, set `UsePipe = true` on one parameter:
+
 ```csharp
 [CommandParameterOrdered("Value", "Value to process", UsePipe = true)]
 ```
 
 When piping is active:
+
 1. `OnStartPipe()` is called first (optional override)
 2. `HandlePipedChunk()` is called for each chunk
 3. `OnEndPipe()` is called last (optional override)
@@ -702,10 +776,18 @@ When piping is active:
 The framework automatically excludes piped parameters from normal parameter processing.
 
 ### Environment Modification
-Commands that modify environment (like `SET`) should set `ModifiesEnvironment = true` on the `CommandRegisterAttribute` if available, though most commands simply call `env.SetValue()` when needed.
+
+Commands that need their changes pushed back to the parent environment must be registered with `modifiesEnvironment` set to `true` (for example via `ICommandController.AddCommand` or `ICommandRegistry.AddCommand`). Calling `env.SetValue()` only updates the child execution context unless the command is registered with that flag.
+
+```csharp
+var controller = new CommandController();
+controller.AddCommand("Default", new SetCommand(), modifiesEnvironment: true);
+```
 
 ### Type Support
+
 Parameters support these types:
+
 - `string`
 - `int`, `long`, `double`, `decimal`
 - `bool`
@@ -715,7 +797,9 @@ Parameters support these types:
 - JSON types (when available)
 
 ### No Parameters Required
+
 A command doesn't need any parameters:
+
 ```csharp
 [CommandRegister("Now", "Get current time")]
 internal class NowCommand : AbstractCommand
@@ -736,6 +820,7 @@ internal class NowCommand : AbstractCommand
 ## Attribute Properties Reference
 
 ### CommandRegisterAttribute (Required)
+
 ```csharp
 [CommandRegister(
     command: "NAME",           // How to invoke the command
@@ -747,6 +832,7 @@ internal class NowCommand : AbstractCommand
 ```
 
 ### CommandParameterOrderedAttribute
+
 ```csharp
 [CommandParameterOrdered(
     name: "ParamName",
@@ -759,6 +845,7 @@ internal class NowCommand : AbstractCommand
 ```
 
 ### CommandParameterNamedAttribute
+
 ```csharp
 [CommandParameterNamed(
     name: "ParamName",
@@ -772,6 +859,7 @@ internal class NowCommand : AbstractCommand
 ```
 
 ### CommandFlagAttribute
+
 ```csharp
 [CommandFlag(
     name: "FlagName",
@@ -780,6 +868,7 @@ internal class NowCommand : AbstractCommand
 ```
 
 ### CommandParameterSuffixAttribute
+
 ```csharp
 [CommandParameterSuffix(
     name: "ParamName",
@@ -793,6 +882,7 @@ internal class NowCommand : AbstractCommand
 ## Common Patterns
 
 ### Pass-Through Filter
+
 ```csharp
 public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
 {
@@ -801,6 +891,7 @@ public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IP
 ```
 
 ### Conditional Filter
+
 ```csharp
 public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
 {
@@ -811,6 +902,7 @@ public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IP
 ```
 
 ### Transform
+
 ```csharp
 public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
 {
@@ -819,6 +911,7 @@ public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IP
 ```
 
 ### Accumulate
+
 ```csharp
 protected override void OnStartPipe(Dictionary<string, IParameterValue> processedParameters, IEnvironmentContext environment)
 {
@@ -842,6 +935,7 @@ protected override void OnEndPipe(Dictionary<string, IParameterValue> processedP
 ## Testing Your Command
 
 Commands should be tested for:
+
 - Parameter parsing with valid inputs
 - Parameter validation with invalid inputs
 - Piped input handling
@@ -850,6 +944,7 @@ Commands should be tested for:
 - Environment interaction (if applicable)
 
 Example test structure:
+
 ```csharp
 [TestClass]
 public class MyCommandTests
