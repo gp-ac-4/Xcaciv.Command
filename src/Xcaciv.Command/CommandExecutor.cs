@@ -50,7 +50,7 @@ public class CommandExecutor : ICommandExecutor
             if (commandDescription == null)
             {
                 await ioContext.AddTraceMessage($"Command registry returned null description for key: {commandKey}").ConfigureAwait(false);
-                await ioContext.OutputChunk(CommandResult<string>.Success($"Command [{commandKey}] not found.")).ConfigureAwait(false);
+                await ioContext.OutputChunk(CommandResult<string>.Failure($"Command [{commandKey}] not found.")).ConfigureAwait(false);
                 return;
             }
 
@@ -82,7 +82,7 @@ public class CommandExecutor : ICommandExecutor
         else
         {
             var message = $"Command [{commandKey}] not found.";
-            await ioContext.OutputChunk(CommandResult<string>.Success($"{message} Try '{HelpCommand}'")).ConfigureAwait(false);
+            await ioContext.OutputChunk(CommandResult<string>.Failure($"{message} Try '{HelpCommand}'")).ConfigureAwait(false);
             await ioContext.AddTraceMessage(message).ConfigureAwait(false);
         }
     }
@@ -153,7 +153,7 @@ public class CommandExecutor : ICommandExecutor
             }
             else
             {
-                await context.OutputChunk(CommandResult<string>.Success($"Command [{commandKey}] not found.")).ConfigureAwait(false);
+                await context.OutputChunk(CommandResult<string>.Failure($"Command [{commandKey}] not found.")).ConfigureAwait(false);
             }
         }
         catch (Exception ex)
@@ -161,8 +161,8 @@ public class CommandExecutor : ICommandExecutor
             await context.AddTraceMessage(
                 $"Error getting help for command '{command}': {ex}").ConfigureAwait(false);
             var exceptionTypeName = ex.GetType().Name;
-            await context.OutputChunk(CommandResult<string>.Success(
-                $"Error getting help for command '{command}' ({exceptionTypeName}: {ex.Message}). See trace for more details."))
+            await context.OutputChunk(CommandResult<string>.Failure(
+                $"Error getting help for command '{command}' ({exceptionTypeName}: {ex.Message}). See trace for more details.", ex))
                 .ConfigureAwait(false);
         }
     }
