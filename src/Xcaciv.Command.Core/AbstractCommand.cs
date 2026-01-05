@@ -83,10 +83,19 @@ namespace Xcaciv.Command.Core
             {
                 OnStartPipe(processedParameters, environment);
 
-                await foreach (var pipedChunk in io.ReadInputPipeChunks())
+                await foreach (var pipedResult in io.ReadInputPipeChunks())
                 {
+                    if (!pipedResult.IsSuccess)
+                    {
+                        yield return pipedResult;
+                        continue;
+                    }
+
+                    var pipedChunk = pipedResult.Output;
                     if (string.IsNullOrEmpty(pipedChunk)) continue;
-                    yield return CommandResult<string>.Success(HandlePipedChunk(pipedChunk, processedParameters, environment), this.OutputFormat);
+
+                    var chunkResult = HandlePipedChunk(pipedChunk, processedParameters, environment);
+                    yield return chunkResult;
                 }
 
                 OnEndPipe(processedParameters, environment);
@@ -101,7 +110,8 @@ namespace Xcaciv.Command.Core
                 }
                 else
                 {
-                    yield return CommandResult<string>.Success(HandleExecution(processedParameters, environment), this.OutputFormat);
+                    var executionResult = HandleExecution(processedParameters, environment);
+                    yield return executionResult;
                 }
             }
         }
@@ -182,25 +192,23 @@ namespace Xcaciv.Command.Core
                 : attributes;
         }
         /// <summary>
-        /// Executes the operation using the specified parameters and environment context, and returns the result as a
-        /// string.
+        /// Executes the operation using the specified parameters and environment context, and returns the result.
         /// </summary>
         /// <param name="parameters">A dictionary containing parameter names and their corresponding values to be used during execution. Cannot
         /// be null.</param>
         /// <param name="env">The environment context in which the operation is executed. Cannot be null.</param>
-        /// <returns>A string representing the result of the execution. The format and content of the result depend on the
-        /// specific implementation.</returns>
-        public abstract string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
+        /// <returns>An IResult containing the execution result with success state, output, and optional error details.</returns>
+        public abstract IResult<string> HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
         /// <summary>
-        /// Processes a chunk of piped input and returns the resulting string after applying the specified parameters
+        /// Processes a chunk of piped input and returns the result after applying the specified parameters
         /// and environment context.
         /// </summary>
         /// <param name="pipedChunk">The input string representing the chunk of data to process. Cannot be null.</param>
         /// <param name="parameters">A dictionary of parameter names and their corresponding values to be used during processing. Cannot be null.</param>
         /// <param name="env">The environment context that provides additional information or services required for processing. Cannot be
         /// null.</param>
-        /// <returns>A string containing the processed result of the input chunk.</returns>
-        public abstract string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
+        /// <returns>An IResult containing the processed result of the input chunk with success state and output.</returns>
+        public abstract IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
 
         /// <summary>
         /// Invoked when a pipe operation is starting, allowing derived classes to perform custom initialization.

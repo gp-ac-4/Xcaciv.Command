@@ -23,7 +23,7 @@ namespace Xcaciv.Command.Commands
 
         protected string regex { get; set; } = string.Empty;
 
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext status)
+        public override IResult<string> HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext status)
         {
             var output = new StringBuilder();
 
@@ -41,10 +41,10 @@ namespace Xcaciv.Command.Commands
                     }
                 }
             }
-            return output.ToString().Trim();
+            return CommandResult<string>.Success(output.ToString().Trim(), this.OutputFormat);
         }
 
-        public override string HandlePipedChunk(string stringToCheck, Dictionary<string, IParameterValue> parameters, IEnvironmentContext status)
+        public override IResult<string> HandlePipedChunk(string stringToCheck, Dictionary<string, IParameterValue> parameters, IEnvironmentContext status)
         {
             if (parameters.TryGetValue("regex", out var regexParam) && regexParam.IsValid)
             {
@@ -53,10 +53,11 @@ namespace Xcaciv.Command.Commands
                     this.expression = new Regex(regexParam.GetValue<string>());
                 }
 
-                return (this.expression?.IsMatch(stringToCheck) ?? false) ? stringToCheck : string.Empty;
+                var matchedValue = (this.expression?.IsMatch(stringToCheck) ?? false) ? stringToCheck : string.Empty;
+                return CommandResult<string>.Success(matchedValue, this.OutputFormat);
             }
 
-            return string.Empty;
+            return CommandResult<string>.Success(string.Empty, this.OutputFormat);
         }
     }
 }

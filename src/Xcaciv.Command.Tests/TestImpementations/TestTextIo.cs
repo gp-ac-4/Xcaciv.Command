@@ -70,9 +70,16 @@ namespace Xcaciv.Command.Tests.TestImpementations
             return Task.CompletedTask;
         }
 
-        public override Task HandleOutputChunk(string chunk)
+        public override Task HandleOutputChunk(IResult<string> result)
         {
-            Output.Add(chunk);
+            if (result.IsSuccess && result.Output != null)
+            {
+                Output.Add(result.Output);
+            }
+            else if (!result.IsSuccess)
+            {
+                Output.Add($"ERROR: {result.ErrorMessage}");
+            }
             return Task.CompletedTask;
         }
 

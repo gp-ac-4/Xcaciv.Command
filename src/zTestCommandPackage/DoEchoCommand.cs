@@ -15,18 +15,18 @@ namespace zTestCommandPackage
     [CommandParameterSuffix("text", "Text to echo")]
     public class DoEchoCommand : AbstractCommand, ICommandDelegate
     {
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             if (parameters.TryGetValue("text", out var textParam))
             {
-                return parameters["text"].GetValue<string>();
+                return CommandResult<string>.Success(parameters["text"].GetValue<string>());
             }
-            return String.Join(' ', parameters.Values.Select(p => p.GetValue<string>()));
+            return CommandResult<string>.Success(String.Join(' ', parameters.Values.Select(p => p.GetValue<string>())));
         }
 
-        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
-            return pipedChunk;
+            return CommandResult<string>.Success(pipedChunk);
         }
     }
 }

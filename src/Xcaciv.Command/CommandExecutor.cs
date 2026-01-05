@@ -50,7 +50,7 @@ public class CommandExecutor : ICommandExecutor
             if (commandDescription == null)
             {
                 await ioContext.AddTraceMessage($"Command registry returned null description for key: {commandKey}").ConfigureAwait(false);
-                await ioContext.OutputChunk($"Command [{commandKey}] not found.").ConfigureAwait(false);
+                await ioContext.OutputChunk(CommandResult<string>.Success($"Command [{commandKey}] not found.")).ConfigureAwait(false);
                 return;
             }
 
@@ -66,7 +66,7 @@ public class CommandExecutor : ICommandExecutor
                 {
                     var commandInstance = _commandFactory.CreateCommand(commandDescription, ioContext);
                     var helpText = _helpService.BuildHelp(commandInstance, ioContext.Parameters, environmentContext);
-                    await ioContext.OutputChunk(helpText).ConfigureAwait(false);
+                    await ioContext.OutputChunk(CommandResult<string>.Success(helpText)).ConfigureAwait(false);
                 }
                 return;
             }
@@ -82,7 +82,7 @@ public class CommandExecutor : ICommandExecutor
         else
         {
             var message = $"Command [{commandKey}] not found.";
-            await ioContext.OutputChunk($"{message} Try '{HelpCommand}'").ConfigureAwait(false);
+            await ioContext.OutputChunk(CommandResult<string>.Success($"{message} Try '{HelpCommand}'")).ConfigureAwait(false);
             await ioContext.AddTraceMessage(message).ConfigureAwait(false);
         }
     }
@@ -121,21 +121,21 @@ public class CommandExecutor : ICommandExecutor
 
                 if (Attribute.GetCustomAttribute(commandType, typeof(CommandRootAttribute)) is CommandRootAttribute rootAttribute)
                 {
-                    await context.OutputChunk($"{description.BaseCommand,-12} {rootAttribute.Description}").ConfigureAwait(false);
+                    await context.OutputChunk(CommandResult<string>.Success($"{description.BaseCommand,-12} {rootAttribute.Description}")).ConfigureAwait(false);
                 }
 
                 // Show each sub-command
                 var subHelpLines = description.SubCommands.Select(subCommand => _helpService.BuildOneLineHelp(subCommand.Value));
                 foreach (var subHelpLine in subHelpLines)
                 {
-                    await context.OutputChunk(subHelpLine).ConfigureAwait(false);
+                    await context.OutputChunk(CommandResult<string>.Success(subHelpLine)).ConfigureAwait(false);
                 }
             }
             else
             {
                 // Regular command - show one line
                 var helpLine = _helpService.BuildOneLineHelp(description);
-                await context.OutputChunk(helpLine).ConfigureAwait(false);
+                await context.OutputChunk(CommandResult<string>.Success(helpLine)).ConfigureAwait(false);
             }
         }
     }
@@ -149,11 +149,11 @@ public class CommandExecutor : ICommandExecutor
             {
                 var commandInstance = _commandFactory.CreateCommand(description, context);
                 var helpText = _helpService.BuildHelp(commandInstance, context.Parameters, env);
-                await context.OutputChunk(helpText).ConfigureAwait(false);
+                await context.OutputChunk(CommandResult<string>.Success(helpText)).ConfigureAwait(false);
             }
             else
             {
-                await context.OutputChunk($"Command [{commandKey}] not found.").ConfigureAwait(false);
+                await context.OutputChunk(CommandResult<string>.Success($"Command [{commandKey}] not found.")).ConfigureAwait(false);
             }
         }
         catch (Exception ex)
@@ -161,8 +161,8 @@ public class CommandExecutor : ICommandExecutor
             await context.AddTraceMessage(
                 $"Error getting help for command '{command}': {ex}").ConfigureAwait(false);
             var exceptionTypeName = ex.GetType().Name;
-            await context.OutputChunk(
-                $"Error getting help for command '{command}' ({exceptionTypeName}: {ex.Message}). See trace for more details.")
+            await context.OutputChunk(CommandResult<string>.Success(
+                $"Error getting help for command '{command}' ({exceptionTypeName}: {ex.Message}). See trace for more details."))
                 .ConfigureAwait(false);
         }
     }
@@ -197,14 +197,14 @@ public class CommandExecutor : ICommandExecutor
                     {
                         if (!string.IsNullOrEmpty(result.Output))
                         {
-                            await ioContext.OutputChunk(result.Output).ConfigureAwait(false);
+                            await ioContext.OutputChunk(result).ConfigureAwait(false);
                         }
                     }
                     else
                     {
                         var failureMessage = result.ErrorMessage ?? $"Command [{commandKey}] reported failure (CorrelationId: {result.CorrelationId}).";
                         resultFailures.Add(failureMessage);
-                        await ioContext.OutputChunk(failureMessage).ConfigureAwait(false);
+                        await ioContext.OutputChunk(CommandResult<string>.Failure(failureMessage, result.Exception)).ConfigureAwait(false);
 
                         if (result.Exception != null)
                         {
@@ -225,7 +225,7 @@ public class CommandExecutor : ICommandExecutor
         {
             success = false;
             errorMessage = ex.Message;
-            await ioContext.OutputChunk($"Error executing {commandKey} (see trace for more info)").ConfigureAwait(false);
+            await ioContext.OutputChunk(CommandResult<string>.Failure($"Error executing {commandKey} (see trace for more info)", ex)).ConfigureAwait(false);
             await ioContext.SetStatusMessage("**Error: " + ex.Message).ConfigureAwait(false);
             await ioContext.AddTraceMessage(ex.ToString()).ConfigureAwait(false);
         }
@@ -267,13 +267,13 @@ public class CommandExecutor : ICommandExecutor
 
                 if (Attribute.GetCustomAttribute(subCmd.GetType(), typeof(CommandRootAttribute)) is CommandRootAttribute rootAttribute)
                 {
-                    await context.OutputChunk($"{rootAttribute.Command,-12} {rootAttribute.Description}").ConfigureAwait(false);
+                    await context.OutputChunk(CommandResult<string>.Success($"{rootAttribute.Command,-12} {rootAttribute.Description}")).ConfigureAwait(false);
                 }
 
                 foreach (var subCommand in description.SubCommands)
                 {
                     var helpLine = _helpService.BuildOneLineHelp(subCommand.Value);
-                    await context.OutputChunk(helpLine).ConfigureAwait(false);
+                    await context.OutputChunk(CommandResult<string>.Success(helpLine)).ConfigureAwait(false);
                 }
             }
             else
@@ -284,7 +284,7 @@ public class CommandExecutor : ICommandExecutor
         else
         {
             var helpLine = _helpService.BuildOneLineHelp(description);
-            await context.OutputChunk(helpLine).ConfigureAwait(false);
+            await context.OutputChunk(CommandResult<string>.Success(helpLine)).ConfigureAwait(false);
         }
     }
 }

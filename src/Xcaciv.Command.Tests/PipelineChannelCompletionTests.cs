@@ -90,7 +90,7 @@ public class PipelineChannelCompletionTests
         {
             if (result.IsSuccess && !string.IsNullOrEmpty(result.Output))
             {
-                await ioContext.OutputChunk(result.Output);
+                await ioContext.OutputChunk(result).ConfigureAwait(false);
             }
         }
     }
@@ -142,7 +142,7 @@ public class PipelineChannelCompletionTests
 
             await foreach (var chunk in ioContext.ReadInputPipeChunks())
             {
-                yield return CommandResult<string>.Success(chunk);
+                yield return chunk;
             }
 
             _onCompleted?.Invoke();
@@ -171,7 +171,7 @@ public class PipelineChannelCompletionTests
             {
                 await foreach (var chunk in ioContext.ReadInputPipeChunks())
                 {
-                    yield return CommandResult<string>.Success(chunk);
+                    yield return chunk;
                 }
 
                 _onCompleted?.Invoke();
@@ -238,7 +238,7 @@ public class PipelineChannelCompletionTests
         {
             if (result.IsSuccess && !string.IsNullOrEmpty(result.Output))
             {
-                await ioContext.OutputChunk(result.Output);
+                await ioContext.OutputChunk(result).ConfigureAwait(false);
             }
         }
     }

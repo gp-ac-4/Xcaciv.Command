@@ -13,24 +13,24 @@ namespace Xcaciv.Command.Commands
     [CommandRegister("ENV", "Output all environment variables", Prototype = "ENV")]
     internal class EnvCommand : AbstractCommand
     {
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             var values = String.Empty;
             foreach (var valuePair in env.GetEnvironment())
             {
                 values += @$"{valuePair.Key} = {valuePair.Value}\n";
             }
-            return values;
+            return CommandResult<string>.Success(values, this.OutputFormat);
         }
 
-        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             var values = String.Empty;
             foreach (var valuePair in env.GetEnvironment())
             {
                 values += @$"{valuePair.Key} = {valuePair.Value}\n";
             }
-            return values;
+            return CommandResult<string>.Success(values, this.OutputFormat);
         }
     }
 }

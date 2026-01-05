@@ -358,13 +358,13 @@ namespace Xcaciv.Command.Tests
             {
                 await foreach (var chunk in ioContext.ReadInputPipeChunks())
                 {
-                    if (string.IsNullOrEmpty(chunk)) continue;
+                    if (chunk == null || string.IsNullOrEmpty(chunk.Output)) continue;
 
                     // Simulate slow processing
                     await Task.Delay(_delayMs);
                     ProcessedCount++;
                     
-                    yield return CommandResult<string>.Success(chunk);
+                    yield return chunk;
                 }
             }
         }

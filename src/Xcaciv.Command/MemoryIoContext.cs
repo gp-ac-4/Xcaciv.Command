@@ -30,9 +30,16 @@ namespace Xcaciv.Command
             return Task.FromResult<IIoContext>(child);
         }
 
-        public override Task HandleOutputChunk(string chunk)
+        public override Task HandleOutputChunk(IResult<string> result)
         {
-            Output.Add(chunk);
+            if (result.IsSuccess && result.Output != null)
+            {
+                Output.Add(result.Output);
+            }
+            else if (!result.IsSuccess)
+            {
+                Output.Add($"ERROR: {result.ErrorMessage}");
+            }
             return Task.CompletedTask;
         }
 

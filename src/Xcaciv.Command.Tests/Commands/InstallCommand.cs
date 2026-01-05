@@ -17,16 +17,16 @@ namespace Xcaciv.Command.Packages
     [CommandParameterOrdered("packagename", "The unique name of the package to install", IsRequired = true)]
     public class InstallCommand : AbstractCommand
     {
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             var paramNames = string.Join(',', parameters.Keys);
-            return "Not installing " + paramNames;
+            return CommandResult<string>.Success("Not installing " + paramNames);
         }
 
-        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             var paramNames = string.Join(',', parameters.Keys);
-            return $"Not installing {pipedChunk} " + paramNames;
+            return CommandResult<string>.Success($"Not installing {pipedChunk} " + paramNames);
         }
     }
 }

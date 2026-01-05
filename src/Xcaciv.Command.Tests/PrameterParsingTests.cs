@@ -28,10 +28,11 @@ namespace Xcaciv.Command.Tests
             var result = command.HandleExecution(processedParams, env);
 
             // Assert
-            Assert.Contains("first = param1", result);
-            Assert.Contains("flag = true", result);  // Changed to lowercase true from True
-            Assert.Contains("name = John", result);
-            Assert.Contains("unnamed = suffix", result);
+            Assert.True(result.IsSuccess);
+            Assert.Contains("first = param1", result.Output);
+            Assert.Contains("flag = true", result.Output);  // Changed to lowercase true from True
+            Assert.Contains("name = John", result.Output);
+            Assert.Contains("unnamed = suffix", result.Output);
         }
 
         [Fact]

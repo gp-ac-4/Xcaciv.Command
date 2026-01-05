@@ -17,16 +17,16 @@ namespace Xcaciv.Command.Commands
     [CommandHelpRemarks("Piped input will be evalueated for env vars before being passed out.")]
     public class SayCommand : AbstractCommand
     {
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             // Get the text parameter which contains all arguments joined together
             if (parameters.TryGetValue("text", out var textParam) && textParam.IsValid)
             {
                 var value = textParam.GetValue<string>();
                 if (value.Contains('%')) value = ProcessEnvValues(value, env);
-                return value;
+                return CommandResult<string>.Success(value, this.OutputFormat);
             }
-            return string.Empty;
+            return CommandResult<string>.Success(string.Empty, this.OutputFormat);
         }
 
         public static string ProcessEnvValues(string value, IEnvironmentContext env)
@@ -47,9 +47,10 @@ namespace Xcaciv.Command.Commands
             });
         }
 
-        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
-            return ProcessEnvValues(pipedChunk, env);
+            var processedValue = ProcessEnvValues(pipedChunk, env);
+            return CommandResult<string>.Success(processedValue, this.OutputFormat);
         }
     }
 }

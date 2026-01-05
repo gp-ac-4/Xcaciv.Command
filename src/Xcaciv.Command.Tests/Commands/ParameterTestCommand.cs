@@ -34,7 +34,7 @@ namespace Xcaciv.Command.Tests.Commands
             _suffix = suffix;
         }
 
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             var builder = new StringBuilder();
 
@@ -47,10 +47,10 @@ namespace Xcaciv.Command.Tests.Commands
                 builder.AppendLine($"{pair.Key} = {valueStr}");
             }
 
-            return builder.ToString();
+            return CommandResult<string>.Success(builder.ToString(), this.OutputFormat);
         }
 
-        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             throw new NotImplementedException();
         }
