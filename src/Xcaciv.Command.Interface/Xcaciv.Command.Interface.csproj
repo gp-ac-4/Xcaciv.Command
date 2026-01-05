@@ -7,6 +7,7 @@
       simplifying updates to supported .NET versions project-wide.
     -->
     <TargetFrameworks>$(XcacivTargetFrameworks)</TargetFrameworks>
+    <LangVersion>14</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>3.1.1</Version>

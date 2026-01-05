@@ -43,7 +43,7 @@ jobs:
         run: dotnet build $env:Solution_Name --configuration Debug --configfile $env:Nuget_Config_Path $env:UseNet08Property
 
       - name: Test with dotnet
-        run: dotnet test $env:Solution_Name --no-build --logger trx --results-directory "TestResults"
+        run: dotnet test $env:Solution_Name --logger trx --results-directory "TestResults"
 
       - name: Upload dotnet test results
         if: ${{ always() }}
@@ -62,7 +62,7 @@ jobs:
         run: dotnet build src\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj --configuration Release $env:UseNet08Property
 
       - name: Pack Interface (Release)
-        run: dotnet pack src\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj --configuration Release --no-build --output "$env:Artifact_Directory" $env:UseNet08Property
+        run: dotnet pack src\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj --configuration Release --output "$env:Artifact_Directory" $env:UseNet08Property
 
       - name: Restore Core against local Interface
         run: dotnet restore src\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj --configfile $env:Nuget_Config_Path $env:UseNet08Property
@@ -71,7 +71,7 @@ jobs:
         run: dotnet build src\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj --configuration Release --no-restore $env:UseNet08Property
 
       - name: Pack Core (Release)
-        run: dotnet pack src\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj --configuration Release --no-build --output "$env:Artifact_Directory" $env:UseNet08Property
+        run: dotnet pack src\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj --configuration Release --output "$env:Artifact_Directory" $env:UseNet08Property
 
       - name: Restore FileLoader against local packages
         run: dotnet restore src\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj --configfile $env:Nuget_Config_Path $env:UseNet08Property
@@ -80,7 +80,7 @@ jobs:
         run: dotnet build src\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj --configuration Release --no-restore $env:UseNet08Property
 
       - name: Pack FileLoader (Release)
-        run: dotnet pack src\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj --configuration Release --no-build --output "$env:Artifact_Directory" $env:UseNet08Property
+        run: dotnet pack src\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj --configuration Release --output "$env:Artifact_Directory" $env:UseNet08Property
 
       - name: Restore Command against local packages
         run: dotnet restore src\Xcaciv.Command\Xcaciv.Command.csproj --configfile $env:Nuget_Config_Path $env:UseNet08Property
@@ -89,7 +89,7 @@ jobs:
         run: dotnet build src\Xcaciv.Command\Xcaciv.Command.csproj --configuration Release --no-restore $env:UseNet08Property
 
       - name: Pack Command (Release)
-        run: dotnet pack src\Xcaciv.Command\Xcaciv.Command.csproj --configuration Release --no-build --output "$env:Artifact_Directory" $env:UseNet08Property
+        run: dotnet pack src\Xcaciv.Command\Xcaciv.Command.csproj --configuration Release --output "$env:Artifact_Directory" $env:UseNet08Property
 
       - name: Restore DependencyInjection against local packages
         run: dotnet restore src\Xcaciv.Command.DependencyInjection\Xcaciv.Command.DependencyInjection.csproj --configfile $env:Nuget_Config_Path $env:UseNet08Property
@@ -98,7 +98,7 @@ jobs:
         run: dotnet build src\Xcaciv.Command.DependencyInjection\Xcaciv.Command.DependencyInjection.csproj --configuration Release --no-restore $env:UseNet08Property
 
       - name: Pack DependencyInjection (Release)
-        run: dotnet pack src\Xcaciv.Command.DependencyInjection\Xcaciv.Command.DependencyInjection.csproj --configuration Release --no-build --output "$env:Artifact_Directory" $env:UseNet08Property
+        run: dotnet pack src\Xcaciv.Command.DependencyInjection\Xcaciv.Command.DependencyInjection.csproj --configuration Release --output "$env:Artifact_Directory" $env:UseNet08Property
 
       - name: Restore Extensions.Commandline against local packages
         run: dotnet restore src\Xcaciv.Command.Extensions.Commandline\Xcaciv.Command.Extensions.Commandline.csproj --configfile $env:Nuget_Config_Path $env:UseNet08Property
@@ -107,4 +107,4 @@ jobs:
         run: dotnet build src\Xcaciv.Command.Extensions.Commandline\Xcaciv.Command.Extensions.Commandline.csproj --configuration Release --no-restore $env:UseNet08Property
 
       - name: Pack Extensions.Commandline (Release)
-        run: dotnet pack src\Xcaciv.Command.Extensions.Commandline\Xcaciv.Command.Extensions.Commandline.csproj --configuration Release --no-build --output "$env:Artifact_Directory" $env:UseNet08Property
+        run: dotnet pack src\Xcaciv.Command.Extensions.Commandline\Xcaciv.Command.Extensions.Commandline.csproj --configuration Release --output "$env:Artifact_Directory" $env:UseNet08Property
