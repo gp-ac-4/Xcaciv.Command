@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Parameters;
 
-namespace Xcaciv.Command.Tests.TestImpementations
+namespace Xcaciv.Command.Tests.TestImplementations
 {
     /// <summary>
     /// Direct implementation of ICommandDelegate for tests that need full control
