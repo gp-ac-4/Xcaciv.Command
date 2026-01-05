@@ -29,7 +29,14 @@ namespace zTestCommandPackage
             {
                 await foreach (var pipedValue in io.ReadInputPipeChunks())
                 {
-                    if (pipedValue != null && !string.IsNullOrEmpty(pipedValue.Output))
+                    // Propagate failures from upstream commands
+                    if (!pipedValue.IsSuccess)
+                    {
+                        yield return pipedValue;
+                        continue;
+                    }
+                    
+                    if (pipedValue.Output != null && !string.IsNullOrEmpty(pipedValue.Output))
                     {
                         yield return CommandResult<string>.Success(this.FormatEcho(pipedValue.Output));
                     }

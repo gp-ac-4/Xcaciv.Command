@@ -501,10 +501,14 @@ try {
     }
     else {
         foreach ($package in $packagesToCopy) {
-            Copy-Item -Path $package.FullName -Destination $LocalNuGetDirectory -Force
-            Write-Host "  Copied: $($package.Name)" -ForegroundColor Gray
+            $destinationPath = Join-Path $LocalNuGetDirectory $package.Name
+            if ($package.FullName -ne $destinationPath) {
+                Copy-Item -Path $package.FullName -Destination $LocalNuGetDirectory -Force
+                Write-Host "  Copied: $($package.Name)" -ForegroundColor Gray
+            } else {
+                Write-Host "  Skipped (source and destination are the same): $($package.Name)" -ForegroundColor Yellow
+            }
         }
-        Write-Success "Copied $($packagesToCopy.Count) package(s) to $LocalNuGetDirectory"
     }
 
     # Step 6: Push to NuGet (optional)

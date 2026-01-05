@@ -37,7 +37,7 @@ namespace Xcaciv.Command.Commands
                 var newValue = env.GetValue(key) + pipedChunk;
                 env.SetValue(key, newValue);
             }
-            // nothing to display
+            // Pass through the chunk (empty string is success since SET doesn't produce output)
             return CommandResult<string>.Success(String.Empty, this.OutputFormat);
         }
 
