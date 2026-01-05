@@ -59,114 +59,94 @@ Base class for implementing commands.
 ```csharp
 public abstract class AbstractCommand : ICommandDelegate
 {
-    public abstract string HandleExecution(string[] parameters, IEnvironmentContext env);
-    
-    public virtual string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env);
-    
-    public virtual IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env);
-    
-    public virtual string Help(string[] parameters, IEnvironmentContext env);
-    
+    public static void SetHelpService(IHelpService helpService);
+
     public virtual ValueTask DisposeAsync();
-    
-    // Helpers
-    protected virtual string BuildHelpString(string[] parameters, IEnvironmentContext environment);
-    
+
+    public virtual string Help(string[] parameters, IEnvironmentContext env);
+
+    public virtual string OneLineHelp(string[] parameters);
+
+    public async IAsyncEnumerable<IResult<string>> Main(IIoContext io, IEnvironmentContext environment);
+
+    public Dictionary<string, IParameterValue> ProcessParameters(string[] parameters, bool hasPipedInput = false);
+
     protected CommandParameterOrderedAttribute[] GetOrderedParameters(bool hasPipedInput);
-    
+
     protected CommandParameterNamedAttribute[] GetNamedParameters(bool hasPipedInput);
-    
+
     protected CommandFlagAttribute[] GetFlagParameters();
-    
+
     protected CommandParameterSuffixAttribute[] GetSuffixParameters(bool hasPipedInput);
+
+    public abstract string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
+
+    public abstract string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
+
+    protected virtual void OnStartPipe(Dictionary<string, IParameterValue> processedParameters, IEnvironmentContext environment);
+
+    protected virtual void OnEndPipe(Dictionary<string, IParameterValue> processedParameters, IEnvironmentContext environment);
 }
 ```
 
 ### Methods
 
-#### HandleExecution(string[] parameters, IEnvironmentContext env)
-Core command logic for non-pipelined execution.
+#### HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+Core command logic for non-pipelined execution. Uses the typed parameter dictionary produced by `ProcessParameters`.
 
 **Parameters:**
-- `parameters` (string[]): Command arguments
-- `env` (IEnvironmentContext): Environment context
+- `parameters` (`Dictionary<string, IParameterValue>`): Parsed parameters
+- `env` (`IEnvironmentContext`): Environment context
 
 **Returns:** (string) Command output
 
-**Override:** Required in most commands
+**Override:** Required for every command
 
 **Example:**
 ```csharp
-public override string HandleExecution(string[] parameters, IEnvironmentContext env)
+public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
 {
-    return $"Processed {parameters.Length} parameters";
+    var value = parameters.TryGetValue("input", out var inputParam) && inputParam.IsValid
+        ? inputParam.GetValue<string>()
+        : string.Empty;
+
+    return value.ToUpperInvariant();
 }
 ```
 
-#### HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
+#### HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
 Processes a single chunk from piped input.
 
 **Parameters:**
 - `pipedChunk` (string): Output from previous command
-- `parameters` (string[]): Command arguments
-- `env` (IEnvironmentContext): Environment context
+- `parameters` (`Dictionary<string, IParameterValue>`): Parsed parameters
+- `env` (`IEnvironmentContext`): Environment context
 
 **Returns:** (string) Transformed output
 
-**Override:** Optional, for simple single-line transformations
+**Override:** Required; return `string.Empty` when not handling piped input
 
 **Example:**
 ```csharp
-public override string HandlePipedChunk(string pipedChunk, string[] parameters, IEnvironmentContext env)
+public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
 {
-    return pipedChunk.ToUpper();
+    return pipedChunk.Trim();
 }
 ```
 
-#### Main(IIoContext ioContext, IEnvironmentContext env)
-Primary command execution supporting pipelines.
+#### Main(IIoContext io, IEnvironmentContext env)
+Framework-provided pipeline orchestrator. It processes parameters, handles help requests, and routes execution to `HandleExecution` or `HandlePipedChunk`. This method is not virtual and should not be overridden.
 
-**Parameters:**
-- `ioContext` (IIoContext): I/O context with parameters and pipes
-- `env` (IEnvironmentContext): Environment context
-
-**Returns:** `IAsyncEnumerable<IResult<string>>` - Async enumerable of results
-
-**Override:** Use for full control over execution and async operations
-
-**Example:**
-```csharp
-public override async IAsyncEnumerable<IResult<string>> Main(
-    IIoContext ioContext,
-    IEnvironmentContext env)
-{
-    if (ioContext.HasPipedInput)
-    {
-        await foreach (var chunk in ioContext.ReadInputPipeChunks())
-        {
-            yield return CommandResult<string>.Success(chunk.ToUpper());
-        }
-    }
-    else
-    {
-        if (ioContext.Parameters.Length > 0)
-        {
-            yield return CommandResult<string>.Success(ioContext.Parameters[0].ToUpper());
-        }
-    }
-}
-```
+**Behavior:**
+- Calls `ProcessParameters` to bind attributes to values
+- If piped input is present, invokes `OnStartPipe`, streams chunks through `HandlePipedChunk`, then calls `OnEndPipe`
+- Otherwise, routes to `Help` when requested or `HandleExecution`
 
 #### Help(string[] parameters, IEnvironmentContext env)
-Returns help text for the command.
+Returns help text for the command using the configured `IHelpService`. Override only when a custom help format is required.
 
-**Parameters:**
-- `parameters` (string[]): Current parameters
-- `env` (IEnvironmentContext): Environment context
-
-**Returns:** (string) Help text
-
-**Override:** Optional, default uses BuildHelpString()
+#### OneLineHelp(string[] parameters)
+Returns a single-line description for listing commands. Uses `IHelpService` when configured; can be overridden for custom formatting.
 
 #### DisposeAsync()
 Cleanup method for async disposal.
@@ -175,45 +155,13 @@ Cleanup method for async disposal.
 
 **Override:** Optional, for resource cleanup
 
-#### BuildHelpString(string[] parameters, IEnvironmentContext environment)
-Generates help text from attributes.
+#### ProcessParameters(string[] parameters, bool hasPipedInput = false)
+Binds raw parameters into typed values using command attributes. Excludes parameters marked `UsePipe` when piped input is active.
 
-**Parameters:**
-- `parameters` (string[]): Command parameters
-- `environment` (IEnvironmentContext): Environment context
+**Returns:** `Dictionary<string, IParameterValue>`
 
-**Returns:** (string) Formatted help text
-
-**Remarks:** Helper method for automatic help generation
-
-#### GetOrderedParameters(bool hasPipedInput)
-Gets ordered parameter attributes.
-
-**Parameters:**
-- `hasPipedInput` (bool): Whether piped input is available
-
-**Returns:** `CommandParameterOrderedAttribute[]` - Parameter attributes
-
-#### GetNamedParameters(bool hasPipedInput)
-Gets named parameter attributes.
-
-**Parameters:**
-- `hasPipedInput` (bool): Whether piped input is available
-
-**Returns:** `CommandParameterNamedAttribute[]` - Parameter attributes
-
-#### GetFlagParameters()
-Gets flag parameter attributes.
-
-**Returns:** `CommandFlagAttribute[]` - Parameter attributes
-
-#### GetSuffixParameters(bool hasPipedInput)
-Gets suffix parameter attributes.
-
-**Parameters:**
-- `hasPipedInput` (bool): Whether piped input is available
-
-**Returns:** `CommandParameterSuffixAttribute[]` - Parameter attributes
+#### OnStartPipe(...) / OnEndPipe(...)
+Lifecycle hooks for piped execution. Override to initialize or finalize state around piped processing; call `base` to preserve default behavior.
 
 ---
 
@@ -225,30 +173,33 @@ Central orchestrator implementation.
 public class CommandController : ICommandController
 {
     public CommandController();
-    
     public CommandController(ICrawler crawler);
-    
     public CommandController(ICrawler crawler, string restrictedDirectory);
-    
     public CommandController(IVerifiedSourceDirectories packageBinaryDirectories);
-    
     public CommandController(
-        ICommandRegistry commandRegistry,
-        ICommandLoader commandLoader,
-        IPipelineExecutor pipelineExecutor,
-        ICommandExecutor commandExecutor,
-        ICommandFactory commandFactory,
-        IServiceProvider serviceProvider);
-    
-    // Implementation of ICommandController
-    public void EnableDefaultCommands();
+        ICommandRegistry? commandRegistry,
+        ICommandLoader? commandLoader,
+        IPipelineExecutor? pipelineExecutor,
+        ICommandExecutor? commandExecutor,
+        ICommandFactory? commandFactory,
+        IServiceProvider? serviceProvider);
+
+    public string HelpCommand { get; set; }
+    public IAuditLogger AuditLogger { get; set; }
+    public IOutputEncoder OutputEncoder { get; set; }
+    public PipelineConfiguration PipelineConfig { get; set; }
+
+    public void RegisterBuiltInCommands();
     public void AddPackageDirectory(string directory);
     public void LoadCommands(string subDirectory = "bin");
-    public Task Run(string commandLine, IIoContext output, IEnvironmentContext env);
-    public void GetHelp(string command, IIoContext output, IEnvironmentContext env);
-    public void AddCommand(ICommandDescription command);
-    public void AddCommand(string packageKey, Type commandType, bool modifiesEnvironment = false);
     public void AddCommand(string packageKey, ICommandDelegate command, bool modifiesEnvironment = false);
+    public void AddCommand(string packageKey, Type commandType, bool modifiesEnvironment = false);
+    public void AddCommand(ICommandDescription command);
+    public Task Run(string commandLine, IIoContext ioContext, IEnvironmentContext env);
+    public Task Run(string commandLine, IIoContext ioContext, IEnvironmentContext env, CancellationToken cancellationToken);
+    public Task GetHelpAsync(string command, IIoContext context, IEnvironmentContext env, CancellationToken cancellationToken = default);
+    [Obsolete("Use GetHelpAsync() instead. This method will be removed in v3.0.")]
+    public void GetHelp(string command, IIoContext context, IEnvironmentContext env);
 }
 ```
 
@@ -270,21 +221,21 @@ Manages environment variables with isolated contexts.
 ```csharp
 public class EnvironmentContext : IEnvironmentContext
 {
+    public bool HasChanged { get; }
+    public Guid Id { get; }
+    public string Name { get; set; }
+    public Guid? Parent { get; protected set; }
+
     public EnvironmentContext();
-    
-    public EnvironmentContext(IDictionary<string, string> variables);
-    
-    public string GetVariable(string name);
-    
-    public void SetVariable(string name, string value);
-    
-    public bool VariableExists(string name);
-    
-    public void RemoveVariable(string name);
-    
-    public IReadOnlyDictionary<string, string> GetAllVariables();
-    
-    public IEnvironmentContext CreateChildContext();
+    public EnvironmentContext(Dictionary<string, string> environment);
+
+    public virtual void SetAuditLogger(IAuditLogger auditLogger);
+    public virtual void SetValue(string key, string addValue);
+    public virtual string GetValue(string key, string defaultValue = "", bool storeDefault = true);
+    public Dictionary<string, string> GetEnvironment();
+    public void UpdateEnvironment(Dictionary<string, string> dictionary);
+    public Task<IEnvironmentContext> GetChild(string[]? childArguments = null);
+    public ValueTask DisposeAsync();
 }
 ```
 
@@ -296,15 +247,9 @@ See [IEnvironmentContext](api-interfaces.md#ienvironmentcontext) for interface d
 
 ```csharp
 var env = new EnvironmentContext();
-env.SetVariable("USER", "john");
-env.SetVariable("APP_NAME", "MyApp");
-
-string user = env.GetVariable("USER");
-bool exists = env.VariableExists("USER");
-
-var childEnv = env.CreateChildContext();
-childEnv.SetVariable("TEMP", "value");
-// Doesn't affect parent unless command has ModifiesEnvironment=true
+env.SetValue("USER", "john");
+var childEnv = await env.GetChild();
+childEnv.SetValue("TEMP", "value");
 ```
 
 ---
@@ -316,35 +261,26 @@ In-memory I/O implementation for testing and non-console scenarios.
 ```csharp
 public class MemoryIoContext : AbstractTextIo
 {
-    public MemoryIoContext();
-    
-    public MemoryIoContext(string[] parameters);
-    
-    public string GetOutput();
-    
-    public void Clear();
+    public ConcurrentBag<MemoryIoContext> Children { get; }
+    public ConcurrentBag<string> Output { get; }
+    public ConcurrentDictionary<string, string> PromptAnswers { get; }
+
+    public MemoryIoContext(string name = "MemoryIo", string[]? parameters = default, Guid parentId = default);
+
+    public override Task<IIoContext> GetChild(string[]? childArguments = null);
+    public override Task HandleOutputChunk(string chunk);
+    public override Task<string> PromptForCommand(string prompt);
+    public override Task<int> SetProgress(int total, int step);
+    public override Task SetStatusMessage(string message);
 }
 ```
-
-### Methods
-
-#### GetOutput()
-Gets all accumulated output.
-
-**Returns:** (string) All output written via OutputChunk()
-
-#### Clear()
-Clears accumulated output.
 
 ### Example
 
 ```csharp
-var ioContext = new MemoryIoContext(new[] { "arg1", "arg2" });
-
-await controller.Run("MYCOMMAND arg1 arg2", ioContext, env);
-
-string output = ioContext.GetOutput();
-Console.WriteLine(output);
+var ioContext = new MemoryIoContext(parameters: new[] { "arg1", "arg2" });
+await controller.Run("SAY hello", ioContext, env);
+var output = string.Join(Environment.NewLine, ioContext.Output);
 ```
 
 ---
@@ -357,10 +293,10 @@ Configuration for pipeline execution behavior.
 public class PipelineConfiguration
 {
     public int MaxChannelQueueSize { get; set; } = 50;
-    
+
     public PipelineBackpressureMode BackpressureMode { get; set; } = 
         PipelineBackpressureMode.Block;
-    
+
     public int StageTimeoutSeconds { get; set; } = 0;
 }
 ```
@@ -380,9 +316,9 @@ How to handle queue overflow.
 **Type:** `PipelineBackpressureMode` (default: Block)
 
 **Values:**
-- `Block` - Wait when queue full (prevents data loss)
-- `DropOldest` - Remove oldest item when queue full
-- `DropNewest` - Remove newest item when queue full
+- `Block` - Wait when queue is full (default)
+- `DropOldest` - Remove oldest item when queue is full
+- `DropNewest` - Remove newest item when queue is full
 
 #### StageTimeoutSeconds
 Timeout for individual pipeline stages in seconds.

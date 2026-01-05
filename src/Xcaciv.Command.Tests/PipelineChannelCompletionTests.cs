@@ -95,14 +95,12 @@ public class PipelineChannelCompletionTests
         }
     }
 
-    [CommandRegister("PIPECHANNELPRODUCER", "Emits deterministic pipeline output")]
-    private sealed class PipelineChannelProducerCommand : AbstractCommand
+    /// <summary>
+    /// Emits deterministic pipeline output - implements ICommandDelegate directly to have full control over Main
+    /// </summary>
+    private sealed class PipelineChannelProducerCommand : ICommandDelegate
     {
-        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => pipedChunk;
-
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => string.Join(' ', parameters.Values.Select(p => p.GetValue<string>()));
-
-        public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
+        public async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {
             if (ioContext.Parameters.Length == 0)
             {
@@ -116,10 +114,16 @@ public class PipelineChannelCompletionTests
                 await Task.Yield();
             }
         }
+
+        public string Help(string[] parameters, IEnvironmentContext env) => "Producer test command";
+        public string OneLineHelp(string[] parameters) => "PIPECHANNELPRODUCER    Emits deterministic pipeline output";
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
-    [CommandRegister("PIPECHANNELPASSTHROUGH", "Reads from input and forwards to output")]
-    private sealed class PipelineChannelPassThroughCommand : AbstractCommand
+    /// <summary>
+    /// Reads from input and forwards to output - implements ICommandDelegate directly
+    /// </summary>
+    private sealed class PipelineChannelPassThroughCommand : ICommandDelegate
     {
         private readonly Action? _onCompleted;
 
@@ -128,11 +132,7 @@ public class PipelineChannelCompletionTests
             _onCompleted = onCompleted;
         }
 
-        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => pipedChunk;
-
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => string.Empty;
-
-        public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
+        public async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {
             if (!ioContext.HasPipedInput)
             {
@@ -147,10 +147,16 @@ public class PipelineChannelCompletionTests
 
             _onCompleted?.Invoke();
         }
+
+        public string Help(string[] parameters, IEnvironmentContext env) => "PassThrough test command";
+        public string OneLineHelp(string[] parameters) => "PIPECHANNELPASSTHROUGH Reads from input and forwards to output";
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
-    [CommandRegister("PIPECHANNELCONSUMER", "Validates that the pipeline closes correctly")]
-    private sealed class PipelineChannelConsumerCommand : AbstractCommand
+    /// <summary>
+    /// Validates that the pipeline closes correctly - implements ICommandDelegate directly
+    /// </summary>
+    private sealed class PipelineChannelConsumerCommand : ICommandDelegate
     {
         private readonly Action? _onCompleted;
 
@@ -159,11 +165,7 @@ public class PipelineChannelCompletionTests
             _onCompleted = onCompleted;
         }
 
-        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => pipedChunk;
-
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => string.Empty;
-
-        public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
+        public async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {
             if (ioContext.HasPipedInput)
             {
@@ -179,6 +181,10 @@ public class PipelineChannelCompletionTests
                 yield return CommandResult<string>.Success(string.Empty);
             }
         }
+
+        public string Help(string[] parameters, IEnvironmentContext env) => "Consumer test command";
+        public string OneLineHelp(string[] parameters) => "PIPECHANNELCONSUMER    Validates that the pipeline closes correctly";
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     [Fact]
@@ -237,8 +243,10 @@ public class PipelineChannelCompletionTests
         }
     }
 
-    [CommandRegister("SLOWCOMMAND", "Command that waits for cancellation")]
-    private sealed class SlowCommand : AbstractCommand
+    /// <summary>
+    /// Command that waits for cancellation - implements ICommandDelegate directly
+    /// </summary>
+    private sealed class SlowCommand : ICommandDelegate
     {
         private readonly TaskCompletionSource<bool> _commandStarted;
         private readonly TaskCompletionSource<bool> _cancellationRequested;
@@ -249,11 +257,7 @@ public class PipelineChannelCompletionTests
             _cancellationRequested = cancellationRequested;
         }
 
-        public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => pipedChunk;
-
-        public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env) => string.Empty;
-
-        public override async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
+        public async IAsyncEnumerable<IResult<string>> Main(IIoContext ioContext, IEnvironmentContext env)
         {
             _commandStarted.SetResult(true);
             
@@ -262,5 +266,9 @@ public class PipelineChannelCompletionTests
             
             yield return CommandResult<string>.Success("Should not reach here");
         }
+
+        public string Help(string[] parameters, IEnvironmentContext env) => "Slow test command";
+        public string OneLineHelp(string[] parameters) => "SLOWCOMMAND            Command that waits for cancellation";
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }

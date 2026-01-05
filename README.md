@@ -101,6 +101,7 @@ See `SECURITY.md` for secure audit logging patterns.
 ## Documentation
 
 - [CHANGELOG](CHANGELOG.md) - Complete version history and release notes
+- [Command Template](COMMAND_TEMPLATE.md) - Template and guide for implementing new commands
 - [Parameter System Implementation](PARAMETER_SYSTEM_IMPLEMENTATION.md) - Type-safe parameter guide
 - [Command Test Coverage](COMMAND_TEST_COVERAGE_COMPLETE.md) - Test coverage report
 - [RawValue Removal](RAWVALUE_REMOVAL_COMPLETE.md) - Security improvement details

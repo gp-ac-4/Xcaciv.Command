@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
 using Xcaciv.Command.Interface.Parameters;
@@ -19,6 +15,7 @@ namespace Xcaciv.Command.Core
         /// <summary>
         /// Sets the help service used by all AbstractCommand instances for help formatting.
         /// Should be set during application startup, typically by the CommandController.
+        /// TODO: make this non-static !!!
         /// </summary>
         public static void SetHelpService(IHelpService helpService)
         {
@@ -35,133 +32,48 @@ namespace Xcaciv.Command.Core
         }
 
         /// <summary>
-        /// output full help
+        /// Generates full help output for the command using the configured help service.
         /// </summary>
-        /// <param name="parameters"></param>
+        /// <param name="parameters">Command parameters for context</param>
+        /// <param name="env">Environment context</param>
+        /// <returns>Formatted help string</returns>
         public virtual string Help(string[] parameters, IEnvironmentContext env)
         {
-            if (_helpService != null)
+            if (_helpService == null)
             {
-                return _helpService.BuildHelp(this, parameters, env);
+                throw new InvalidOperationException(
+                    "HelpService has not been configured. Call AbstractCommand.SetHelpService() during application startup.");
             }
 
-            return BuildHelpString(parameters, env);
+            return _helpService.BuildHelp(this, parameters, env);
         }
 
         /// <summary>
-        /// single line help command description, used for listing all commands
+        /// Generates single line help summary for command listing.
         /// </summary>
-        /// <param name="parameters"></param>
+        /// <param name="parameters">Command parameters for context</param>
+        /// <returns>Single line formatted help string</returns>
         public virtual string OneLineHelp(string[] parameters)
         {
-            var thisType = GetType();
-            var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
-            if (baseCommand == null)
+            if (_helpService == null)
             {
-                throw new Exception("CommandRegisterAttribute is required for all commands");
+                var thisType = GetType();
+                var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
+                if (baseCommand == null)
+                {
+                    throw new InvalidOperationException("CommandRegisterAttribute is required for all commands");
+                }
+
+                var isRoot = Attribute.GetCustomAttribute(thisType, typeof(CommandRootAttribute)) is CommandRootAttribute;
+                var prefix = isRoot ? "-\t" : "";
+                return $"{prefix}{baseCommand.Command,-12} {baseCommand.Description}";
             }
 
-            if (Attribute.GetCustomAttribute(thisType, typeof(CommandRootAttribute)) is CommandRootAttribute)
-            {
-                return $"-\t{baseCommand.Command,-12} {baseCommand.Description}";
-            }
-            else
-            {
-                return $"{baseCommand.Command,-12} {baseCommand.Description}";
-            }
+            var commandDesc = CommandParameters.CreatePackageDescription(GetType(), null!);
+            return _helpService.BuildOneLineHelp(commandDesc);
         }
 
-        /// <summary>
-        /// [Obsolete] Legacy help builder. Use IHelpService.BuildHelp() instead.
-        /// Kept for backward compatibility with commands that override this method.
-        /// </summary>
-        [Obsolete("Use IHelpService.BuildHelp() instead. This method will be removed in v3.0.")]
-        protected virtual string BuildHelpString(string[] parameters, IEnvironmentContext environment)
-        {
-            var thisType = GetType();
-            var baseCommand = Attribute.GetCustomAttribute(thisType, typeof(CommandRegisterAttribute)) as CommandRegisterAttribute;
-            var commandParametersOrdered = GetOrderedParameters(false);
-            var commandParametersFlag = GetFlagParameters();
-            var commandParametersNamed = GetNamedParameters(false);
-            var commandParametersSuffix = GetSuffixParameters(false);
-            var helpRemarks = Attribute.GetCustomAttributes(thisType, typeof(CommandHelpRemarksAttribute)) as CommandHelpRemarksAttribute[];
-
-            var builder = new StringBuilder();
-            if (Attribute.GetCustomAttribute(thisType, typeof(CommandRootAttribute)) is CommandRootAttribute rootCommand)
-                builder.Append($"{rootCommand.Command} ");            
-            builder.AppendLine($"{baseCommand?.Command}:");
-            builder.AppendLine($"  {baseCommand?.Description}");
-            builder.AppendLine();
-            builder.AppendLine($"Usage:");
-            
-            if (commandParametersOrdered.Length + commandParametersNamed.Length + commandParametersSuffix.Length + commandParametersFlag.Length > 0)
-            {
-                var parameterBuilder = new StringBuilder();
-                var prototypeBuilder = new StringBuilder();
-
-                foreach (var parameter in commandParametersOrdered)
-                {
-                    parameterBuilder.AppendLine($"  {parameter}");
-                    prototypeBuilder.Append($"{parameter.GetIndicator()} ");
-                }
-
-                foreach (var parameter in commandParametersFlag)
-                {
-                    parameterBuilder.AppendLine($"  {parameter}");
-                    prototypeBuilder.Append($"{parameter.GetIndicator()} ");
-                }
-
-                foreach (var parameter in commandParametersNamed)
-                {
-                    parameterBuilder.AppendLine($"  {parameter}");
-                    string valueIndicator = (parameter.AllowedValues.Length > 0) ?
-                        $"[{string.Join("|", parameter.AllowedValues)}]" :
-                        parameter.Name;
-
-                    prototypeBuilder.Append($"{parameter.GetIndicator()} <{valueIndicator}> ");
-                }
-
-                foreach (var parameter in commandParametersSuffix)
-                {
-                    parameterBuilder.AppendLine($"  {parameter}");
-                    prototypeBuilder.Append($"{parameter.GetIndicator()} ");
-                }
-
-                if (baseCommand?.Prototype.Equals("todo", StringComparison.OrdinalIgnoreCase) ?? false)
-                {
-                    builder.AppendLine(prototypeBuilder.ToString());
-                }
-                else
-                {
-                    builder.AppendLine($"  {baseCommand?.Prototype}");
-                }
-
-                builder.AppendLine();
-                builder.AppendLine("Options:");
-                builder.AppendLine(parameterBuilder.ToString());
-            }
-
-            if (helpRemarks != null && helpRemarks.Length > 0)
-            {
-                builder.AppendLine("Remarks:");
-                foreach (var rem in helpRemarks)
-                {
-                    builder.AppendLine();
-                    builder.AppendLine(rem.Remarks);
-                }
-            }
-
-            builder.AppendLine();
-            return builder.ToString();
-        }
-
-        /// <summary>
-        /// execute pipe and single input the same
-        /// </summary>
-        /// <param name="io"></param>
-        /// <param name="environment"></param>
-        /// <returns></returns>
-        public virtual async IAsyncEnumerable<IResult<string>> Main(IIoContext io, IEnvironmentContext environment)
+        public async IAsyncEnumerable<IResult<string>> Main(IIoContext io, IEnvironmentContext environment)
         {
             var processedParameters = ProcessParameters(io.Parameters, io.HasPipedInput);
 
@@ -176,7 +88,6 @@ namespace Xcaciv.Command.Core
                 }
 
                 OnEndPipe(processedParameters, environment);
-
             }
             else
             {
@@ -194,12 +105,17 @@ namespace Xcaciv.Command.Core
         }
 
         /// <summary>
-        /// Use the parameter attributes to process the parameters into a typed dictionary
+        /// Processes command parameters using attributes into a typed dictionary.
         /// </summary>
-        /// <param name="parameters"></param>
+        /// <param name="parameters">Raw command parameters</param>
+        /// <param name="hasPipedInput">Whether command is receiving piped input</param>
+        /// <returns>Dictionary of processed parameter values</returns>
         public Dictionary<string, IParameterValue> ProcessParameters(string[] parameters, bool hasPipedInput = false)
         {
-            if (parameters.Length == 0) return new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
+            if (parameters.Length == 0)
+            {
+                return new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
+            }
 
             return CommandParameters.ProcessTypedParameters(
                 parameters,
@@ -210,91 +126,97 @@ namespace Xcaciv.Command.Core
         }
 
         /// <summary>
-        /// reads parameter description from the instance
+        /// Retrieves ordered parameter attributes from the command type.
         /// </summary>
-        /// <returns></returns>
-        protected virtual CommandParameterOrderedAttribute[] GetOrderedParameters(bool hasPipedInput)
+        /// <param name="hasPipedInput">If true, excludes parameters marked with UsePipe</param>
+        /// <returns>Array of ordered parameter attributes</returns>
+        protected CommandParameterOrderedAttribute[] GetOrderedParameters(bool hasPipedInput)
         {
             var thisType = GetType();
-            var ordered = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterOrderedAttribute)) as CommandParameterOrderedAttribute[] ?? ([]);
-            if (hasPipedInput)
-            {
-                ordered = ordered.Where(x => !x.UsePipe).ToArray();
-            }
-
-            return ordered;
+            var attributes = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterOrderedAttribute)) as CommandParameterOrderedAttribute[] ?? Array.Empty<CommandParameterOrderedAttribute>();
+            
+            return hasPipedInput 
+                ? attributes.Where(x => !x.UsePipe).ToArray() 
+                : attributes;
         }
 
         /// <summary>
-        /// reads parameter description from the instance
+        /// Retrieves named parameter attributes from the command type.
         /// </summary>
-        /// <returns></returns>
-        protected virtual CommandParameterNamedAttribute[] GetNamedParameters(bool hasPipedInput)
+        /// <param name="hasPipedInput">If true, excludes parameters marked with UsePipe</param>
+        /// <returns>Array of named parameter attributes</returns>
+        protected CommandParameterNamedAttribute[] GetNamedParameters(bool hasPipedInput)
         {
             var thisType = GetType();
-            var named = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterNamedAttribute)) as CommandParameterNamedAttribute[] ?? ([]);
-            if (hasPipedInput)
-            {
-                named = named.Where(x => !x.UsePipe).ToArray();
-            }
-            return named;
+            var attributes = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterNamedAttribute)) as CommandParameterNamedAttribute[] ?? Array.Empty<CommandParameterNamedAttribute>();
+            
+            return hasPipedInput 
+                ? attributes.Where(x => !x.UsePipe).ToArray() 
+                : attributes;
         }
 
         /// <summary>
-        /// reads parameter description from the instance
+        /// Retrieves flag parameter attributes from the command type.
         /// </summary>
-        /// <returns></returns>
-        protected virtual CommandFlagAttribute[] GetFlagParameters()
+        /// <returns>Array of flag attributes</returns>
+        protected CommandFlagAttribute[] GetFlagParameters()
         {
             var thisType = GetType();
-            var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandFlagAttribute)) as CommandFlagAttribute[] ?? ([]);
-            return flags;
+            return Attribute.GetCustomAttributes(thisType, typeof(CommandFlagAttribute)) as CommandFlagAttribute[] ?? Array.Empty<CommandFlagAttribute>();
         }
 
         /// <summary>
-        /// reads parameter description from the instance
+        /// Retrieves suffix parameter attributes from the command type.
         /// </summary>
-        /// <returns></returns>
-        protected virtual CommandParameterSuffixAttribute[] GetSuffixParameters(bool hasPipedInput)
+        /// <param name="hasPipedInput">If true, excludes parameters marked with UsePipe</param>
+        /// <returns>Array of suffix parameter attributes</returns>
+        protected CommandParameterSuffixAttribute[] GetSuffixParameters(bool hasPipedInput)
         {
             var thisType = GetType();
-            var flags = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterSuffixAttribute)) as CommandParameterSuffixAttribute[] ?? ([]);
-            if (hasPipedInput)
-            {
-                flags = flags.Where(x => !x.UsePipe).ToArray();
-            }
-            return flags;
+            var attributes = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterSuffixAttribute)) as CommandParameterSuffixAttribute[] ?? Array.Empty<CommandParameterSuffixAttribute>();
+            
+            return hasPipedInput 
+                ? attributes.Where(x => !x.UsePipe).ToArray() 
+                : attributes;
         }
-
+        /// <summary>
+        /// Executes the operation using the specified parameters and environment context, and returns the result as a
+        /// string.
+        /// </summary>
+        /// <param name="parameters">A dictionary containing parameter names and their corresponding values to be used during execution. Cannot
+        /// be null.</param>
+        /// <param name="env">The environment context in which the operation is executed. Cannot be null.</param>
+        /// <returns>A string representing the result of the execution. The format and content of the result depend on the
+        /// specific implementation.</returns>
+        public abstract string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
+        /// <summary>
+        /// Processes a chunk of piped input and returns the resulting string after applying the specified parameters
+        /// and environment context.
+        /// </summary>
+        /// <param name="pipedChunk">The input string representing the chunk of data to process. Cannot be null.</param>
+        /// <param name="parameters">A dictionary of parameter names and their corresponding values to be used during processing. Cannot be null.</param>
+        /// <param name="env">The environment context that provides additional information or services required for processing. Cannot be
+        /// null.</param>
+        /// <returns>A string containing the processed result of the input chunk.</returns>
         public abstract string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
 
         /// <summary>
-        /// Invoked when a pipe operation is starting, allowing derived classes to perform custom initialization or
-        /// setup.
+        /// Invoked when a pipe operation is starting, allowing derived classes to perform custom initialization.
         /// </summary>
-        /// <param name="processedParameters">A dictionary containing the processed parameter values for the pipe operation. Keys represent parameter
-        /// names; values provide the corresponding parameter values. Cannot be null.</param>
-        /// <param name="environment">The environment context in which the pipe is being started. Provides access to environment-specific
-        /// information and services. Cannot be null.</param>
+        /// <param name="processedParameters">Dictionary containing processed parameter values</param>
+        /// <param name="environment">Environment context</param>
         protected virtual void OnStartPipe(Dictionary<string, IParameterValue> processedParameters, IEnvironmentContext environment)
         {
-            // handle start for pipes
-        }
-        /// <summary>
-        /// Invoked when the pipe processing has completed, allowing for custom post-processing or cleanup.
-        /// </summary>
-        /// <remarks>Override this method in a derived class to implement custom logic that should run
-        /// after the pipe has finished processing. This method is called after all parameters have been
-        /// processed.</remarks>
-        /// <param name="processedParameters">A dictionary containing the parameters that were processed during the pipe execution. Keys represent
-        /// parameter names; values are the corresponding processed values.</param>
-        /// <param name="environment">The environment context in which the pipe was executed. Provides access to environment-specific information
-        /// and services.</param>
-        protected virtual void OnEndPipe(Dictionary<string, IParameterValue> processedParameters, IEnvironmentContext environment)
-        {
-            // handle end for pipes
         }
 
-        public abstract string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
+        /// <summary>
+        /// Invoked when pipe processing has completed, allowing for custom post-processing or cleanup.
+        /// </summary>
+        /// <param name="processedParameters">Dictionary containing processed parameter values</param>
+        /// <param name="environment">Environment context</param>
+        protected virtual void OnEndPipe(Dictionary<string, IParameterValue> processedParameters, IEnvironmentContext environment)
+        {
+        }
+
     }
 }
