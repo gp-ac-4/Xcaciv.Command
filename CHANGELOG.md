@@ -5,11 +5,34 @@ All notable changes to Xcaciv.Command will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.1] - 2026-01-06
+
+### Breaking
+
+- **Target frameworks:** Default build now targets .NET 10.0 (see Directory.Build.props). The build script enforces .NET 10 SDK detection. Use the `-UseNet08` flag to multi-target `.NET 8.0` alongside `.NET 10.0` when legacy support is required.
+
+### Added
+
+- **Optional multi-targeting path:** `build.ps1` supports `-UseNet08`, automatically skipping tests when multi-targeting because the test projects are single-TFM.
+
+### Changed
+
+- **Version bump:** All projects now versioned to **3.2.1** (Command, Core, Interface, FileLoader).
+- **Dependency updates:** Xcaciv.Loader **2.1.2**, System.IO.Abstractions **22.1.0**, Microsoft.Extensions.* **10.0.1**, System.CommandLine **2.0.1**.
+- **Build defaults:** Directory.Build.props now defaults to `.NET 10.0`; multi-targeting with `.NET 8.0` is opt-in via `UseNet08`.
+- **Packaging:** Pipeline configuration types are type-forwarded from `Xcaciv.Command` to `Xcaciv.Command.Interface` to keep binary compatibility for existing consumers.
+
+### Migration Notes
+
+- Install .NET 10 SDK before building. Use `./build.ps1 -UseNet08` when you must ship `.NET 8.0` binaries.
+- No code changes are required for pipeline or parameter APIs; the type forwarding preserves existing references.
+
 ## [3.1.0] - 2025-01-XX
 
 ### Added
 
 #### Type-Safe Parameter System
+
 - **`IParameterValue<T>` generic interface** - Strongly-typed parameter values with compile-time type safety
 - **`AbstractParameterValue<T>` base class** - Generic implementation with boxed storage for invalid sentinel support
 - **`ParameterValue<T>` class** - Concrete implementation of typed parameter values
@@ -23,11 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`InvalidParameterValue` sentinel** - Type-safe sentinel for conversion failures
 
 #### Enhanced Diagnostics
+
 - **Rich type mismatch errors** - Detailed messages showing stored type, requested type, DataType, and raw value
 - **Validation error messages** - Clear conversion failure messages with input value context
 - **Parameter name tracking** - All errors include parameter name for easy debugging
 
 #### Breaking API Changes (v3.x)
+
 - **`IParameterValue.DataType`** - New property exposing the target data type (non-null)
 - **`IParameterValue.UntypedValue`** - New property exposing boxed converted value
 - **`IParameterValue.GetValue<T>()`** - New generic method for type-safe value retrieval
@@ -62,10 +87,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Migration Notes
 
 **Breaking Changes:**
+
 1. **Command implementations** must use `IParameterValue.GetValue<T>()` instead of accessing raw strings
 2. **Custom commands** need to update `HandleExecution()` signature if not already using `Dictionary<string, IParameterValue>`
 
 **Migration Pattern:**
+
 ```csharp
 // Before (v3.0)
 public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
@@ -135,6 +162,7 @@ See [Migration Guide v3.0](docs/migration_guide_v3.0.md) for detailed upgrade in
 ## [2.1.0] - 2025-12-25
 
 ### Changed
+
 - Bump all package versions to 2.1.0 across projects.
 - Update README to reference Xcaciv.Loader 2.1.0 and current features.
 - Align documentation with current security policies and .NET 8.
@@ -152,10 +180,12 @@ Major version release completing 8 phases of systematic improvements targeting m
 ### 🔴 BREAKING CHANGES
 
 #### API Renames (Backward compatible via deprecation)
+
 - `EnableDefaultCommands()` → `RegisterBuiltInCommands()` [Deprecated in v2.0, removed in v3.0]
 - `GetHelp()` → `GetHelpAsync()` [Deprecated in v2.0, removed in v3.0]
 
 #### Security Defaults Changed
+
 - **Default SecurityPolicy:** `AssemblySecurityPolicy.Default` → `AssemblySecurityPolicy.Strict`
 - **Base Path Restriction:** Now enforced by default (prevents directory traversal)
 - **Reflection Emit:** Disabled by default (prevents runtime code generation)
@@ -305,12 +335,14 @@ Major version release completing 8 phases of systematic improvements targeting m
 This release represents a comprehensive improvement initiative targeting the **Securable Software Engineering Model (SSEM)** score, increasing overall quality from **7.4 (Adequate)** to **8.2+ (Good)**.
 
 **SSEM Score Improvements by Pillar:**
+
 - **Maintainability:** 7.5 ? 8.3 (+0.8 points)
 - **Trustworthiness:** 7.1 ? 7.8 (+0.7 points)
 - **Reliability:** 7.7 ? 8.5 (+0.8 points)
 - **Overall SSEM:** 7.4 ? 8.2 (+0.8 points)
 
 **Key Metrics:**
+
 - **Tests Added:** 103 new tests during SSEM initiative
 - **Test Success Rate:** 100% (148/148 passing across all test projects)
 - **Code Coverage:** ~65% ? ~80% (estimated)
@@ -318,6 +350,7 @@ This release represents a comprehensive improvement initiative targeting the **S
 - **Documentation:** 6000+ words added (SECURITY.md + XML docs)
 
 ### Added - Phase 7: Output Encoding Infrastructure
+
 - **IOutputEncoder Interface** (`src/Xcaciv.Command.Interface/IOutputEncoder.cs`)
   - `Encode()` - Encodes output for safe consumption by target systems
 - **NoOpEncoder** (`src/Xcaciv.Command.Interface/IOutputEncoder.cs`) - Default no-op encoder (backward compatible)
@@ -330,6 +363,7 @@ This release represents a comprehensive improvement initiative targeting the **S
 - **Namespace:** `Xcaciv.Command.Encoders` for concrete encoder implementations
 
 ### Added - Phase 4: Audit Logging Infrastructure
+
 - **IAuditLogger Interface** (`src/Xcaciv.Command.Interface/IAuditLogger.cs`)
   - `LogCommandExecution()` - Logs command execution with parameters, timing, success/error status
   - `LogEnvironmentChange()` - Logs environment variable changes with old/new values
@@ -341,6 +375,7 @@ This release represents a comprehensive improvement initiative targeting the **S
 - 8 comprehensive audit logging tests
 
 ### Added - Phase 6: Pipeline DoS Protection
+
 - **PipelineConfiguration Class** (`src/Xcaciv.Command/PipelineConfiguration.cs`)
   - `MaxChannelQueueSize` (default: 10,000 items) - Prevents unbounded memory growth
   - `BackpressureMode` enum (DropOldest, DropNewest, Block) - Configurable overflow strategies
@@ -352,6 +387,7 @@ This release represents a comprehensive improvement initiative targeting the **S
 - **Memory Protection:** Default configuration prevents DoS via memory exhaustion (~100MB max per pipeline)
 
 ### Added - Phase 5: Security Documentation
+
 - **SECURITY.md** (6000+ words) - Comprehensive security policy
   - Plugin security model with trust boundaries
   - Threat analysis (directory traversal, tampering, malicious execution, audit tampering)
@@ -362,25 +398,30 @@ This release represents a comprehensive improvement initiative targeting the **S
 - **README.md Security Section** - Expanded with audit logging examples and SECURITY.md link
 
 ### Added - Phase 2: Test Coverage Expansion
+
 - **PipelineErrorTests.cs** - 7 tests for pipeline error handling and graceful failure
 - **ParameterValidationBoundaryTests.cs** - 12 tests for parameter edge cases (empty, long, special chars, Unicode)
 - **SecurityExceptionTests.cs** - 7 tests for security exception handling in plugin loading
 - **EnvironmentContextEdgeCaseTests.cs** - 18 tests for environment variable management (case-insensitivity, collision, isolation)
 
 ### Added - Phase 3: Refactoring Tests
+
 - **CommandControllerRefactoringTests.cs** - 11 behavioral regression tests for refactored methods
 
 ### Added - Phase 1: Parameter Bounds Tests
+
 - **ParameterBoundsTests.cs** - 10 tests for parameter parsing edge cases (empty lists, null, missing parameters)
 - 3 help command tests in CommandControllerTests.cs
 
 ### Added - Phase 8: XML Documentation
+
 - Comprehensive XML documentation for all public APIs
 - `<summary>`, `<param>`, `<returns>`, `<exception>`, `<remarks>` tags throughout
 - Security considerations documented in remarks sections
 - IntelliSense-ready documentation for improved developer experience
 
 ### Changed - Phase 3: Method Refactoring
+
 - **CommandController.PipelineTheBitch** - Refactored from ~60 LOC to ~10 LOC (83% reduction)
   - Extracted `CreatePipelineStages()` (38 LOC) - Pipeline stage creation
   - Extracted `CollectPipelineOutput()` (5 LOC) - Output collection
@@ -391,6 +432,7 @@ This release represents a comprehensive improvement initiative targeting the **S
   - Reduced cyclomatic complexity from 12+ to <8
 
 ### Fixed - Phase 1: Bounds Checking
+
 - **Critical:** Added bounds checking to `ProcessOrderedParameters` and `ProcessSuffixParameters` in `CommandParameters.cs`
   - Prevents `IndexOutOfRangeException` when commands invoked with insufficient parameters
 - **Critical:** Refactored help request handling in `CommandController.ExecuteCommand`
@@ -398,12 +440,14 @@ This release represents a comprehensive improvement initiative targeting the **S
   - Cleaner error handling separation
 
 ### Security
+
 - **Fixed:** Parameter bounds checking prevents IndexOutOfRangeException (Internal Bug)
 - **Added:** Audit logging infrastructure for command execution and environment changes
 - **Added:** Bounded pipeline channels prevent denial-of-service via memory exhaustion
 - **Added:** Comprehensive security documentation (SECURITY.md)
 
 ### Performance
+
 - **Improved:** Refactored orchestration methods reduce cyclomatic complexity by ~40%
 - **Improved:** Bounded channels prevent unbounded memory growth in pipelines
 - **No Regression:** All performance-critical paths maintained or improved
@@ -415,18 +459,21 @@ This release represents a comprehensive improvement initiative targeting the **S
 **Breaking Changes:** None
 
 **Optional Enhancements:**
+
 1. **Audit Logging:** Implement custom `IAuditLogger` for production logging (Serilog, Application Insights, etc.)
 2. **Pipeline Configuration:** Review default bounded channel settings (10,000 items) for your use case
 3. **Output Encoding:** Use `HtmlEncoder` for web UIs, `JsonEncoder` for JSON APIs, or implement custom encoders
 4. **Security:** Read SECURITY.md for plugin security guidelines
 
 **Known Limitations:**
+
 - Execution timeouts not yet implemented (Phase 6b deferred to future release)
 - Requires breaking change to `ICommandDelegate.Main` signature (add `CancellationToken`)
 
 ### Test Summary
 
 **Current Test Status:**
+
 - **Xcaciv.Command.Tests:** 136/136 passing (100%)
   - Includes OutputEncodingTests (17 tests)
   - Includes all Phase 1-8 test additions
@@ -434,6 +481,7 @@ This release represents a comprehensive improvement initiative targeting the **S
 - **Grand Total:** 148/148 tests passing (100%)
 
 **Tests Added by Phase:**
+
 - Phase 1: Bounds Checking - 13 tests
 - Phase 2: Test Expansion - 44 tests  
 - Phase 3: Refactoring - 11 tests
@@ -447,6 +495,7 @@ This release represents a comprehensive improvement initiative targeting the **S
 ### Usage Examples
 
 #### Audit Logging Example
+
 ```csharp
 public class ConsoleAuditLogger : IAuditLogger
 {
@@ -470,6 +519,7 @@ await controller.Run("Say Hello", ioContext, env);
 ```
 
 #### Pipeline Configuration Example
+
 ```csharp
 // For memory-constrained environments
 controller.PipelineConfig = new PipelineConfiguration
@@ -487,6 +537,7 @@ controller.PipelineConfig = new PipelineConfiguration
 ```
 
 #### Output Encoding Example
+
 ```csharp
 using Xcaciv.Command.Encoders;
 
@@ -511,30 +562,36 @@ await defaultController.Run("Say Hello", ioContext, env);
 ## [1.5.18] - 2025-01-XX
 
 ### Changed - BREAKING
+
 - **Migrated to Xcaciv.Loader 2.0.1** with instance-based security configuration
   - Replaced static `SetStrictDirectoryRestriction()` with per-instance `AssemblySecurityPolicy`
   - Changed from wildcard (`*`) path restrictions to directory-based security
   - Each `AssemblyContext` now has independent security configuration
   
 ### Added
+
 - Comprehensive security exception handling for plugin loading
 - Detailed trace logging for security violations
 - `LoaderMigrationTests` test suite with 8 new security-focused tests
 - Security documentation in README files
 
 ### Fixed
+
 - CS8602 null reference warnings in `MemoryIoContext` and `TestTextIo` constructors
 - Proper path-based security restrictions for plugin loading (replaced TODO comment)
 - Enhanced error messages when security violations occur
 
 ### Security
+
 - Plugin assemblies now restricted to their actual directory paths
 - Security violations are explicitly caught and logged
 - Follows SSEM principles: Maintainability, Trustworthiness, and Reliability
 - No more wildcard access permissions
 
 ### Migration Notes
+
 For users upgrading from versions using Xcaciv.Loader 1.x:
+
 - No API changes required for basic usage
 - Plugin security is automatically enhanced
 - Security exceptions now propagate with clear error messages
@@ -543,6 +600,7 @@ For users upgrading from versions using Xcaciv.Loader 1.x:
 ## Previous Versions
 
 ### [1.5.x] - Previous
+
 - Threaded pipeline support
 - Sub-command structure
 - Auto-generated help

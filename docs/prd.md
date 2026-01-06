@@ -5,8 +5,8 @@
 ### 1.1 Document title and version
 
 - PRD: Xcaciv.Command Framework
-- Version: 2.0.0
-- Date: December 20, 2025
+- Version: 3.2.1
+- Date: January 6, 2026
 
 ### 1.2 Product summary
 
@@ -14,7 +14,14 @@ Xcaciv.Command is an extensible .NET command processing framework that provides 
 
 The project solves the fundamental challenge of creating text-based command interfaces by abstracting away the complexity of command parsing, parameter validation, plugin discovery, asynchronous pipeline execution, and security management. Developers can focus on implementing command logic while the framework handles orchestration, security boundaries, help generation, and multi-threaded pipeline coordination.
 
-Built on .NET 8, the framework is production-ready and includes features like dynamic plugin loading from external assemblies, async pipeline support with bounded channels, auto-generated help documentation, hierarchical sub-commands, environment isolation, audit logging, and instance-based security policies.
+Built on .NET 10 by default (with optional .NET 8 compatibility builds), the framework is production-ready and includes features like dynamic plugin loading from external assemblies, async pipeline support with bounded channels, auto-generated help documentation, hierarchical sub-commands, environment isolation, audit logging, and instance-based security policies.
+
+#### What’s new in 3.2.1
+
+- Default target framework upgraded to **.NET 10.0** with optional multi-targeting to **.NET 8.0** via the `UseNet08` switch for compatibility builds.
+- Dependency updates: Xcaciv.Loader **2.1.2**, System.IO.Abstractions **22.1.0**, Microsoft.Extensions.* **10.0.1**, System.CommandLine **2.0.1**.
+- Pipeline configuration types are type-forwarded from `Xcaciv.Command` into `Xcaciv.Command.Interface` to keep existing consumers binary compatible.
+- Build script now enforces .NET 10 SDK presence and auto-skips tests when multi-targeting to avoid unsupported test TFMs.
 
 ## 2. Goals
 
@@ -63,16 +70,6 @@ Built on .NET 8, the framework is production-ready and includes features like dy
 
 - **Security Engineer (David)**: A security-focused developer responsible for ensuring command execution does not violate security policies. David needs path-based sandboxing, audit event correlation, parameter masking for sensitive data, and configurable security restrictions on plugin loading.
 
-### 3.3 Role-based access
-
-- **Command Authors**: Can create `ICommandDelegate` implementations, decorate with attributes, and package as class libraries. Must inherit from `AbstractCommand` or implement the interface directly.
-
-- **Application Integrators**: Can configure `CommandController`, register plugin directories, enable built-in commands, set security policies, and provide custom `IAuditLogger` implementations.
-
-- **Plugin Distributors**: Can publish command packages as NuGet packages or distribute as compiled DLLs. Plugins are loaded from verified directory structures with security restrictions enforced.
-
-- **End Users**: Execute commands via `CommandController.Run()`, chain commands with pipe operator, access help via `--HELP` flag, and view structured output through `IIoContext` implementations.
-
 ## 4. Functional requirements
 
 ### **Command registration and discovery** (Priority: Critical)
@@ -106,6 +103,7 @@ Built on .NET 8, the framework is production-ready and includes features like dy
 - Commands must support boolean flags (`CommandFlagAttribute`) with `--flag` syntax
 - Commands must support suffix parameters (`CommandParameterSuffixAttribute`) capturing trailing arguments
 - Parameter definitions must indicate pipeline compatibility via `usePipe` property
+- Parameter values must be converted into strongly-typed `IParameterValue<T>` instances before command execution, with validation errors surfaced early
 
 ### **Help generation** (Priority: High)
 
@@ -170,9 +168,9 @@ Built on .NET 8, the framework is production-ready and includes features like dy
 
 - **Creating a custom command**: Developer creates class inheriting `AbstractCommand`, decorates with `[CommandRegister("MYCOMMAND", "Description")]`, adds parameter attributes to properties, and overrides `Main()` method to implement logic. Command is packaged as class library DLL.
 
-- **Loading plugins**: Developer calls `controller.AddPackageDirectory("/path/to/plugins")` followed by `controller.LoadCommands()`. Framework discovers all commands in `bin/` subdirectories and registers them in the command registry.
+- **Loading plugins**: Developer calls `controller.AddPackageDirectory("/path/to/plugins")` followed by `controller.LoadCommands()`. Framework discovers all commands in `plugin_name/bin/` subdirectories and registers them in the command registry. (windows and linux paths supported)
 
-- **Executing pipelines**: Developer runs `await controller.Run("SAY data | REGIF pattern", ioContext, env)`. Framework parses pipeline, creates bounded channels between stages, executes SAY command outputting to channel, REGIF command reads from channel and filters by regex, final output appears in `IIoContext`.
+- **Executing pipelines**: Developer runs `await controller.Run("SAY some words here | REGIF here", ioContext, env)`. Framework parses pipeline, creates bounded channels between stages, executes SAY command outputting to channel, REGIF command reads from channel and filters by regex, final output appears in `IIoContext`.
 
 - **Accessing help**: Developer runs `await controller.GetHelpAsync("", ioContext, env)` to list all commands or `await controller.Run("MYCOMMAND --HELP", ioContext, env)` for command-specific help. Framework generates formatted help text from command attributes.
 
@@ -238,11 +236,13 @@ When security requirements demand audit trails, the developer implements `IAudit
 - Exposes `ICommandController` for application-level integration
 - Exposes `IIoContext` interface for custom UI implementations (console, web, WPF, etc.)
 - Exposes `IAuditLogger` interface for custom audit log sinks
+- Default target framework is .NET 10.0; use the `UseNet08` build flag when you need to produce .NET 8.0 compatible binaries alongside .NET 10.0
 
 ### 8.2 Data storage & privacy
 
 - Commands execute within isolated `IEnvironmentContext` child contexts preventing unintended state leakage
-- Environment variables are copied to child contexts; changes require explicit `ModifiesEnvironment=true`
+- Environment variables are copied to child contexts; changes require explicit `ModifiesEnvironment=true` to be copied back to global context
+- Audit logs contain structured data with correlation IDs for traceability
 - Audit logs may contain command parameters; `AuditMaskingConfiguration` redacts sensitive values using regex patterns
 - Plugin assemblies are loaded in isolated `AssemblyContext` instances preventing cross-plugin contamination
 - No persistent storage managed by framework; commands handle their own I/O

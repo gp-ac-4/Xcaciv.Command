@@ -1,4 +1,21 @@
-# V3.0 Breaking Changes - Quick Reference
+# V3.2.1 Quick Reference
+
+## What’s new (3.2.1)
+
+- **Default TFM:** Builds now default to **.NET 10.0**. Multi-target to **.NET 8.0** by passing `-UseNet08` to `build.ps1` (tests auto-skip when multi-targeting because test projects are single-TFM).
+- **SDK prerequisite:** Install .NET 10 SDK; the build script warns/fails fast if it is missing.
+- **Dependencies:** Xcaciv.Loader **2.1.2**, System.IO.Abstractions **22.1.0**, Microsoft.Extensions.* **10.0.1**, System.CommandLine **2.0.1**.
+- **Binary compatibility:** `PipelineConfiguration` and `PipelineBackpressureMode` are type-forwarded into `Xcaciv.Command.Interface` to keep existing consumers working after the assembly move.
+- **Package versions:** All packages are versioned to **3.2.1** (Command, Core, Interface, FileLoader).
+
+## Build & multi-target cheatsheet
+
+- **Default build:** `./build.ps1` → net10.0 only.
+- **Add net8.0:** `./build.ps1 -UseNet08` → net8.0 + net10.0 (tests skipped automatically).
+- **NuGet push:** `./build.ps1 -NuGetApiKey $env:NUGET_API_KEY`.
+- **Local copy:** Packages land in `artifacts/packages` and mirror to `G:\NuGetPackages` by default.
+
+## Legacy: V3.0 Breaking Changes
 
 ## ?? Quick Reference Card
 
@@ -153,10 +170,10 @@ If you need to revert:
 
 ```xml
 <!-- Change this in your .csproj -->
-<PackageReference Include="Xcaciv.Command" Version="3.0.0" />
+<PackageReference Include="Xcaciv.Command" Version="3.2.1" />
 
 <!-- To this -->
-<PackageReference Include="Xcaciv.Command" Version="2.1.3" />
+<PackageReference Include="Xcaciv.Command" Version="3.1.0" />
 ```
 
 Then restore and rebuild:
@@ -179,11 +196,11 @@ dotnet build
 
 ## Version Info
 
-**Current Version:** 3.0.0  
-**Previous Version:** 2.1.3  
+**Current Version:** 3.2.1  
+**Previous Version:** 3.1.0  
 **Support for v2.x:** Until end of 2026  
-**Breaking Changes:** 2 APIs removed  
+**Breaking Changes:** None in 3.2.1 (TFM default change; multi-target via UseNet08)  
 
 ---
 
-**Last Updated:** January 2025
+**Last Updated:** January 2026
