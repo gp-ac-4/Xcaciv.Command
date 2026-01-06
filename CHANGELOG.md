@@ -5,6 +5,28 @@ All notable changes to Xcaciv.Command will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.1] - 2026-01-06
+
+### Breaking
+
+- **Target frameworks:** Default build now targets .NET 10.0 (see Directory.Build.props). The build script enforces .NET 10 SDK detection. Use the `-UseNet08` flag to multi-target `.NET 8.0` alongside `.NET 10.0` when legacy support is required.
+
+### Added
+
+- **Optional multi-targeting path:** `build.ps1` supports `-UseNet08`, automatically skipping tests when multi-targeting because the test projects are single-TFM.
+
+### Changed
+
+- **Version bump:** All projects now versioned to **3.2.1** (Command, Core, Interface, FileLoader).
+- **Dependency updates:** Xcaciv.Loader **2.1.2**, System.IO.Abstractions **22.1.0**, Microsoft.Extensions.* **10.0.1**, System.CommandLine **2.0.1**.
+- **Build defaults:** Directory.Build.props now defaults to `.NET 10.0`; multi-targeting with `.NET 8.0` is opt-in via `UseNet08`.
+- **Packaging:** Pipeline configuration types are type-forwarded from `Xcaciv.Command` to `Xcaciv.Command.Interface` to keep binary compatibility for existing consumers.
+
+### Migration Notes
+
+- Install .NET 10 SDK before building. Use `./build.ps1 -UseNet08` when you must ship `.NET 8.0` binaries.
+- No code changes are required for pipeline or parameter APIs; the type forwarding preserves existing references.
+
 ## [3.1.0] - 2025-01-XX
 
 ### Added
