@@ -55,7 +55,7 @@ namespace Xcaciv.Command.Interface
         /// Called by the framework when setting up a piped command sequence.
         /// Implementations should store this reader for use in ReadInputPipeChunks().
         /// </remarks>
-        void SetInputPipe(ChannelReader<string> reader);
+        void SetInputPipe(ChannelReader<IResult<string>> reader);
 
         /// <summary>
         /// Asynchronously reads all output chunks from the input pipe.
@@ -66,7 +66,7 @@ namespace Xcaciv.Command.Interface
         /// output chunk from the previous command.
         /// Blocks until input is available or the pipe is closed.
         /// </remarks>
-        IAsyncEnumerable<string> ReadInputPipeChunks();
+        IAsyncEnumerable<IResult<string>> ReadInputPipeChunks();
 
         /// <summary>
         /// Prompts the user for a command via the configured input mechanism.
@@ -87,7 +87,7 @@ namespace Xcaciv.Command.Interface
         /// Called by the framework when setting up a piped command sequence.
         /// Implementations should write OutputChunk() data to this writer when available.
         /// </remarks>
-        void SetOutputPipe(ChannelWriter<string> writer);
+        void SetOutputPipe(ChannelWriter<IResult<string>> writer);
 
         /// <summary>
         /// Outputs a chunk of command result data.
@@ -99,7 +99,7 @@ namespace Xcaciv.Command.Interface
         /// otherwise outputs to the default output (console, UI buffer, etc.).
         /// Each OutputChunk() call represents one discrete unit of output.
         /// </remarks>
-        Task OutputChunk(string message);
+        Task OutputChunk(IResult<string> message);
 
         /// <summary>
         /// Sets the current status message (replaces previous status).

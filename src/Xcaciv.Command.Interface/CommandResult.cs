@@ -13,10 +13,11 @@ namespace Xcaciv.Command.Interface
 
         public ResultFormat OutputFormat { get; init; } = ResultFormat.General;
 
-        public static CommandResult<T> Success(T? output) => new()
+        public static CommandResult<T> Success(T? output, ResultFormat format = ResultFormat.General) => new()
         {
             IsSuccess = true,
-            Output = output
+            Output = output,
+            OutputFormat = format
         };
 
         public static CommandResult<T> Failure(string? errorMessage = null, Exception? exception = null) => new()

@@ -29,7 +29,17 @@ namespace zTestCommandPackage
             {
                 await foreach (var pipedValue in io.ReadInputPipeChunks())
                 {
-                    yield return CommandResult<string>.Success(this.FormatEcho(pipedValue));
+                    // Propagate failures from upstream commands
+                    if (!pipedValue.IsSuccess)
+                    {
+                        yield return pipedValue;
+                        continue;
+                    }
+                    
+                    if (pipedValue.Output != null && !string.IsNullOrEmpty(pipedValue.Output))
+                    {
+                        yield return CommandResult<string>.Success(this.FormatEcho(pipedValue.Output));
+                    }
                 }
             }
             else if (io.Parameters.Length > 0 && io.Parameters[0].Equals("--HELP", StringComparison.CurrentCultureIgnoreCase))

@@ -67,8 +67,8 @@ namespace Xcaciv.Command.Tests
             var adapter = new CommandLineCommand<SystemCommand>();
             adapter.SetCommand(systemCommand);
 
-            var channel = Channel.CreateUnbounded<string>();
-            await channel.Writer.WriteAsync("pipe-value");
+            var channel = Channel.CreateUnbounded<IResult<string>>();
+            await channel.Writer.WriteAsync(CommandResult<string>.Success("pipe-value"));
             channel.Writer.Complete();
 
             var ioContext = new MemoryIoContext(parameters: Array.Empty<string>());

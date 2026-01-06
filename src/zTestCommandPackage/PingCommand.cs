@@ -29,9 +29,16 @@ namespace zTestCommandPackage
             await io.AddTraceMessage($"{this.BaseCommand} test start");
             if (io.HasPipedInput)
             {
-                await foreach (var pipedValue in io.ReadInputPipeChunks())
+                await foreach (var pipedResult in io.ReadInputPipeChunks())
                 {
-                    yield return CommandResult<string>.Success(this.FormatEcho(pipedValue));
+                    if (pipedResult.IsSuccess && pipedResult.Output != null)
+                    {
+                        yield return CommandResult<string>.Success(this.FormatEcho(pipedResult.Output));
+                    }
+                    else
+                    {
+                        yield return pipedResult;
+                    }
                 }
             }
             else if (io.Parameters.Length > 0 && io.Parameters[0].Equals("--HELP", StringComparison.CurrentCultureIgnoreCase))

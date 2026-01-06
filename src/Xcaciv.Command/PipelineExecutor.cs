@@ -63,7 +63,7 @@ public class PipelineExecutor : IPipelineExecutor
         await CollectPipelineOutput(outputChannel, ioContext, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<(List<Task>, Channel<string>?)> CreatePipelineStages(
+    private async Task<(List<Task>, Channel<IResult<string>>?)> CreatePipelineStages(
         string commandLine,
         IIoContext ioContext,
         IEnvironmentContext environmentContext,
@@ -71,7 +71,7 @@ public class PipelineExecutor : IPipelineExecutor
         CancellationToken cancellationToken)
     {
         var tasks = new List<Task>();
-        Channel<string>? pipeChannel = null;
+        Channel<IResult<string>>? pipeChannel = null;
 
         // Use formal parser to handle quoted arguments, escapes, and delimiters
         var commands = PipelineParser.ParsePipeline(commandLine);
@@ -94,7 +94,7 @@ public class PipelineExecutor : IPipelineExecutor
                 childContext.SetInputPipe(pipeChannel.Reader);
             }
 
-            pipeChannel = Channel.CreateBounded<string>(new BoundedChannelOptions(Configuration.MaxChannelQueueSize)
+            pipeChannel = Channel.CreateBounded<IResult<string>>(new BoundedChannelOptions(Configuration.MaxChannelQueueSize)
             {
                 FullMode = GetChannelFullMode(Configuration.BackpressureMode)
             });
@@ -176,7 +176,7 @@ public class PipelineExecutor : IPipelineExecutor
         }
     }
 
-    private async Task CollectPipelineOutput(Channel<string>? outputChannel, IIoContext ioContext, CancellationToken cancellationToken)
+    private async Task CollectPipelineOutput(Channel<IResult<string>>? outputChannel, IIoContext ioContext, CancellationToken cancellationToken)
     {
         if (outputChannel == null)
         {

@@ -13,6 +13,8 @@ Excessively modular, async pipeable, command framework with strongly-typed param
 
 Commands are .NET class libraries that contain implementations of the `Xc.Command.ICommand` interface and are decorated with attributes that describe the command and its parameters. These attributes are used to filter and validate input as well as output auto-generated help for the user.
 
+**Authoring note:** When building a new command, start from the template and guidance in [COMMAND_TEMPLATE.md](COMMAND_TEMPLATE.md) to match the latest interfaces (`ICommandDelegate`/`AbstractCommand`), `OutputFormat`, and environment propagation rules.
+
 ## Features
 
 - **Strongly-Typed Parameters**: Generic `IParameterValue<T>` with compile-time type safety and pre-validation

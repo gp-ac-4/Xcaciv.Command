@@ -50,8 +50,8 @@ namespace Xcaciv.Command.Core
             PipelineTotalStages = totalStages;
         }
 
-        protected ChannelReader<string>? inputPipe;
-        protected ChannelWriter<string>? outputPipe;
+        protected ChannelReader<IResult<string>>? inputPipe;
+        protected ChannelWriter<IResult<string>>? outputPipe;
         /// <summary>
         /// implementation must set the expected child's properties and pass environment values
         /// </summary>
@@ -64,7 +64,7 @@ namespace Xcaciv.Command.Core
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        public virtual Task OutputChunk(string message)
+        public virtual Task OutputChunk(IResult<string> message)
         {
             if (outputPipe == null)
             {
@@ -75,9 +75,9 @@ namespace Xcaciv.Command.Core
         /// <summary>
         /// allow the implementation to handle the final output
         /// </summary>
-        /// <param name="chunk"></param>
+        /// <param name="result"></param>
         /// <returns></returns>
-        public abstract Task HandleOutputChunk(string chunk);
+        public abstract Task HandleOutputChunk(IResult<string> result);
         /// <summary>
         /// allow the implementation to handle the prompting for input
         /// </summary>
@@ -88,7 +88,7 @@ namespace Xcaciv.Command.Core
         /// handles the Channel so the command just handles the await foreach
         /// </summary>
         /// <returns></returns>
-        public async IAsyncEnumerable<string> ReadInputPipeChunks()
+        public async IAsyncEnumerable<IResult<string>> ReadInputPipeChunks()
         {
             if (inputPipe == null) yield break;
 
@@ -101,7 +101,7 @@ namespace Xcaciv.Command.Core
         /// set channel reader for pipeline
         /// </summary>
         /// <param name="reader"></param>
-        public void SetInputPipe(ChannelReader<string> reader)
+        public void SetInputPipe(ChannelReader<IResult<string>> reader)
         {
             HasPipedInput = true;
             inputPipe = reader;
@@ -110,7 +110,7 @@ namespace Xcaciv.Command.Core
         /// set channel writer for pipeline
         /// </summary>
         /// <param name="writer"></param>
-        public void SetOutputPipe(ChannelWriter<string> writer)
+        public void SetOutputPipe(ChannelWriter<IResult<string>> writer)
         {
             outputPipe = writer;
         }
@@ -168,7 +168,7 @@ namespace Xcaciv.Command.Core
         {
             if (Verbose)
             {
-                return OutputChunk("\tTRACE: " + message);
+                return OutputChunk(CommandResult<string>.Success("\tTRACE: " + message));
             }
             // if we are not verbose, send the output to DEBUG
             Trace.WriteLine(message);

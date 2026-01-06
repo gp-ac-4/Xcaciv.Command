@@ -289,13 +289,28 @@ try {
     Write-BuildStep "Step 1: Restoring Dependencies"
     
     if ($UseNet08.IsPresent) {
-        # When UseNet08 is enabled, restore the package project specifically
-        # This ensures project references are available for both net8.0 and net10.0
-        Write-Host "Restoring package project with multi-targeting..." -ForegroundColor Yellow
-        $restoreArguments = @('restore', $packageProjectPath)
-        $restoreArguments += $msbuildProperties
-        Invoke-DotNet -Arguments $restoreArguments
-        Write-Success "Restore completed for package project"
+        # When UseNet08 is enabled, restore all package projects
+        Write-Host "Restoring all package projects with multi-targeting..." -ForegroundColor Yellow
+        
+        $projectsToRestore = @(
+            'src\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj',
+            'src\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj',
+            'src\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj',
+            'src\Xcaciv.Command\Xcaciv.Command.csproj',
+            'src\Xcaciv.Command.DependencyInjection\Xcaciv.Command.DependencyInjection.csproj',
+            'src\Xcaciv.Command.Extensions.Commandline\Xcaciv.Command.Extensions.Commandline.csproj'
+        )
+        
+        foreach ($proj in $projectsToRestore) {
+            $fullPath = Join-Path $repositoryRoot $proj
+            if (Test-Path -Path $fullPath) {
+                $restoreArguments = @('restore', $fullPath)
+                $restoreArguments += $msbuildProperties
+                Invoke-DotNet -Arguments $restoreArguments
+            }
+        }
+        
+        Write-Success "Restore completed for all package projects"
     }
     elseif ($solutionPath -and (Test-Path -Path $solutionPath)) {
         $restoreArguments = @('restore', $solutionPath)
@@ -317,13 +332,29 @@ try {
     # Step 2: Build
     Write-BuildStep "Step 2: Building Solution"
     
-    # When UseNet08 is enabled, only build the package project to avoid test project issues
+    # When UseNet08 is enabled, build all package projects individually
     if ($UseNet08.IsPresent) {
-        Write-Host "Building package project only (test projects excluded)" -ForegroundColor Yellow
-        $buildArguments = @('build', $packageProjectPath, '--configuration', $Configuration, '--no-restore', '--nologo')
-        $buildArguments += $msbuildProperties
-        Invoke-DotNet -Arguments $buildArguments
-        Write-Success "Build completed for package project"
+        Write-Host "Building all package projects with multi-targeting..." -ForegroundColor Yellow
+        
+        $projectsToBuild = @(
+            'src\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj',
+            'src\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj',
+            'src\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj',
+            'src\Xcaciv.Command\Xcaciv.Command.csproj',
+            'src\Xcaciv.Command.DependencyInjection\Xcaciv.Command.DependencyInjection.csproj',
+            'src\Xcaciv.Command.Extensions.Commandline\Xcaciv.Command.Extensions.Commandline.csproj'
+        )
+        
+        foreach ($proj in $projectsToBuild) {
+            $fullPath = Join-Path $repositoryRoot $proj
+            if (Test-Path -Path $fullPath) {
+                $buildArguments = @('build', $fullPath, '--configuration', $Configuration, '--no-restore', '--nologo')
+                $buildArguments += $msbuildProperties
+                Invoke-DotNet -Arguments $buildArguments
+            }
+        }
+        
+        Write-Success "Build completed for all package projects"
     }
     elseif ($solutionPath -and (Test-Path -Path $solutionPath)) {
         $buildArguments = @('build', $solutionPath, '--configuration', $Configuration, '--no-restore', '--nologo')
@@ -372,20 +403,6 @@ try {
     # Use ordered restore/pack with local artifacts first so Release builds consume freshly built packages
     $packageSources = @($artifactDirectory, 'https://api.nuget.org/v3/index.json', $NuGetSource) | Where-Object { $_ } | Select-Object -Unique
 
-    function Restore-ProjectForPacking {
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$ProjectPath
-        )
-
-        $restoreArguments = @('restore', $ProjectPath, '--nologo', '--disable-parallel')
-        foreach ($source in $packageSources) {
-            $restoreArguments += @('--source', $source)
-        }
-        $restoreArguments += $msbuildProperties
-        Invoke-DotNet -Arguments $restoreArguments
-    }
-
     function Pack-ProjectInOrder {
         param(
             [Parameter(Mandatory = $true)]
@@ -395,18 +412,29 @@ try {
             [string]$ProjectName
         )
 
-        Restore-ProjectForPacking -ProjectPath $ProjectPath
-
-        $packArguments = @('pack', $ProjectPath, '--configuration', $Configuration, '--no-restore', '--output', $artifactDirectory, '--nologo')
+        # Pack already-built binaries (built in Step 2)
+        $packArguments = @('pack', $ProjectPath, '--configuration', $Configuration, '--output', $artifactDirectory, '--nologo')
+        
+        # Add source parameters for resolving package dependencies
+        foreach ($source in $packageSources) {
+            $packArguments += @('--source', $source)
+        }
+        
         if ($VersionSuffix) {
             $packArguments += '--version-suffix'
             $packArguments += $VersionSuffix
         }
         $packArguments += $msbuildProperties
 
-        Invoke-DotNet -Arguments $packArguments
-        Write-Host "Packed $ProjectName" -ForegroundColor Gray
-        return $ProjectName
+        try {
+            Invoke-DotNet -Arguments $packArguments
+            Write-Host "  ? Packed $ProjectName" -ForegroundColor Gray
+            return $ProjectName
+        }
+        catch {
+            Write-Host "  ? Failed to pack $ProjectName : $($_.Exception.Message)" -ForegroundColor Yellow
+            return $null
+        }
     }
 
     $orderedProjects = @(
@@ -426,11 +454,9 @@ try {
             continue
         }
 
-        try {
-            $packedProjects += (Pack-ProjectInOrder -ProjectPath $project.Path -ProjectName $project.Name)
-        }
-        catch {
-            Write-Host "  Warning: Failed to pack $($project.Name)" -ForegroundColor Yellow
+        $packedProject = Pack-ProjectInOrder -ProjectPath $project.Path -ProjectName $project.Name
+        if ($packedProject) {
+            $packedProjects += $packedProject
         }
     }
 
@@ -438,7 +464,24 @@ try {
         Write-Host "Version suffix: $VersionSuffix" -ForegroundColor Gray
     }
 
-    Write-Success "Packages created for $($packedProjects.Count) project(s): $($packedProjects -join ', ')"
+    if ($packedProjects.Count -gt 0) {
+        Write-Success "Packages created for $($packedProjects.Count) project(s): $($packedProjects -join ', ')"
+        
+        # Show actual packages created in artifacts directory
+        $createdPackages = Get-ChildItem -Path $artifactDirectory -Filter '*.nupkg' | 
+            Where-Object { $_.Name -notlike '*.symbols.nupkg' -and $_.LastWriteTime -gt (Get-Date).AddMinutes(-5) } |
+            Select-Object -ExpandProperty Name
+        
+        if ($createdPackages) {
+            Write-Host "`nPackages in artifacts directory:" -ForegroundColor Gray
+            foreach ($pkg in $createdPackages) {
+                Write-Host "  - $pkg" -ForegroundColor Gray
+            }
+        }
+    }
+    else {
+        Write-ErrorMessage "No packages were created successfully"
+    }
 
     # Step 5: Copy to local directory
     Write-BuildStep "Step 5: Copying Packages to Local Directory"
@@ -458,10 +501,14 @@ try {
     }
     else {
         foreach ($package in $packagesToCopy) {
-            Copy-Item -Path $package.FullName -Destination $LocalNuGetDirectory -Force
-            Write-Host "  Copied: $($package.Name)" -ForegroundColor Gray
+            $destinationPath = Join-Path $LocalNuGetDirectory $package.Name
+            if ($package.FullName -ne $destinationPath) {
+                Copy-Item -Path $package.FullName -Destination $LocalNuGetDirectory -Force
+                Write-Host "  Copied: $($package.Name)" -ForegroundColor Gray
+            } else {
+                Write-Host "  Skipped (source and destination are the same): $($package.Name)" -ForegroundColor Yellow
+            }
         }
-        Write-Success "Copied $($packagesToCopy.Count) package(s) to $LocalNuGetDirectory"
     }
 
     # Step 6: Push to NuGet (optional)

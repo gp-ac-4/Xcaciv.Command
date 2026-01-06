@@ -163,12 +163,12 @@ namespace Xcaciv.Command.Extensions.Commandline
 
             await foreach (var chunk in ioContext.ReadInputPipeChunks().ConfigureAwait(false))
             {
-                if (string.IsNullOrEmpty(chunk))
+                if (chunk == null || string.IsNullOrEmpty(chunk.Output))
                 {
                     continue;
                 }
 
-                builder.Append(chunk);
+                builder.Append(chunk.Output);
             }
 
             if (builder.Length > 0)

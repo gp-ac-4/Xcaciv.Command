@@ -74,9 +74,19 @@ namespace Xcaciv.Command.Tests.TestImplementations
         {
             if (io.HasPipedInput)
             {
-                await foreach (var chunk in io.ReadInputPipeChunks())
+                await foreach (var pipedResult in io.ReadInputPipeChunks())
                 {
-                    yield return CommandResult<string>.Success(_prefix + chunk);
+                    // Propagate failures from upstream commands
+                    if (!pipedResult.IsSuccess)
+                    {
+                        yield return pipedResult;
+                        continue;
+                    }
+                    
+                    if (pipedResult.Output != null)
+                    {
+                        yield return CommandResult<string>.Success(_prefix + pipedResult.Output);
+                    }
                 }
             }
             else if (io.Parameters != null && io.Parameters.Length > 0)
