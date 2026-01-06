@@ -14,6 +14,10 @@ Excessively modular, async pipeable, command framework with strongly-typed param
 Commands are .NET class libraries that contain implementations of the `Xc.Command.ICommand` interface and are decorated with attributes that describe the command and its parameters. These attributes are used to filter and validate input as well as output auto-generated help for the user.
 
 **Authoring note:** When building a new command, start from the template and guidance in [COMMAND_TEMPLATE.md](COMMAND_TEMPLATE.md) to match the latest interfaces (`ICommandDelegate`/`AbstractCommand`), `OutputFormat`, and environment propagation rules.
+## Getting Started
+
+- Read the quickstart in [docs/learn/quickstart.md](docs/learn/quickstart.md) for a five-minute walkthrough.
+- When building a new command, start from [COMMAND_TEMPLATE.md](COMMAND_TEMPLATE.md) to match the latest interfaces (`ICommandDelegate`/`AbstractCommand`), `OutputFormat`, and environment propagation rules.
 
 ## Features
 
@@ -27,15 +31,19 @@ Commands are .NET class libraries that contain implementations of the `Xc.Comman
 - **Auto-Generated Help**: Comprehensive help generation from command attributes
 - **Sub-Commands**: Hierarchical command structure support
 - **Built-in Commands**: `SAY`, `SET`, `ENV`, and `REGIF` included
+- **Target Frameworks**: Defaults to .NET 10.0; opt into multi-targeting with `.NET 8.0` via `build.ps1 -UseNet08`
 
 ## Dependencies
 
 - **Xcaciv.Loader 2.1.2**: Assembly loading with instance-based security configuration
 - **System.IO.Abstractions 22.1.0**: File system abstraction for testability
+- **Microsoft.Extensions.* 10.0.1**
+- **System.CommandLine 2.0.1** (Command Extensions only)
 
 ## Security
 
-This framework uses Xcaciv.Loader 2.1.0's instance-based security policies:
+This framework uses Xcaciv.Loader 2.1.2 instance-based security policies:
+
 - **Default Security Policy**: Each plugin is restricted to its own directory
 - **No Wildcard Access**: Replaces v1.x wildcard (`*`) restrictions with proper path-based security
 - **Security Exception Handling**: Graceful handling of security violations with detailed logging
@@ -63,6 +71,7 @@ await controller.Run("say hello", ioContext, env);
 ```
 
 Logs include:
+
 - Command execution with parameters, duration, and success status
 - Environment variable changes with old/new values
 - Timestamps in UTC for consistency
@@ -75,26 +84,36 @@ See `SECURITY.md` for secure audit logging patterns.
 - [X] Internal commands `SAY` `SET`, `ENV` and `REGIF`
 - [X] Sub-command structure
 - [X] Auto generated help
-- [X] Migrate to Xcaciv.Loader 2.1.0 with instance-based security
+- [X] Migrate to Xcaciv.Loader 2.1.2 with instance-based security
 - [X] Type-safe parameter system with generics
 
 ## Version History
 
-### 3.1.0 (Current)
+### 3.2.1 (Current)
+
+- **Default TFM:** Builds target .NET 10.0 by default; multi-target `.NET 8.0` via `build.ps1 -UseNet08` (tests auto-skip when multi-targeting).
+- **Dependencies:** Xcaciv.Loader 2.1.2, System.IO.Abstractions 22.1.0, Microsoft.Extensions.* 10.0.1, System.CommandLine 2.0.1.
+- **Binary compatibility:** `PipelineConfiguration` and `PipelineBackpressureMode` are type-forwarded into `Xcaciv.Command.Interface` to keep existing consumers working.
+- See [CHANGELOG](CHANGELOG.md) for full details.
+
+### 3.1.0
+
 - **Type-Safe Parameter System:** Fully generic `IParameterValue<T>` with compile-time type safety
 - **Enhanced Security:** Parameters validated before execution, no direct raw string access
 - **Breaking:** Commands use `GetValue<T>()` instead of `RawValue`
 - **Comprehensive Tests:** 36 new tests for built-in commands (232 total passing)
 - **Rich Diagnostics:** Detailed type mismatch and validation error messages
-- See [CHANGELOG](CHANGELOG.md#310) for full details
+- See [CHANGELOG](CHANGELOG.md) for full details
 
 ### 3.0.0
+
 - **BREAKING:** Removed deprecated `EnableDefaultCommands()` - use `RegisterBuiltInCommands()`
 - **BREAKING:** Removed deprecated `GetHelp()` - use `await GetHelpAsync()`
 - Cleaned up API surface for better maintainability
 - See [Migration Guide v3.0](docs/migration_guide_v3.0.md) for upgrade instructions
 
 ### 2.1.3
+
 - Bumped all package versions to 2.1.3
 - Updated to Xcaciv.Loader 2.1.2
 - Documentation improvements
@@ -104,6 +123,7 @@ See `SECURITY.md` for secure audit logging patterns.
 
 - [CHANGELOG](CHANGELOG.md) - Complete version history and release notes
 - [Command Template](COMMAND_TEMPLATE.md) - Template and guide for implementing new commands
+- [Quickstart](docs/learn/quickstart.md) - Five-minute walkthrough
 - [Parameter System Implementation](PARAMETER_SYSTEM_IMPLEMENTATION.md) - Type-safe parameter guide
 - [Command Test Coverage](COMMAND_TEST_COVERAGE_COMPLETE.md) - Test coverage report
 - [RawValue Removal](RAWVALUE_REMOVAL_COMPLETE.md) - Security improvement details
