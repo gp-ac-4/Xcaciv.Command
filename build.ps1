@@ -413,7 +413,7 @@ try {
         )
 
         # Pack already-built binaries (built in Step 2)
-        $packArguments = @('pack', $ProjectPath, '--configuration', $Configuration, '--output', $artifactDirectory, '--nologo', '--no-build')
+        $packArguments = @('pack', $ProjectPath, '--configuration', $Configuration, '--output', $artifactDirectory, '--nologo')
         
         # Add source parameters for resolving package dependencies
         foreach ($source in $packageSources) {
