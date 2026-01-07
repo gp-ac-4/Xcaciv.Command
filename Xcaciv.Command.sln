@@ -1,4 +1,3 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.3.11310.294
@@ -6,10 +5,19 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xcaciv.Command.Interface", "src\Xcaciv.Command.Interface\Xcaciv.Command.Interface.csproj", "{1D54A8C6-1E92-4B5B-9EBB-147839480D73}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xcaciv.Command", "src\Xcaciv.Command\Xcaciv.Command.csproj", "{E6280E51-8ED7-4ED0-819A-063251C9E53D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1D54A8C6-1E92-4B5B-9EBB-147839480D73} = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xcaciv.Command.FileLoader", "src\Xcaciv.Command.FileLoader\Xcaciv.Command.FileLoader.csproj", "{BC290BFF-4ACA-4D84-96DC-5432F9722C87}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1D54A8C6-1E92-4B5B-9EBB-147839480D73} = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xcaciv.Command.FileLoaderTests", "src\Xcaciv.Command.FileLoaderTests\Xcaciv.Command.FileLoaderTests.csproj", "{9B087B2C-5852-4B56-B213-727CB6048784}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1D54A8C6-1E92-4B5B-9EBB-147839480D73} = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{6FEF8306-B2C7-489D-9ECC-23BCC8B53C41}"
 EndProject
@@ -17,6 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		build.ps1 = build.ps1
 		CHANGELOG.md = CHANGELOG.md
+		COMMAND_TEMPLATE.md = COMMAND_TEMPLATE.md
 		Directory.Build.props = Directory.Build.props
 		src\Directory.Packages.props = src\Directory.Packages.props
 		NuGet.config = NuGet.config
@@ -24,14 +33,29 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "zTestCommandPackage", "src\zTestCommandPackage\zTestCommandPackage.csproj", "{B062C312-8C65-45E6-AF49-0692502DA605}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1D54A8C6-1E92-4B5B-9EBB-147839480D73} = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xcaciv.Command.Tests", "src\Xcaciv.Command.Tests\Xcaciv.Command.Tests.csproj", "{1AA7D848-7F82-4190-8CB8-FDE32B74B0E7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1D54A8C6-1E92-4B5B-9EBB-147839480D73} = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xcaciv.Command.Core", "src\Xcaciv.Command.Core\Xcaciv.Command.Core.csproj", "{7BE3D0B8-651A-4C44-A46F-04345DFDE3EC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1D54A8C6-1E92-4B5B-9EBB-147839480D73} = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xcaciv.Command.DependencyInjection", "src\Xcaciv.Command.DependencyInjection\Xcaciv.Command.DependencyInjection.csproj", "{23B60EDA-B936-4B78-ABC6-6AB865D284CF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1D54A8C6-1E92-4B5B-9EBB-147839480D73} = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xcaciv.Command.Extensions.Commandline", "src\Xcaciv.Command.Extensions.Commandline\Xcaciv.Command.Extensions.Commandline.csproj", "{ACB9F79F-230B-46FF-A876-6CB15569CD54}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1D54A8C6-1E92-4B5B-9EBB-147839480D73} = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,18 +67,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Debug|x64.Build.0 = Debug|Any CPU
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Debug|x86.Build.0 = Debug|Any CPU
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Release|x64.ActiveCfg = Release|Any CPU
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Release|x64.Build.0 = Release|Any CPU
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Release|x86.ActiveCfg = Release|Any CPU
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Release|x86.Build.0 = Release|Any CPU
 		{1D54A8C6-1E92-4B5B-9EBB-147839480D73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1D54A8C6-1E92-4B5B-9EBB-147839480D73}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1D54A8C6-1E92-4B5B-9EBB-147839480D73}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -67,6 +79,18 @@ Global
 		{1D54A8C6-1E92-4B5B-9EBB-147839480D73}.Release|x64.Build.0 = Release|Any CPU
 		{1D54A8C6-1E92-4B5B-9EBB-147839480D73}.Release|x86.ActiveCfg = Release|Any CPU
 		{1D54A8C6-1E92-4B5B-9EBB-147839480D73}.Release|x86.Build.0 = Release|Any CPU
+		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Debug|x64.Build.0 = Debug|Any CPU
+		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Debug|x86.Build.0 = Debug|Any CPU
+		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Release|x64.ActiveCfg = Release|Any CPU
+		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Release|x64.Build.0 = Release|Any CPU
+		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Release|x86.ActiveCfg = Release|Any CPU
+		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.Release|x86.Build.0 = Release|Any CPU
 		{BC290BFF-4ACA-4D84-96DC-5432F9722C87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BC290BFF-4ACA-4D84-96DC-5432F9722C87}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC290BFF-4ACA-4D84-96DC-5432F9722C87}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -151,16 +175,6 @@ Global
 		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Release|x64.Build.0 = Release|Any CPU
 		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Release|x86.ActiveCfg = Release|Any CPU
 		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.Release|x86.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(ProjectDependencies) = postSolution
-		{E6280E51-8ED7-4ED0-819A-063251C9E53D}.0 = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
-		{BC290BFF-4ACA-4D84-96DC-5432F9722C87}.0 = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
-		{9B087B2C-5852-4B56-B213-727CB6048784}.0 = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
-		{B062C312-8C65-45E6-AF49-0692502DA605}.0 = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
-		{1AA7D848-7F82-4190-8CB8-FDE32B74B0E7}.0 = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
-		{7BE3D0B8-651A-4C44-A46F-04345DFDE3EC}.0 = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
-		{23B60EDA-B936-4B78-ABC6-6AB865D284CF}.0 = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
-		{ACB9F79F-230B-46FF-A876-6CB15569CD54}.0 = {1D54A8C6-1E92-4B5B-9EBB-147839480D73}
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

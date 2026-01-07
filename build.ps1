@@ -195,8 +195,7 @@ try {
     if ($UseNet08) {
         Write-Host "Multi-targeting: .NET 8 + .NET 10" -ForegroundColor Gray
         if (-not $SkipTests) {
-            Write-Host "? Auto-enabling SkipTests: Test projects don't support multi-targeting" -ForegroundColor Yellow
-            $SkipTests = $true
+            Write-Host "? Note: Test projects are single-TFM (net10.0); tests will run on net10.0 only." -ForegroundColor Yellow
         }
     }
     else {
@@ -377,7 +376,7 @@ try {
             Write-Host "Note: Tests will run on all target frameworks (net8.0 and net10.0)" -ForegroundColor Yellow
         }
         
-        $testArguments = @('test', $solutionPath, '--configuration', $Configuration, '--no-build', '--nologo', '--verbosity', 'normal')
+        $testArguments = @('test', $solutionPath, '--configuration', $Configuration, '--nologo', '--verbosity', 'normal')
         $testArguments += $msbuildProperties
         
         try {
