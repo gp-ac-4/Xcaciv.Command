@@ -376,7 +376,7 @@ try {
             Write-Host "Note: Tests will run on all target frameworks (net8.0 and net10.0)" -ForegroundColor Yellow
         }
         
-        $testArguments = @('test', $solutionPath, '--configuration', $Configuration, '--no-build', '--nologo', '--verbosity', 'normal')
+        $testArguments = @('test', $solutionPath, '--configuration', $Configuration, '--nologo', '--verbosity', 'normal')
         $testArguments += $msbuildProperties
         
         try {
