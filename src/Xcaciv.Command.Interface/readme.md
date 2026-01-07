@@ -97,6 +97,6 @@ catch (IOException ioException)
 
 ## More Resources
 
-- `COMMAND_TEMPLATE.md` — full patterns for command implementation, piping hooks, and disposal guidance.
-- `src/Xcaciv.Command.Interface/Attributes/` — authoritative attribute definitions.
-- `Xcaciv.Command.Core` — `AbstractCommand` and `CommandResult` used alongside these interfaces.
+- `COMMAND_TEMPLATE.md` â€” full patterns for command implementation, piping hooks, and disposal guidance.
+- `src/Xcaciv.Command.Interface/Attributes/` â€” authoritative attribute definitions.
+- `Xcaciv.Command.Core` - `AbstractCommand` and `CommandResult` used alongside these interfaces.
