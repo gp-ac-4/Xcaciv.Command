@@ -1,12 +1,12 @@
-# V3.2.1 Quick Reference
+# V3.2.2 Quick Reference
 
-## What’s new (3.2.1)
+## What’s new (3.2.2)
 
+- **Version alignment:** All packages are versioned to **3.2.2** (Command, Core, Interface, FileLoader, DependencyInjection, Extensions.Commandline).
 - **Default TFM:** Builds now default to **.NET 10.0**. Multi-target to **.NET 8.0** by passing `-UseNet08` to `build.ps1` (tests auto-skip when multi-targeting because test projects are single-TFM).
 - **SDK prerequisite:** Install .NET 10 SDK; the build script warns/fails fast if it is missing.
 - **Dependencies:** Xcaciv.Loader **2.1.2**, System.IO.Abstractions **22.1.0**, Microsoft.Extensions.* **10.0.1**, System.CommandLine **2.0.1**.
 - **Binary compatibility:** `PipelineConfiguration` and `PipelineBackpressureMode` are type-forwarded into `Xcaciv.Command.Interface` to keep existing consumers working after the assembly move.
-- **Package versions:** All packages are versioned to **3.2.1** (Command, Core, Interface, FileLoader).
 
 ## Build & multi-target cheatsheet
 
@@ -170,7 +170,7 @@ If you need to revert:
 
 ```xml
 <!-- Change this in your .csproj -->
-<PackageReference Include="Xcaciv.Command" Version="3.2.1" />
+<PackageReference Include="Xcaciv.Command" Version="3.2.2" />
 
 <!-- To this -->
 <PackageReference Include="Xcaciv.Command" Version="3.1.0" />
@@ -196,10 +196,10 @@ dotnet build
 
 ## Version Info
 
-**Current Version:** 3.2.1  
+**Current Version:** 3.2.2  
 **Previous Version:** 3.1.0  
 **Support for v2.x:** Until end of 2026  
-**Breaking Changes:** None in 3.2.1 (TFM default change; multi-target via UseNet08)  
+**Breaking Changes:** None in 3.2.2 (TFM default change; multi-target via UseNet08)  
 
 ---
 

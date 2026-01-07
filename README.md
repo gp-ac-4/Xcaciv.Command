@@ -89,7 +89,14 @@ See `SECURITY.md` for secure audit logging patterns.
 
 ## Version History
 
-### 3.2.1 (Current)
+### 3.2.2 (Current)
+
+- **Version bump:** All packages aligned to **3.2.2** (Command, Core, Interface, FileLoader, DependencyInjection, Extensions.Commandline).
+- **Defaults:** Builds target .NET 10.0 by default; multi-target `.NET 8.0` via `build.ps1 -UseNet08` (tests auto-skip when multi-targeting).
+- **Dependencies:** Xcaciv.Loader 2.1.2, System.IO.Abstractions 22.1.0, Microsoft.Extensions.* 10.0.1, System.CommandLine 2.0.1.
+- See [CHANGELOG](CHANGELOG.md) for full details.
+
+### 3.2.1
 
 - **Default TFM:** Builds target .NET 10.0 by default; multi-target `.NET 8.0` via `build.ps1 -UseNet08` (tests auto-skip when multi-targeting).
 - **Dependencies:** Xcaciv.Loader 2.1.2, System.IO.Abstractions 22.1.0, Microsoft.Extensions.* 10.0.1, System.CommandLine 2.0.1.
