@@ -10,6 +10,7 @@ jobs:
 
     env:
       Artifact_Directory: ${{ github.workspace }}\artifacts\packages
+      Nuget_Config_Path: NuGet.config
 
     steps:
       - name: Checkout
