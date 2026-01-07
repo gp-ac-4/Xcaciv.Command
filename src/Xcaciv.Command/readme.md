@@ -78,8 +78,8 @@ internal class NowCommand : AbstractCommand
 [CommandRegister("Copy", "Copy with optional verbose flag", Prototype = "COPY <source> -dest <destination> [-limit <number>] [-sort <ASC|DSC>] [-v]")]
 [CommandParameterOrdered("Source", "Source path")]
 [CommandParameterNamed("Dest", "Destination path", IsRequired = true)]
-[CommandParameterNamed("Limit", "Limit number of files", DataType = typeof(int)]
-[CommandParameterNamed("Sort", "Sort order", IsRequired = false, AllowedValues: ["ASC", "DSC"])]
+[CommandParameterNamed("Limit", "Limit number of files", DataType = typeof(int))]
+[CommandParameterNamed("Sort", "Sort order", IsRequired = false, AllowedValues = ["ASC", "DSC"])]
 [CommandFlag("Verbose", "Show verbose output")]
 internal class CopyCommand : AbstractCommand
 {
