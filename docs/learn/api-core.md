@@ -79,9 +79,9 @@ public abstract class AbstractCommand : ICommandDelegate
 
     protected CommandParameterSuffixAttribute[] GetSuffixParameters(bool hasPipedInput);
 
-    public abstract string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
+    public abstract IResult<string> HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
 
-    public abstract string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
+    public abstract IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
 
     protected virtual void OnStartPipe(Dictionary<string, IParameterValue> processedParameters, IEnvironmentContext environment);
 
@@ -98,41 +98,83 @@ Core command logic for non-pipelined execution. Uses the typed parameter diction
 - `parameters` (`Dictionary<string, IParameterValue>`): Parsed parameters
 - `env` (`IEnvironmentContext`): Environment context
 
-**Returns:** (string) Command output
+**Returns:** `IResult<string>` - Command result
 
 **Override:** Required for every command
 
 **Example:**
 ```csharp
-public override string HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+public override IResult<string> HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
 {
     var value = parameters.TryGetValue("input", out var inputParam) && inputParam.IsValid
         ? inputParam.GetValue<string>()
         : string.Empty;
 
-    return value.ToUpperInvariant();
+    return CommandResult<string>.Success(value.ToUpperInvariant());
 }
 ```
 
-#### HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
-Processes a single chunk from piped input.
+#### HandlePipedChunk(IResult&lt;string&gt; pipedChunk, Dictionary&lt;string, IParameterValue&gt; parameters, IEnvironmentContext env)
+**Version 3.2.3+**: Processes a single chunk from piped input. The `pipedChunk` parameter is now `IResult<string>` to provide access to the full result context.
 
 **Parameters:**
-- `pipedChunk` (string): Output from previous command
+- `pipedChunk` (`IResult<string>`): Result from previous command (v3.2.3+)
 - `parameters` (`Dictionary<string, IParameterValue>`): Parsed parameters
 - `env` (`IEnvironmentContext`): Environment context
 
-**Returns:** (string) Transformed output
+**Returns:** `IResult<string>` - Transformed result
 
-**Override:** Required; return `string.Empty` when not handling piped input
+**Override:** Required; return empty success result when not handling piped input
 
-**Example:**
+**Example (v3.2.3+):**
 ```csharp
-public override string HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+public override IResult<string> HandlePipedChunk(
+    IResult<string> pipedChunk, 
+    Dictionary<string, IParameterValue> parameters, 
+    IEnvironmentContext env)
 {
-    return pipedChunk.Trim();
+    // Check if upstream command succeeded
+    if (!pipedChunk.IsSuccess)
+    {
+        // Propagate error to downstream
+        return pipedChunk;
+    }
+
+    // Access the output string
+    var input = pipedChunk.Output ?? string.Empty;
+    
+    // Process the input
+    return CommandResult<string>.Success(input.Trim());
 }
 ```
+
+**Migration from v3.2.2:**
+```csharp
+// Old (v3.2.2 and earlier)
+public override IResult<string> HandlePipedChunk(
+    string pipedChunk, 
+    Dictionary<string, IParameterValue> parameters, 
+    IEnvironmentContext env)
+{
+    return CommandResult<string>.Success(pipedChunk.Trim());
+}
+
+// New (v3.2.3+)
+public override IResult<string> HandlePipedChunk(
+    IResult<string> pipedChunk, 
+    Dictionary<string, IParameterValue> parameters, 
+    IEnvironmentContext env)
+{
+    var input = pipedChunk.Output ?? string.Empty;
+    return CommandResult<string>.Success(input.Trim());
+}
+```
+
+**Benefits of v3.2.3 Signature:**
+- Access `pipedChunk.IsSuccess` to detect upstream failures
+- Retrieve `pipedChunk.ErrorMessage` and `pipedChunk.Exception` for error handling
+- Access `pipedChunk.ResultFormat` and `pipedChunk.CorrelationId` for metadata
+- Propagate errors by returning `pipedChunk` directly
 
 #### Main(IIoContext io, IEnvironmentContext env)
 Framework-provided pipeline orchestrator. It processes parameters, handles help requests, and routes execution to `HandleExecution` or `HandlePipedChunk`. This method is not virtual and should not be overridden.

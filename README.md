@@ -89,7 +89,15 @@ See `SECURITY.md` for secure audit logging patterns.
 
 ## Version History
 
-### 3.2.2 (Current)
+### 3.2.3 (Current)
+
+- **HandlePipedChunk Signature Change:** `HandlePipedChunk` now accepts `IResult<string>` instead of `string` for full result context access
+- **Breaking Change:** Custom commands must update `HandlePipedChunk` signature and use `pipedChunk.Output` to access string value
+- **Error Propagation:** Commands can now check `pipedChunk.IsSuccess` and access error details from upstream commands
+- **Version bump:** All packages aligned to **3.2.3** (Command, Core, Interface, FileLoader, DependencyInjection, Extensions.Commandline)
+- See [CHANGELOG](CHANGELOG.md) and [HandlePipedChunk Migration Guide](docs/changelog-3.2.3-handlePipedChunk-signature-change.md) for full details
+
+### 3.2.2
 
 - **Version bump:** All packages aligned to **3.2.2** (Command, Core, Interface, FileLoader, DependencyInjection, Extensions.Commandline).
 - **Defaults:** Builds target .NET 10.0 by default; multi-target `.NET 8.0` via `build.ps1 -UseNet08` (tests auto-skip when multi-targeting).
@@ -129,6 +137,7 @@ See `SECURITY.md` for secure audit logging patterns.
 ## Documentation
 
 - [CHANGELOG](CHANGELOG.md) - Complete version history and release notes
+- [HandlePipedChunk Migration Guide](docs/changelog-3.2.3-handlePipedChunk-signature-change.md) - Version 3.2.3 breaking change guide
 - [Command Template](COMMAND_TEMPLATE.md) - Template and guide for implementing new commands
 - [Quickstart](docs/learn/quickstart.md) - Five-minute walkthrough
 - [Parameter System Implementation](PARAMETER_SYSTEM_IMPLEMENTATION.md) - Type-safe parameter guide

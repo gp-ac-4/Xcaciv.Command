@@ -33,6 +33,38 @@ public override ValueTask DisposeAsync()
 }
 ```
 
+## Important: HandlePipedChunk Signature (v3.2.3+)
+
+As of version 3.2.3, `HandlePipedChunk` accepts `IResult<string>` instead of `string`:
+
+```csharp
+// New signature (v3.2.3+)
+public override IResult<string> HandlePipedChunk(
+    IResult<string> pipedChunk, 
+    Dictionary<string, IParameterValue> parameters, 
+    IEnvironmentContext env)
+{
+    // Access the output string
+    var input = pipedChunk.Output ?? string.Empty;
+    
+    // Optionally check if upstream command succeeded
+    if (!pipedChunk.IsSuccess)
+    {
+        // Handle or propagate error
+        return pipedChunk;
+    }
+    
+    // Process the input
+    var result = ProcessInput(input);
+    return CommandResult<string>.Success(result, this.OutputFormat);
+}
+```
+
+This allows commands to:
+- Check `pipedChunk.IsSuccess` for upstream failures
+- Access `pipedChunk.ErrorMessage` and `pipedChunk.Exception`
+- Retrieve `pipedChunk.ResultFormat` and `pipedChunk.CorrelationId`
+
 ## Basic Command Template
 
 ```csharp
@@ -48,7 +80,7 @@ namespace Xcaciv.Command.Commands
     [CommandRegister("MyCommand", "Description of what the command does", Prototype = "MYCOMMAND <param1> <param2>")]
     [CommandParameterOrdered("param1", "Description of first parameter")]
     [CommandParameterOrdered("param2", "Description of second parameter", DataType = typeof(int))]
-    [CommandParameterNamed("param3", "Description of named parameter", IsRequired = false, AllowedValues: ["value1", "value2"])]
+    [CommandParameterNamed("param3", "Description of named parameter", IsRequired = false, AllowedValues = ["value1", "value2"])]
     internal class MyCommand : AbstractCommand
     {
         public override IResult<string> HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
@@ -72,10 +104,11 @@ namespace Xcaciv.Command.Commands
             return CommandResult<string>.Success(result, this.OutputFormat);
         }
 
-        public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
-            // Handle piped input
-            return CommandResult<string>.Success(pipedChunk.ToUpper(), this.OutputFormat);
+            // Handle piped input - extract the output string
+            var input = pipedChunk.Output ?? string.Empty;
+            return CommandResult<string>.Success(input.ToUpper(), this.OutputFormat);
         }
     }
 }
@@ -94,9 +127,10 @@ internal class NowCommand : AbstractCommand
         return CommandResult<string>.Success(DateTime.UtcNow.ToString("O"), this.OutputFormat);
     }
 
-    public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+    public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
     {
-        return CommandResult<string>.Success(pipedChunk, this.OutputFormat); // Pass through piped input
+        // Pass through piped input unchanged
+        return CommandResult<string>.Success(pipedChunk.Output ?? string.Empty, this.OutputFormat);
     }
 }
 ```
@@ -121,14 +155,13 @@ internal class AddCommand : AbstractCommand
         return CommandResult<string>.Success((num1 + num2).ToString(), this.OutputFormat);
     }
 
-    public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+    public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
     {
-        return CommandResult<string>.Success(string.Empty, this.OutputFormat); // Not designed for piping
+        // Not designed for piping - return empty
+        return CommandResult<string>.Success(string.Empty, this.OutputFormat);
     }
 }
 ```
-
-TODO: review all code samples for correctness and consistency.
 
 ### 3. Command with Named Parameters
 
@@ -158,7 +191,7 @@ internal class CopyCommand : AbstractCommand
         return CommandResult<string>.Success(result, this.OutputFormat);
     }
 
-    public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+    public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
     {
         return CommandResult<string>.Success(string.Empty, this.OutputFormat);
     }
@@ -181,9 +214,10 @@ internal class EchoCommand : AbstractCommand
         return CommandResult<string>.Success(text, this.OutputFormat);
     }
 
-    public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+    public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
     {
-        return CommandResult<string>.Success(pipedChunk, this.OutputFormat);
+        // Pass through piped input
+        return CommandResult<string>.Success(pipedChunk.Output ?? string.Empty, this.OutputFormat);
     }
 }
 ```
@@ -213,7 +247,7 @@ internal class BufferCommand : AbstractCommand
         return CommandResult<string>.Success(string.Empty, this.OutputFormat);
     }
 
-    public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+    public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
     {
         var name = parameters.TryGetValue("name", out var n) && n.IsValid 
             ? n.GetValue<string>() 
@@ -221,8 +255,9 @@ internal class BufferCommand : AbstractCommand
         
         if (!string.IsNullOrEmpty(name))
         {
+            var input = pipedChunk.Output ?? string.Empty;
             var current = env.GetValue(name);
-            env.SetValue(name, current + pipedChunk);
+            env.SetValue(name, current + input);
         }
         return CommandResult<string>.Success(string.Empty, this.OutputFormat);
     }
@@ -261,22 +296,71 @@ internal class FilterCommand : AbstractCommand
         return CommandResult<string>.Success(string.Empty, this.OutputFormat);
     }
 
-    public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+    public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
     {
+        var input = pipedChunk.Output ?? string.Empty;
+        
         if (cachedCondition)
         {
-            return CommandResult<string>.Success(pipedChunk, this.OutputFormat);
+            return CommandResult<string>.Success(input, this.OutputFormat);
         }
         return CommandResult<string>.Success(string.Empty, this.OutputFormat);
     }
 }
 ```
 
-### 7. Command with Help Remarks and Aliases
+### 7. Command with Error Propagation
+
+```csharp
+[CommandRegister("Validate", "Validate and process input", Prototype = "VALIDATE <rule>")]
+[CommandParameterOrdered("Rule", "Validation rule")]
+[CommandHelpRemarks("Checks if piped input matches the validation rule.")]
+[CommandHelpRemarks("Propagates errors from upstream commands.")]
+internal class ValidateCommand : AbstractCommand
+{
+    public override IResult<string> HandleExecution(Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+    {
+        return CommandResult<string>.Success(string.Empty, this.OutputFormat);
+    }
+
+    public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+    {
+        // Check if upstream command failed
+        if (!pipedChunk.IsSuccess)
+        {
+            // Propagate the error to downstream commands
+            return pipedChunk;
+        }
+
+        var input = pipedChunk.Output ?? string.Empty;
+        var rule = parameters.TryGetValue("rule", out var r) && r.IsValid 
+            ? r.GetValue<string>() 
+            : string.Empty;
+
+        // Validate the input
+        if (IsValid(input, rule))
+        {
+            return CommandResult<string>.Success(input, this.OutputFormat);
+        }
+        else
+        {
+            return CommandResult<string>.Failure($"Validation failed: input does not match rule '{rule}'");
+        }
+    }
+
+    private bool IsValid(string input, string rule)
+    {
+        // Implement validation logic
+        return true;
+    }
+}
+```
+
+### 8. Command with Help Remarks and Aliases
 
 ```csharp
 [CommandRegister("Count", "Count lines or characters", Prototype = "COUNT [-type lines|chars]")]
-[CommandParameterNamed("Type", "Count type", DefaultValue = "lines", AllowedValues = new[] { "lines", "chars" })]
+[CommandParameterNamed("Type", "Count type", DefaultValue = "lines", AllowedValues = ["lines", "chars"])]
 [CommandHelpRemarks("Counts the number of lines or characters in piped input.")]
 [CommandHelpRemarks("Default behavior counts lines. Use -type chars to count characters.")]
 internal class CountCommand : AbstractCommand
@@ -286,69 +370,52 @@ internal class CountCommand : AbstractCommand
         return CommandResult<string>.Success("0", this.OutputFormat);
     }
 
-    public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+    public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
     {
+        var input = pipedChunk.Output ?? string.Empty;
         var type = parameters.TryGetValue("type", out var t) && t.IsValid 
             ? t.GetValue<string>() 
             : "lines";
 
         var count = type == "chars" 
-            ? pipedChunk.Length 
-            : pipedChunk.Split(new[] { "\n", "\r\n" }, StringSplitOptions.None).Length;
+            ? input.Length 
+            : input.Split(new[] { "\n", "\r\n" }, StringSplitOptions.None).Length;
 
         return CommandResult<string>.Success(count.ToString(), this.OutputFormat);
     }
 }
 ```
 
-## Common Patterns
+## Best Practices
 
-### Pass-Through Filter
+1. **Null Safety**: Always use `pipedChunk.Output ?? string.Empty` when accessing piped input
+2. **Error Handling**: Check `pipedChunk.IsSuccess` if you need to handle upstream failures
+3. **Error Propagation**: Return `pipedChunk` directly to propagate errors to downstream commands
+4. **Parameter Validation**: Use `IsValid` property before calling `GetValue<T>()`
+5. **Resource Cleanup**: Override `DisposeAsync` for commands that allocate resources
+6. **Output Format**: Set `OutputFormat` in constructor if command produces structured data
+7. **Help Documentation**: Use `CommandHelpRemarks` for additional usage information
 
-```csharp
-public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
-{
-    return CommandResult<string>.Success(pipedChunk, this.OutputFormat); // Return unchanged
-}
-```
+## Migration from v3.2.2 to v3.2.3
 
-### Conditional Filter
-
-```csharp
-public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
-{
-    if (SomeCondition(pipedChunk))
-        return CommandResult<string>.Success(pipedChunk, this.OutputFormat);
-    return CommandResult<string>.Success(string.Empty, this.OutputFormat); // Filter out
-}
-```
-
-### Transform
+If you have existing commands using the old signature:
 
 ```csharp
-public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+// Old (v3.2.2 and earlier)
+public override IResult<string> HandlePipedChunk(
+    string pipedChunk, 
+    Dictionary<string, IParameterValue> parameters, 
+    IEnvironmentContext env)
 {
-    return CommandResult<string>.Success(pipedChunk.ToUpper(), this.OutputFormat); // Transform and return
-}
-```
-
-### Accumulate
-
-```csharp
-protected override void OnStartPipe(Dictionary<string, IParameterValue> processedParameters, IEnvironmentContext environment)
-{
-    accumulated = string.Empty;
-    base.OnStartPipe(processedParameters, environment);
+    return CommandResult<string>.Success(pipedChunk.ToUpper());
 }
 
-public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+// New (v3.2.3+)
+public override IResult<string> HandlePipedChunk(
+    IResult<string> pipedChunk, 
+    Dictionary<string, IParameterValue> parameters, 
+    IEnvironmentContext env)
 {
-    accumulated += pipedChunk;
-    return CommandResult<string>.Success(string.Empty, this.OutputFormat);
-}
-
-protected override void OnEndPipe(Dictionary<string, IParameterValue> processedParameters, IEnvironmentContext environment)
-{
-    FinalizeAccumulation();
-    base.OnEndPipe(processedParameters, environment);
+    var input = pipedChunk.Output ?? string.Empty;
+    return CommandResult<string>.Success(input.ToUpper());
 }

@@ -23,12 +23,16 @@ internal sealed class EchoCommand : AbstractCommand
         return CommandResult<string>.Success(text, OutputFormat);
     }
 
-    public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+    public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
     {
-        return CommandResult<string>.Success(pipedChunk, OutputFormat);
+        // v3.2.3+: pipedChunk is now IResult<string> - access output via pipedChunk.Output
+        var input = pipedChunk.Output ?? string.Empty;
+        return CommandResult<string>.Success(input, OutputFormat);
     }
 }
 ```
+
+**Important (v3.2.3+):** `HandlePipedChunk` now accepts `IResult<string>` instead of `string`, providing access to the full result context including success status, error messages, and metadata from upstream commands.
 
 Key behaviors:
 - Uses `ProcessParameters` to map ordered, named, flag, and suffix attributes into typed `IParameterValue` entries.
@@ -82,5 +86,5 @@ internal sealed class MemoryIoContext(string name, string[] args, Guid? parentId
 Highlights:
 - `SetInputPipe`/`SetOutputPipe` wire the command pipeline; `ReadInputPipeChunks` yields piped `IResult<string>` items.
 - `OutputChunk` routes output through the pipeline writer when present or directly to `HandleOutputChunk` otherwise.
-- `AddTraceMessage` honors `Verbose` mode and emits trace messages to the output or to diagnostics.
+- `AddTraceMessage` honors `Verbose` mode and emits trace messages to the output or to diagnostics`.
 
