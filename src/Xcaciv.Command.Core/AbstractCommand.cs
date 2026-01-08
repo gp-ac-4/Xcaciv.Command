@@ -78,7 +78,7 @@ namespace Xcaciv.Command.Core
 
         public async IAsyncEnumerable<IResult<string>> Main(IIoContext io, IEnvironmentContext environment)
         {
-            var processedParameters = ProcessParameters(io.Parameters, io.HasPipedInput);
+            var processedParameters = ProcessParameters(io);
 
             if (io.HasPipedInput)
             {
@@ -123,22 +123,23 @@ namespace Xcaciv.Command.Core
         /// <param name="parameters">Raw command parameters</param>
         /// <param name="hasPipedInput">Whether command is receiving piped input</param>
         /// <returns>Dictionary of processed parameter values</returns>
-        public Dictionary<string, IParameterValue> ProcessParameters(string[] parameters, bool hasPipedInput = false)
+        public Dictionary<string, IParameterValue> ProcessParameters(IIoContext io)
         {
-            if (parameters.Length == 0)
+            var hasPipedInput = io.HasPipedInput;
+            if (io.Parameters.Length == 0)
             {
                 return new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             }
 
             var processedParameters = CommandParameters.ProcessTypedParameters(
-                parameters,
+                io.Parameters,
                 GetOrderedParameters(hasPipedInput),
                 GetFlagParameters(),
                 GetNamedParameters(hasPipedInput),
                 GetSuffixParameters(hasPipedInput));
 
             // Inject parameter values into public instance fields
-            SetParameterFields(processedParameters);
+            SetParameterFields(processedParameters, io);
 
             return processedParameters;
         }
@@ -148,50 +149,43 @@ namespace Xcaciv.Command.Core
         /// Matches parameter names to field names case-insensitively.
         /// </summary>
         /// <param name="processedParameters">Dictionary of processed parameter values</param>
-        private void SetParameterFields(Dictionary<string, IParameterValue> processedParameters)
+        private void SetParameterFields(Dictionary<string, IParameterValue> processedParameters, IIoContext io)
         {
             if (processedParameters == null || processedParameters.Count == 0)
                 return;
 
-            try
+            
+            // Get public instance fields from the command type
+            var commandType = GetType();
+            var publicFields = commandType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+
+            if (publicFields.Length == 0)
+                return;
+
+            // Match and set field values from parameters (case-insensitive)
+            foreach (var field in publicFields)
             {
-                // Get public instance fields from the command type
-                var commandType = GetType();
-                var publicFields = commandType.GetFields(BindingFlags.Public | BindingFlags.Instance);
-
-                if (publicFields.Length == 0)
-                    return;
-
-                // Match and set field values from parameters (case-insensitive)
-                foreach (var field in publicFields)
+                if (processedParameters.TryGetValue(field.Name, out var parameterValue) && 
+                    parameterValue != null && 
+                    parameterValue.IsValid)
                 {
-                    if (processedParameters.TryGetValue(field.Name, out var parameterValue) && 
-                        parameterValue != null && 
-                        parameterValue.IsValid)
+                    try
                     {
-                        try
-                        {
-                            // Get the typed value from the parameter
-                            var value = parameterValue.UntypedValue;
+                        // Get the typed value from the parameter
+                        var value = parameterValue.UntypedValue;
                             
-                            // Only set if value is not null and field type is compatible
-                            if (value != null && field.FieldType.IsAssignableFrom(value.GetType()))
-                            {
-                                field.SetValue(this, value);
-                            }
-                        }
-                        catch (Exception)
+                        // Only set if value is not null and field type is compatible
+                        if (value != null && field.FieldType.IsAssignableFrom(value.GetType()))
                         {
-                            // Silently ignore field setting errors to avoid breaking command execution
-                            // This follows the pattern of optional parameter injection
+                            field.SetValue(this, value);
                         }
                     }
+                    catch (Exception)
+                    {
+                        var fieldName = (string.IsNullOrEmpty(field?.Name)) ? "UNKNOWN" : field.Name;
+                        io.AddTraceMessage($"Failed to set field '{fieldName}' from parameter.").Wait();
+                    }
                 }
-            }
-            catch (Exception)
-            {
-                // Silently ignore parameter field injection errors
-                // Field injection is optional and should not break command execution
             }
         }
 
