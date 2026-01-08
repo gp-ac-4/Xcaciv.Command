@@ -108,7 +108,7 @@ These commands implement `ICommandDelegate` directly (not `AbstractCommand`) and
 
 ## Test Results
 
-? **All 224 tests passing**
+✓ **All 224 tests passing**
 - `Xcaciv.Command.Tests`: 212 tests passed
 - `Xcaciv.Command.FileLoaderTests`: 12 tests passed
 - No breaking changes for direct `ICommandDelegate` implementations
