@@ -23,10 +23,10 @@ namespace Xcaciv.Command.Packages
             return CommandResult<string>.Success("Not installing " + paramNames);
         }
 
-        public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             var paramNames = string.Join(',', parameters.Keys);
-            return CommandResult<string>.Success($"Not installing {pipedChunk} " + paramNames);
+            return CommandResult<string>.Success($"Not installing {pipedChunk.Output} " + paramNames);
         }
     }
 }

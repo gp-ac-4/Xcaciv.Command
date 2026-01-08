@@ -29,12 +29,12 @@ namespace Xcaciv.Command.Commands
             return CommandResult<string>.Success(String.Empty, this.OutputFormat);
         }
 
-        public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             var key = parameters.TryGetValue("key", out var keyParam) && keyParam.IsValid ? keyParam.GetValue<string>() : string.Empty;
-            if (!String.IsNullOrEmpty(key) && !String.IsNullOrEmpty(pipedChunk))
+            if (!String.IsNullOrEmpty(key) && !String.IsNullOrEmpty(pipedChunk.Output))
             {
-                var newValue = env.GetValue(key) + pipedChunk;
+                var newValue = env.GetValue(key) + pipedChunk.Output;
                 env.SetValue(key, newValue);
             }
             // Pass through the chunk (empty string is success since SET doesn't produce output)

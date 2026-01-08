@@ -39,7 +39,7 @@ namespace Xcaciv.Command.Tests
         public void HandlePipedChunk_ShouldThrowNotImplementedException()
         {
             // Arrange
-            var pipedChunk = "piped chunk";
+            var pipedChunk = CommandResult<string>.Success("piped chunk");
             var parameters = new string[] { };
             var env = new Mock<IEnvironmentContext>().Object;
             var command = new Commands.ParameterTestCommand([], [], [], []);

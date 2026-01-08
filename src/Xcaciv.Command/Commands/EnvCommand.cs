@@ -23,7 +23,7 @@ namespace Xcaciv.Command.Commands
             return CommandResult<string>.Success(values, this.OutputFormat);
         }
 
-        public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             var values = String.Empty;
             foreach (var valuePair in env.GetEnvironment())
