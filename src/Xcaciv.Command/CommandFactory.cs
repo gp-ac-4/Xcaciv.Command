@@ -157,42 +157,68 @@ public class CommandFactory : ICommandFactory
         if (command == null || ioContext?.Parameters == null || ioContext.Parameters.Length == 0)
             return;
 
-        // Process parameters to get typed parameter values
-        var processedParameters = (command as AbstractCommand)?.ProcessParameters(ioContext.Parameters, ioContext.HasPipedInput);
-        if (processedParameters == null || processedParameters.Count == 0)
+        // Skip parameter field injection for help requests
+        // Help requests should not require parameter validation
+        if (IsHelpRequest(ioContext.Parameters))
             return;
 
-        // Get public instance fields from the command type
-        var commandType = command.GetType();
-        var publicFields = commandType.GetFields(BindingFlags.Public | BindingFlags.Instance);
-
-        if (publicFields.Length == 0)
-            return;
-
-        // Match and set field values from parameters (case-insensitive)
-        foreach (var field in publicFields)
+        try
         {
-            if (processedParameters.TryGetValue(field.Name, out var parameterValue) && 
-                parameterValue != null && 
-                parameterValue.IsValid)
+            // Process parameters to get typed parameter values
+            var processedParameters = (command as AbstractCommand)?.ProcessParameters(ioContext.Parameters, ioContext.HasPipedInput);
+            if (processedParameters == null || processedParameters.Count == 0)
+                return;
+
+            // Get public instance fields from the command type
+            var commandType = command.GetType();
+            var publicFields = commandType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+
+            if (publicFields.Length == 0)
+                return;
+
+            // Match and set field values from parameters (case-insensitive)
+            foreach (var field in publicFields)
             {
-                try
+                if (processedParameters.TryGetValue(field.Name, out var parameterValue) && 
+                    parameterValue != null && 
+                    parameterValue.IsValid)
                 {
-                    // Get the typed value from the parameter
-                    var value = parameterValue.UntypedValue;
-                    
-                    // Only set if value is not null and field type is compatible
-                    if (value != null && field.FieldType.IsAssignableFrom(value.GetType()))
+                    try
                     {
-                        field.SetValue(command, value);
+                        // Get the typed value from the parameter
+                        var value = parameterValue.UntypedValue;
+                        
+                        // Only set if value is not null and field type is compatible
+                        if (value != null && field.FieldType.IsAssignableFrom(value.GetType()))
+                        {
+                            field.SetValue(command, value);
+                        }
                     }
-                }
-                catch (Exception)
-                {
-                    // Silently ignore field setting errors to avoid breaking command execution
-                    // This follows the pattern of optional parameter injection
+                    catch (Exception)
+                    {
+                        // Silently ignore field setting errors to avoid breaking command execution
+                        // This follows the pattern of optional parameter injection
+                    }
                 }
             }
         }
+        catch (Exception)
+        {
+            // Silently ignore parameter processing errors (e.g., validation failures for help requests)
+            // Field injection is optional and should not break command execution
+        }
+    }
+
+    /// <summary>
+    /// Checks if the parameters contain a help request flag.
+    /// </summary>
+    private static bool IsHelpRequest(string[] parameters)
+    {
+        if (parameters == null || parameters.Length == 0)
+            return false;
+
+        return parameters.Any(p => p.Equals("--HELP", StringComparison.OrdinalIgnoreCase) ||
+                                   p.Equals("-?", StringComparison.OrdinalIgnoreCase) ||
+                                   p.Equals("/?", StringComparison.OrdinalIgnoreCase));
     }
 }
