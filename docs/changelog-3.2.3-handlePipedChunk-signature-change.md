@@ -48,7 +48,7 @@ All command implementations inheriting from `AbstractCommand` were updated:
 **File**: `src/Xcaciv.Command.Tests/PrameterParsingTests.cs`
 - Updated test to pass `CommandResult<string>.Success("piped chunk")` instead of plain string
 
-### 4. Version Bumps (3.2.2 ? 3.2.3)
+### 4. Version Bumps (3.2.2 → 3.2.3)
 
 Updated version numbers in all project files:
 - `src/Xcaciv.Command.Core/Xcaciv.Command.Core.csproj`
