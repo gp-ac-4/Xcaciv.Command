@@ -118,14 +118,14 @@ public override IResult<string> HandlePipedChunk(
 
 ## Documentation Completeness
 
-? **Template updated** - COMMAND_TEMPLATE.md with all patterns
-? **Examples updated** - parameter-field-injection-example.md
-? **API docs updated** - api-core.md with comprehensive migration guide
-? **Package docs updated** - Core/readme.md
-? **Main docs updated** - README.md with version history
-? **Changelog created** - changelog-3.2.3-handlePipedChunk-signature-change.md
-? **Migration examples** - Before/after code in multiple files
-? **Error patterns** - New pattern example for error propagation
+✓ **Template updated** - COMMAND_TEMPLATE.md with all patterns
+✓ **Examples updated** - parameter-field-injection-example.md
+✓ **API docs updated** - api-core.md with comprehensive migration guide
+✓ **Package docs updated** - Core/readme.md
+✓ **Main docs updated** - README.md with version history
+✓ **Changelog created** - changelog-3.2.3-handlePipedChunk-signature-change.md
+✓ **Migration examples** - Before/after code in multiple files
+✓ **Error patterns** - New pattern example for error propagation
 
 ## Search Keywords Covered
 
