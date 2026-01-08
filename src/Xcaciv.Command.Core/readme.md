@@ -23,12 +23,16 @@ internal sealed class EchoCommand : AbstractCommand
         return CommandResult<string>.Success(text, OutputFormat);
     }
 
-    public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+    public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
     {
-        return CommandResult<string>.Success(pipedChunk, OutputFormat);
+        // v3.2.3+: pipedChunk is now IResult<string> - access output via pipedChunk.Output
+        var input = pipedChunk.Output ?? string.Empty;
+        return CommandResult<string>.Success(input, OutputFormat);
     }
 }
 ```
+
+**Important (v3.2.3+):** `HandlePipedChunk` now accepts `IResult<string>` instead of `string`, providing access to the full result context including success status, error messages, and metadata from upstream commands.
 
 Key behaviors:
 - Uses `ProcessParameters` to map ordered, named, flag, and suffix attributes into typed `IParameterValue` entries.

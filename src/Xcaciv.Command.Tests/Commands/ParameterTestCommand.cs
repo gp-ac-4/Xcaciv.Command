@@ -50,7 +50,7 @@ namespace Xcaciv.Command.Tests.Commands
             return CommandResult<string>.Success(builder.ToString(), this.OutputFormat);
         }
 
-        public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
             throw new NotImplementedException();
         }

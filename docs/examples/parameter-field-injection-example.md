@@ -43,11 +43,13 @@ public class GreetCommand : AbstractCommand
     }
 
     public override IResult<string> HandlePipedChunk(
-        string pipedChunk, 
+        IResult<string> pipedChunk, 
         Dictionary<string, IParameterValue> parameters, 
         IEnvironmentContext env)
     {
-        return CommandResult<string>.Success(pipedChunk);
+        // v3.2.3+: pipedChunk is now IResult<string>
+        var input = pipedChunk.Output ?? string.Empty;
+        return CommandResult<string>.Success(input);
     }
 }
 ```
@@ -75,6 +77,7 @@ Greet --NAME "Smith" --TITLE "Mrs."
 3. **Optional Feature**: Fields are only set if a matching parameter exists and is valid
 4. **Error Handling**: Field setting errors are silently ignored to avoid breaking command execution
 5. **Still Available in Dictionary**: Parameters are still available in the `parameters` dictionary for manual access
+6. **v3.2.3+ HandlePipedChunk**: As of version 3.2.3, `HandlePipedChunk` accepts `IResult<string>` instead of `string`
 
 ## Benefits
 

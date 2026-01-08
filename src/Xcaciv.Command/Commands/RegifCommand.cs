@@ -44,7 +44,7 @@ namespace Xcaciv.Command.Commands
             return CommandResult<string>.Success(output.ToString().Trim(), this.OutputFormat);
         }
 
-        public override IResult<string> HandlePipedChunk(string stringToCheck, Dictionary<string, IParameterValue> parameters, IEnvironmentContext status)
+        public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext status)
         {
             if (parameters.TryGetValue("regex", out var regexParam) && regexParam.IsValid)
             {
@@ -53,7 +53,8 @@ namespace Xcaciv.Command.Commands
                     this.expression = new Regex(regexParam.GetValue<string>());
                 }
 
-                var matchedValue = (this.expression?.IsMatch(stringToCheck) ?? false) ? stringToCheck : string.Empty;
+                var input = pipedChunk.Output ?? string.Empty;
+                var matchedValue = (this.expression?.IsMatch(input) ?? false) ? input : string.Empty;
                 return CommandResult<string>.Success(matchedValue, this.OutputFormat);
             }
 

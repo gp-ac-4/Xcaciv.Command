@@ -24,9 +24,9 @@ namespace zTestCommandPackage
             return CommandResult<string>.Success(String.Join(' ', parameters.Values.Select(p => p.GetValue<string>())));
         }
 
-        public override IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
+        public override IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env)
         {
-            return CommandResult<string>.Success(pipedChunk);
+            return CommandResult<string>.Success(pipedChunk.Output);
         }
     }
 }

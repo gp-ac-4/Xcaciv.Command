@@ -92,10 +92,9 @@ namespace Xcaciv.Command.Core
                         continue;
                     }
 
-                    var pipedChunk = pipedResult.Output;
-                    if (string.IsNullOrEmpty(pipedChunk)) continue;
+                    if (string.IsNullOrEmpty(pipedResult.Output)) continue;
 
-                    var chunkResult = HandlePipedChunk(pipedChunk, processedParameters, environment);
+                    var chunkResult = HandlePipedChunk(pipedResult, processedParameters, environment);
                     yield return chunkResult;
                 }
 
@@ -260,7 +259,7 @@ namespace Xcaciv.Command.Core
         /// <param name="env">The environment context that provides additional information or services required for processing. Cannot be
         /// null.</param>
         /// <returns>An IResult containing the processed result of the input chunk with success state and output.</returns>
-        public abstract IResult<string> HandlePipedChunk(string pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
+        public abstract IResult<string> HandlePipedChunk(IResult<string> pipedChunk, Dictionary<string, IParameterValue> parameters, IEnvironmentContext env);
 
         /// <summary>
         /// Invoked when a pipe operation is starting, allowing derived classes to perform custom initialization.
