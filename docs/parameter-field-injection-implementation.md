@@ -53,17 +53,17 @@ using System.Reflection;
 ### Why This Location Is Better
 
 **Previous approach (CommandFactory):**
-- ? Required help request detection logic
-- ? Called `ProcessParameters()` twice (once for field injection, once in Main)
-- ? Only worked for commands created through the factory
-- ? Didn't work for direct instantiation or DI-resolved commands
+- Required help request detection logic
+- Called `ProcessParameters()` twice (once for field injection, once in Main)
+- Only worked for commands created through the factory
+- Didn't work for direct instantiation or DI-resolved commands
 
 **Current approach (AbstractCommand.ProcessParameters):**
-- ? No help request detection needed (happens in Main, not during processing)
-- ? Parameters processed only once
-- ? Works for all AbstractCommand subclasses regardless of instantiation method
-- ? Co-located with parameter processing logic (better cohesion)
-- ? Cleaner separation of concerns
+- No help request detection needed (happens in Main, not during processing)
+- Parameters processed only once
+- Works for all AbstractCommand subclasses regardless of instantiation method
+- Co-located with parameter processing logic (better cohesion)
+- Cleaner separation of concerns
 
 ### Type Safety
 - Uses `FieldInfo.SetValue()` for assignment
