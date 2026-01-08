@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Reflection;
 using System.Security;
 using System.Threading.Tasks;
+using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface;
 using Xcaciv.Loader;
 
@@ -49,10 +51,14 @@ public class CommandFactory : ICommandFactory
             // Contract: SetParameters must be fast and non-blocking. This call uses ConfigureAwait(false)
             // and synchronous wait due to ICommandFactory being synchronous.
             ioContext.SetParameters(ioContext.Parameters[1..]).ConfigureAwait(false).GetAwaiter().GetResult();
-            return CreateCommand(subCommandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
+            var subCommand = CreateCommand(subCommandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
+            SetParameterFields(subCommand, ioContext);
+            return subCommand;
         }
 
-        return CreateCommand(commandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
+        var command = CreateCommand(commandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
+        SetParameterFields(command, ioContext);
+        return command;
     }
 
     public ICommandDelegate CreateCommand(string fullTypeName, string packagePath)
@@ -130,9 +136,89 @@ public class CommandFactory : ICommandFactory
         {
             // Use async SetParameters to avoid blocking
             await ioContext.SetParameters(ioContext.Parameters[1..]).ConfigureAwait(false);
-            return CreateCommand(subCommandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
+            var command = CreateCommand(subCommandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
+            SetParameterFields(command, ioContext);
+            return command;
         }
 
-        return CreateCommand(commandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
+        var resultCommand = CreateCommand(commandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
+        SetParameterFields(resultCommand, ioContext);
+        return resultCommand;
+    }
+
+    /// <summary>
+    /// Sets public instance fields on the command from named parameters.
+    /// Matches parameter names to field names case-insensitively.
+    /// </summary>
+    /// <param name="command">Command instance to configure</param>
+    /// <param name="ioContext">IO context containing parameters</param>
+    private static void SetParameterFields(ICommandDelegate command, IIoContext ioContext)
+    {
+        if (command == null || ioContext?.Parameters == null || ioContext.Parameters.Length == 0)
+            return;
+
+        // Skip parameter field injection for help requests
+        // Help requests should not require parameter validation
+        if (IsHelpRequest(ioContext.Parameters))
+            return;
+
+        try
+        {
+            // Process parameters to get typed parameter values
+            var processedParameters = (command as AbstractCommand)?.ProcessParameters(ioContext.Parameters, ioContext.HasPipedInput);
+            if (processedParameters == null || processedParameters.Count == 0)
+                return;
+
+            // Get public instance fields from the command type
+            var commandType = command.GetType();
+            var publicFields = commandType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+
+            if (publicFields.Length == 0)
+                return;
+
+            // Match and set field values from parameters (case-insensitive)
+            foreach (var field in publicFields)
+            {
+                if (processedParameters.TryGetValue(field.Name, out var parameterValue) && 
+                    parameterValue != null && 
+                    parameterValue.IsValid)
+                {
+                    try
+                    {
+                        // Get the typed value from the parameter
+                        var value = parameterValue.UntypedValue;
+                        
+                        // Only set if value is not null and field type is compatible
+                        if (value != null && field.FieldType.IsAssignableFrom(value.GetType()))
+                        {
+                            field.SetValue(command, value);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // Silently ignore field setting errors to avoid breaking command execution
+                        // This follows the pattern of optional parameter injection
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Silently ignore parameter processing errors (e.g., validation failures for help requests)
+            // Field injection is optional and should not break command execution
+        }
+    }
+
+    /// <summary>
+    /// Checks if the parameters contain a help request flag.
+    /// </summary>
+    private static bool IsHelpRequest(string[] parameters)
+    {
+        if (parameters == null || parameters.Length == 0)
+            return false;
+
+        return parameters.Any(p => p.Equals("--HELP", StringComparison.OrdinalIgnoreCase) ||
+                                   p.Equals("-?", StringComparison.OrdinalIgnoreCase) ||
+                                   p.Equals("/?", StringComparison.OrdinalIgnoreCase));
     }
 }
