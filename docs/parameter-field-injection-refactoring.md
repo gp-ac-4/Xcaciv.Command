@@ -64,7 +64,7 @@ private void SetParameterFields(Dictionary<string, IParameterValue> processedPar
 
 ## Test Results
 
-? **All 224 tests passing**
+- **All 224 tests passing**
 - No breaking changes
 - Feature works identically from user perspective
 - Internal implementation is cleaner and more maintainable
