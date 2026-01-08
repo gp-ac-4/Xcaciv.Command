@@ -91,7 +91,7 @@ namespace Xcaciv.Command.Core
                         continue;
                     }
 
-                    if (!pipedResult.IsSuccess || string.IsNullOrEmpty(pipedResult.Output)) continue;
+                    if (string.IsNullOrEmpty(pipedResult.Output)) continue;
 
                     var chunkResult = HandlePipedChunk(pipedResult, processedParameters, environment);
                     yield return chunkResult;
