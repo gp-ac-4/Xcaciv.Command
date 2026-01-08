@@ -86,5 +86,5 @@ internal sealed class MemoryIoContext(string name, string[] args, Guid? parentId
 Highlights:
 - `SetInputPipe`/`SetOutputPipe` wire the command pipeline; `ReadInputPipeChunks` yields piped `IResult<string>` items.
 - `OutputChunk` routes output through the pipeline writer when present or directly to `HandleOutputChunk` otherwise.
-- `AddTraceMessage` honors `Verbose` mode and emits trace messages to the output or to diagnostics`.
+- `AddTraceMessage` honors `Verbose` mode and emits trace messages to the output or to diagnostics.
 
