@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
@@ -77,7 +78,7 @@ namespace Xcaciv.Command.Core
 
         public async IAsyncEnumerable<IResult<string>> Main(IIoContext io, IEnvironmentContext environment)
         {
-            var processedParameters = ProcessParameters(io.Parameters, io.HasPipedInput);
+            var processedParameters = ProcessParameters(io);
 
             if (io.HasPipedInput)
             {
@@ -122,19 +123,70 @@ namespace Xcaciv.Command.Core
         /// <param name="parameters">Raw command parameters</param>
         /// <param name="hasPipedInput">Whether command is receiving piped input</param>
         /// <returns>Dictionary of processed parameter values</returns>
-        public Dictionary<string, IParameterValue> ProcessParameters(string[] parameters, bool hasPipedInput = false)
+        public Dictionary<string, IParameterValue> ProcessParameters(IIoContext io)
         {
-            if (parameters.Length == 0)
+            var hasPipedInput = io.HasPipedInput;
+            if (io.Parameters.Length == 0)
             {
                 return new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             }
 
-            return CommandParameters.ProcessTypedParameters(
-                parameters,
+            var processedParameters = CommandParameters.ProcessTypedParameters(
+                io.Parameters,
                 GetOrderedParameters(hasPipedInput),
                 GetFlagParameters(),
                 GetNamedParameters(hasPipedInput),
                 GetSuffixParameters(hasPipedInput));
+
+            // Inject parameter values into public instance fields
+            SetParameterFields(processedParameters, io);
+
+            return processedParameters;
+        }
+
+        /// <summary>
+        /// Sets public instance fields on this command from processed parameters.
+        /// Matches parameter names to field names case-insensitively.
+        /// </summary>
+        /// <param name="processedParameters">Dictionary of processed parameter values</param>
+        private void SetParameterFields(Dictionary<string, IParameterValue> processedParameters, IIoContext io)
+        {
+            if (processedParameters == null || processedParameters.Count == 0)
+                return;
+
+            
+            // Get public instance fields from the command type
+            var commandType = GetType();
+            var publicFields = commandType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+
+            if (publicFields.Length == 0)
+                return;
+
+            // Match and set field values from parameters (case-insensitive)
+            foreach (var field in publicFields)
+            {
+                if (processedParameters.TryGetValue(field.Name, out var parameterValue) && 
+                    parameterValue != null && 
+                    parameterValue.IsValid)
+                {
+                    try
+                    {
+                        // Get the typed value from the parameter
+                        var value = parameterValue.UntypedValue;
+                            
+                        // Only set if value is not null and field type is compatible
+                        if (value != null && field.FieldType.IsAssignableFrom(value.GetType()))
+                        {
+                            field.SetValue(this, value);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        var fieldName = (string.IsNullOrEmpty(field?.Name)) ? "UNKNOWN" : field.Name;
+                        io.AddTraceMessage($"Failed to set field '{fieldName}' from parameter.").Wait();
+                    }
+                }
+            }
         }
 
         /// <summary>

@@ -1,48 +1,69 @@
 # Parameter Field Injection - Implementation Summary
 
 ## Overview
-Successfully implemented automatic parameter field injection in the `CommandFactory` class. This feature allows command classes to have public instance fields automatically populated from command-line parameters.
+Successfully implemented automatic parameter field injection in the `AbstractCommand` class. This feature allows command classes to have public instance fields automatically populated from command-line parameters during parameter processing.
 
 ## Changes Made
 
-### 1. Modified `CommandFactory.cs`
+### 1. Modified `AbstractCommand.cs`
 
 #### Added Using Statement
 ```csharp
 using System.Reflection;
 ```
 
-#### New Helper Method: `SetParameterFields`
-- **Purpose**: Sets public instance fields on command instances from named parameters
-- **Location**: Private static method in `CommandFactory`
+#### Enhanced `ProcessParameters` Method
+- **Location**: `AbstractCommand.ProcessParameters()`
+- **Integration Point**: Called at the end of parameter processing, right before returning the dictionary
 - **Key Features**:
   - Case-insensitive parameter-to-field matching
   - Type-safe value assignment (only compatible types)
   - Graceful error handling (silent failures)
-  - Skips processing for help requests
+  - Works for all AbstractCommand subclasses automatically
+  - No special setup required
+
+#### New Private Method: `SetParameterFields`
+- **Purpose**: Sets public instance fields on command instances from processed parameters
+- **Location**: Private method in `AbstractCommand`
+- **Behavior**:
+  - Matches parameter names to public instance field names (case-insensitive)
   - Validates parameter values before assignment
+  - Uses reflection to set field values
+  - Fails silently to avoid breaking command execution
 
-#### New Helper Method: `IsHelpRequest`
-- **Purpose**: Detects if parameters contain a help flag
-- **Supports**: `--HELP`, `-?`, `/?` (case-insensitive)
-- **Prevents**: Unnecessary parameter validation for help requests
+### 2. Simplified `CommandFactory.cs`
 
-#### Integration Points
-Modified three methods to call `SetParameterFields` after command creation:
-1. `CreateCommand(ICommandDescription, IIoContext)` - main command creation
-2. `CreateCommand(ICommandDescription, IIoContext)` - sub-command branch
-3. `CreateCommandAsync(ICommandDescription, IIoContext)` - async version
+- **Removed**: `SetParameterFields()` method (moved to AbstractCommand)
+- **Removed**: `IsHelpRequest()` method (not needed, AbstractCommand handles this)
+- **Removed**: Calls to `SetParameterFields()` after command creation
+- **Removed**: `using System.Reflection;` (no longer needed)
+- **Removed**: `using Xcaciv.Command.Core;` (no longer needed)
+- **Result**: CommandFactory is now simpler and focused solely on command instantiation
 
 ## Technical Details
 
 ### Parameter Processing Flow
-1. Command instance is created via existing mechanism
-2. `SetParameterFields` is called with command and IO context
-3. Help requests are detected and processing is skipped
-4. Parameters are processed using `AbstractCommand.ProcessParameters`
-5. Public instance fields are retrieved via reflection
-6. Parameter names are matched to field names (case-insensitive)
-7. Valid parameter values are assigned to matching fields
+1. Command's `Main()` method is invoked
+2. `ProcessParameters()` is called to parse and validate parameters
+3. `CommandParameters.ProcessTypedParameters()` creates typed parameter dictionary
+4. `SetParameterFields()` injects parameter values into matching public fields
+5. Processed parameters dictionary is returned
+6. `HandleExecution()` or `HandlePipedChunk()` uses the parameters
+
+### Why This Location Is Better
+
+**Previous approach (CommandFactory):**
+- Required help request detection logic
+- Called `ProcessParameters()` twice (once for field injection, once in Main)
+- Only worked for commands created through the factory
+- Didn't work for direct instantiation or DI-resolved commands
+
+**Current approach (AbstractCommand.ProcessParameters):**
+- No help request detection needed (happens in Main, not during processing)
+- Parameters processed only once
+- Works for all AbstractCommand subclasses regardless of instantiation method
+- Co-located with parameter processing logic (better cohesion)
+- Cleaner separation of concerns
 
 ### Type Safety
 - Uses `FieldInfo.SetValue()` for assignment
@@ -78,6 +99,7 @@ Modified three methods to call `SetParameterFields` after command creation:
 - No breaking changes to existing functionality
 - Help requests handled correctly
 - Piping functionality preserved
+- Works for all command instantiation methods
 
 ## Example Usage
 
@@ -87,7 +109,7 @@ Modified three methods to call `SetParameterFields` after command creation:
 [CommandParameterNamed("title", "Title", DefaultValue = "")]
 public class GreetCommand : AbstractCommand
 {
-    // These fields are automatically populated
+    // These fields are automatically populated during ProcessParameters()
     public string? Name;
     public string? Title;
 
@@ -101,6 +123,16 @@ public class GreetCommand : AbstractCommand
             : $"Hello, {Title} {Name}!";
         return CommandResult<string>.Success(greeting);
     }
+    
+    public override IResult<string> HandlePipedChunk(
+        string pipedChunk, 
+        Dictionary<string, IParameterValue> parameters, 
+        IEnvironmentContext env)
+    {
+        // Fields are still available here too
+        var message = $"{Title} {Name} received: {pipedChunk}";
+        return CommandResult<string>.Success(message);
+    }
 }
 ```
 
@@ -112,6 +144,8 @@ public class GreetCommand : AbstractCommand
 4. **Backward Compatible**: Existing commands work unchanged
 5. **Optional**: Commands can still use parameters dictionary
 6. **Case-Insensitive**: Flexible parameter naming
+7. **Universal**: Works regardless of how command is instantiated
+8. **Co-located**: Parameter injection logic lives with parameter processing
 
 ## Dependencies
 
@@ -122,10 +156,10 @@ public class GreetCommand : AbstractCommand
 
 ## Performance Impact
 
-- Minimal: Reflection called once per command execution
-- Cached: Command types already loaded in memory
-- Skip: Help requests bypass parameter processing
-- Fail-fast: Empty parameter arrays exit immediately
+- Minimal: Reflection called once per command execution during parameter processing
+- Efficient: Only processes public instance fields
+- Skip: Empty parameter arrays exit immediately
+- Cached: Type information retrieved only once per command execution
 
 ## Compatibility
 
@@ -135,3 +169,6 @@ public class GreetCommand : AbstractCommand
 - ? Plugin system compatible
 - ? Sub-command support
 - ? Async execution support
+- ? DI container support
+- ? Direct instantiation support
+- ? Factory creation support
