@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
@@ -129,12 +130,69 @@ namespace Xcaciv.Command.Core
                 return new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             }
 
-            return CommandParameters.ProcessTypedParameters(
+            var processedParameters = CommandParameters.ProcessTypedParameters(
                 parameters,
                 GetOrderedParameters(hasPipedInput),
                 GetFlagParameters(),
                 GetNamedParameters(hasPipedInput),
                 GetSuffixParameters(hasPipedInput));
+
+            // Inject parameter values into public instance fields
+            SetParameterFields(processedParameters);
+
+            return processedParameters;
+        }
+
+        /// <summary>
+        /// Sets public instance fields on this command from processed parameters.
+        /// Matches parameter names to field names case-insensitively.
+        /// </summary>
+        /// <param name="processedParameters">Dictionary of processed parameter values</param>
+        private void SetParameterFields(Dictionary<string, IParameterValue> processedParameters)
+        {
+            if (processedParameters == null || processedParameters.Count == 0)
+                return;
+
+            try
+            {
+                // Get public instance fields from the command type
+                var commandType = GetType();
+                var publicFields = commandType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+
+                if (publicFields.Length == 0)
+                    return;
+
+                // Match and set field values from parameters (case-insensitive)
+                foreach (var field in publicFields)
+                {
+                    if (processedParameters.TryGetValue(field.Name, out var parameterValue) && 
+                        parameterValue != null && 
+                        parameterValue.IsValid)
+                    {
+                        try
+                        {
+                            // Get the typed value from the parameter
+                            var value = parameterValue.UntypedValue;
+                            
+                            // Only set if value is not null and field type is compatible
+                            if (value != null && field.FieldType.IsAssignableFrom(value.GetType()))
+                            {
+                                field.SetValue(this, value);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            // Silently ignore field setting errors to avoid breaking command execution
+                            // This follows the pattern of optional parameter injection
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Silently ignore parameter field injection errors
+                // Field injection is optional and should not break command execution
+            }
         }
 
         /// <summary>
