@@ -1,4 +1,6 @@
 # Xcaciv.Command: Excessive Command Framework
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fgp-ac-4%2FXcaciv.Command.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fgp-ac-4%2FXcaciv.Command?ref=badge_shield)
+
 
 Excessively modular, async pipeable, command framework with strongly-typed parameter support.
 
@@ -135,3 +137,6 @@ See `SECURITY.md` for secure audit logging patterns.
 ## License
 
 AGPL-3.0 License. See LICENSE file for details.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fgp-ac-4%2FXcaciv.Command.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fgp-ac-4%2FXcaciv.Command?ref=badge_large)
