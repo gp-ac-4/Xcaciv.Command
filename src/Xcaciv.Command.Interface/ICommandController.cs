@@ -43,7 +43,7 @@
         /// <param name="env">Environment context</param>
         /// <param name="cancellationToken">Cancellation token</param>
         Task GetHelpAsync(string command, IIoContext output, IEnvironmentContext env, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// install a single command into the index
         /// </summary>
@@ -58,12 +58,16 @@
         /// <param name="modifiesEnvironment"></param>
         void AddCommand(string packageKey, Type commandType, bool modifiesEnvironment = false);
         /// <summary>
-        /// add a command from an instance of the command
-        /// good for commands from internal or linked dlls
+        /// Registers a command delegate for the specified package key, optionally indicating whether the command
+        /// modifies the environment.
         /// </summary>
-        /// <param name="packageKey"></param>
-        /// <param name="command"></param>
-        /// <param name="modifiesEnvironment"></param>
+        /// <remarks>If multiple commands are registered for the same package key, only the most recently
+        /// added command will be used. Commands that modify the environment may have side effects that persist beyond
+        /// their execution.</remarks>
+        /// <param name="packageKey">The unique key identifying the package to associate with the command. Cannot be null or empty.</param>
+        /// <param name="command">The command delegate to register. Cannot be null.</param>
+        /// <param name="modifiesEnvironment">Indicates whether the command modifies the environment. Set to <see langword="true"/> if the command alters
+        /// environment variables or state; otherwise, <see langword="false"/>.</param>
         void AddCommand(string packageKey, ICommandDelegate command, bool modifiesEnvironment = false);
     }
 }
