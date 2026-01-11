@@ -77,7 +77,8 @@ namespace Xcaciv.Command.Tests.Commands
                 suffixAttrs = suffixAttrs.Where(x => !x.UsePipe).ToArray();
             }
 
-            return CommandParameters.ProcessTypedParameters(
+            var commandParameters = new CommandParameters();
+            return commandParameters.ProcessParameters(
                 parameters,
                 orderedAttrs,
                 _flags ?? Array.Empty<CommandFlagAttribute>(),

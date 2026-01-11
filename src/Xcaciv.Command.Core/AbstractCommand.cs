@@ -72,7 +72,8 @@ namespace Xcaciv.Command.Core
                 return $"{prefix}{baseCommand.Command,-12} {baseCommand.Description}";
             }
 
-            var commandDesc = CommandParameters.CreatePackageDescription(GetType(), null!);
+            var commandParameters = new CommandParameters();
+            var commandDesc = commandParameters.CreatePackageDescription(GetType(), null!);
             return _helpService.BuildOneLineHelp(commandDesc);
         }
 
@@ -130,7 +131,8 @@ namespace Xcaciv.Command.Core
                 return new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             }
 
-            var processedParameters = CommandParameters.ProcessTypedParameters(
+            var commandParameters = new CommandParameters();
+            var processedParameters = commandParameters.ProcessParameters(
                 io.Parameters,
                 GetOrderedParameters(hasPipedInput),
                 GetFlagParameters(),

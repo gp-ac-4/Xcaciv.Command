@@ -1,6 +1,7 @@
 using Xunit;
 using Xcaciv.Command.Core;
 using Xcaciv.Command.Interface.Attributes;
+using Xcaciv.Command.Interface.Parameters;
 using System;
 using System.Collections.Generic;
 
@@ -8,6 +9,8 @@ namespace Xcaciv.Command.Tests
 {
     public class ParameterBoundsTests
     {
+        private readonly CommandParameters _commandParameters = new();
+
         /// <summary>
         /// Test: Empty parameter list with required ordered parameter should throw
         /// </summary>
@@ -16,13 +19,13 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var parameterList = new List<string>();
-            var parameterLookup = new Dictionary<string, string>();
+            var parameterLookup = new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             var requiredParam = new CommandParameterOrderedAttribute("name", "A required parameter") { IsRequired = true };
             var parameters = new[] { requiredParam };
 
             // Act & Assert
             Assert.Throws<ArgumentException>(() =>
-                CommandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters)
+                _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters)
             );
         }
 
@@ -34,7 +37,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var parameterList = new List<string>();
-            var parameterLookup = new Dictionary<string, string>();
+            var parameterLookup = new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             var optionalParam = new CommandParameterOrderedAttribute("name", "An optional parameter") 
             { 
                 IsRequired = false, 
@@ -43,11 +46,11 @@ namespace Xcaciv.Command.Tests
             var parameters = new[] { optionalParam };
 
             // Act
-            CommandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters);
+            _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters);
 
             // Assert
             Assert.True(parameterLookup.ContainsKey("name"));
-            Assert.Equal("defaultValue", parameterLookup["name"]);
+            Assert.Equal("defaultValue", parameterLookup["name"].UntypedValue);
         }
 
         /// <summary>
@@ -58,7 +61,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var parameterList = new List<string>();
-            var parameterLookup = new Dictionary<string, string>();
+            var parameterLookup = new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             var optionalParam = new CommandParameterOrderedAttribute("name", "An optional parameter") 
             { 
                 IsRequired = false, 
@@ -67,7 +70,7 @@ namespace Xcaciv.Command.Tests
             var parameters = new[] { optionalParam };
 
             // Act
-            CommandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters);
+            _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters);
 
             // Assert - should not add parameter if not required and no default
             Assert.False(parameterLookup.ContainsKey("name"));
@@ -81,14 +84,14 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var parameterList = new List<string> { "value1" };
-            var parameterLookup = new Dictionary<string, string>();
+            var parameterLookup = new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             var param1 = new CommandParameterOrderedAttribute("first", "First parameter") { IsRequired = true };
             var param2 = new CommandParameterOrderedAttribute("second", "Second parameter") { IsRequired = true };
             var parameters = new[] { param1, param2 };
 
             // Act & Assert
             Assert.Throws<ArgumentException>(() =>
-                CommandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters)
+                _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters)
             );
         }
 
@@ -100,13 +103,13 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var parameterList = new List<string>();
-            var parameterLookup = new Dictionary<string, string>();
+            var parameterLookup = new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             var requiredParam = new CommandParameterSuffixAttribute("trailing", "A required parameter") { IsRequired = true };
             var parameters = new[] { requiredParam };
 
             // Act & Assert
             Assert.Throws<ArgumentException>(() =>
-                CommandParameters.ProcessSuffixParameters(parameterList, parameterLookup, parameters)
+                _commandParameters.ProcessSuffixParameters(parameterList, parameterLookup, parameters)
             );
         }
 
@@ -118,7 +121,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var parameterList = new List<string>();
-            var parameterLookup = new Dictionary<string, string>();
+            var parameterLookup = new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             var optionalParam = new CommandParameterSuffixAttribute("trailing", "An optional parameter") 
             { 
                 IsRequired = false, 
@@ -127,11 +130,11 @@ namespace Xcaciv.Command.Tests
             var parameters = new[] { optionalParam };
 
             // Act
-            CommandParameters.ProcessSuffixParameters(parameterList, parameterLookup, parameters);
+            _commandParameters.ProcessSuffixParameters(parameterList, parameterLookup, parameters);
 
             // Assert
             Assert.True(parameterLookup.ContainsKey("trailing"));
-            Assert.Equal("defaultValue", parameterLookup["trailing"]);
+            Assert.Equal("defaultValue", parameterLookup["trailing"].UntypedValue);
         }
 
         /// <summary>
@@ -142,7 +145,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var parameterList = new List<string>();
-            var parameterLookup = new Dictionary<string, string>();
+            var parameterLookup = new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             var optionalParam = new CommandParameterSuffixAttribute("trailing", "An optional parameter") 
             { 
                 IsRequired = false, 
@@ -151,7 +154,7 @@ namespace Xcaciv.Command.Tests
             var parameters = new[] { optionalParam };
 
             // Act
-            CommandParameters.ProcessSuffixParameters(parameterList, parameterLookup, parameters);
+            _commandParameters.ProcessSuffixParameters(parameterList, parameterLookup, parameters);
 
             // Assert - should not add parameter if not required and no default
             Assert.False(parameterLookup.ContainsKey("trailing"));
@@ -165,13 +168,13 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             List<string> parameterList = null!;
-            var parameterLookup = new Dictionary<string, string>();
+            var parameterLookup = new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             var param = new CommandParameterOrderedAttribute("name", "A parameter");
             var parameters = new[] { param };
 
             // Act & Assert
             Assert.Throws<NullReferenceException>(() =>
-                CommandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters)
+                _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters)
             );
         }
 
@@ -183,7 +186,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var parameterList = new List<string> { "--name" };
-            var parameterLookup = new Dictionary<string, string>();
+            var parameterLookup = new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             var requiredParam = new CommandParameterOrderedAttribute("value", "Required parameter") 
             { 
                 IsRequired = true, 
@@ -193,7 +196,7 @@ namespace Xcaciv.Command.Tests
 
             // Act & Assert
             Assert.Throws<ArgumentException>(() =>
-                CommandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters)
+                _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters)
             );
         }
 
@@ -205,7 +208,7 @@ namespace Xcaciv.Command.Tests
         {
             // Arrange
             var parameterList = new List<string> { "--name" };
-            var parameterLookup = new Dictionary<string, string>();
+            var parameterLookup = new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             var optionalParam = new CommandParameterSuffixAttribute("trailing", "Optional parameter") 
             { 
                 IsRequired = false, 
@@ -214,11 +217,11 @@ namespace Xcaciv.Command.Tests
             var parameters = new[] { optionalParam };
 
             // Act
-            CommandParameters.ProcessSuffixParameters(parameterList, parameterLookup, parameters);
+            _commandParameters.ProcessSuffixParameters(parameterList, parameterLookup, parameters);
 
             // Assert
             Assert.True(parameterLookup.ContainsKey("trailing"));
-            Assert.Equal("defaultValue", parameterLookup["trailing"]);
+            Assert.Equal("defaultValue", parameterLookup["trailing"].UntypedValue);
         }
     }
 }

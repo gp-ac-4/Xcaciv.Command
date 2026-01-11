@@ -52,7 +52,8 @@ public class CommandRegistry : ICommandRegistry
             FullPath = commandType.Assembly.Location
         };
 
-        var commandDesc = CommandParameters.CreatePackageDescription(commandType, packageDesc);
+        var commandParameters = new CommandParameters();
+        var commandDesc = commandParameters.CreatePackageDescription(commandType, packageDesc);
         if (commandDesc is CommandDescription mutableDescription)
         {
             mutableDescription.ModifiesEnvironment = modifiesEnvironment;
