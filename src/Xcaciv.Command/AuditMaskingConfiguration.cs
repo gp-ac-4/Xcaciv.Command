@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Xcaciv.Command.Interface;
 
-namespace Xcaciv.Command.Interface;
+namespace Xcaciv.Command;
 
 /// <summary>
 /// Configuration for parameter masking in audit logs.
 /// Allows redaction of sensitive parameters based on parameter names or patterns.
 /// </summary>
-public sealed class AuditMaskingConfiguration
+public sealed class AuditMaskingConfiguration : IAuditMaskingConfiguration
 {
     /// <summary>
     /// Parameter names that should be completely redacted in audit logs.

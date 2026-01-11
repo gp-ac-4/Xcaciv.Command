@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
+using Xcaciv.Command.Interface;
 
-namespace Xcaciv.Command.Interface;
+namespace Xcaciv.Command;
 
 /// <summary>
 /// Information about a command and how to execute it

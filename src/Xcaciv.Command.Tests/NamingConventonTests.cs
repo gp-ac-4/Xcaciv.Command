@@ -68,6 +68,18 @@ namespace Xcaciv.Command.Tests
         }
 
         [Fact()]
+        public void PrepareArgsHandleQuotesTest()
+        {
+            var command = "PACKAGE";
+            var expected = new[] { "search", "nuget", "-name", "some text" };
+            var commandLine = "package search nuget -name \"some text\"";
+            var manager = new CommandController();
+
+            var actual = CommandDescription.GetArgumentsFromCommandline(commandLine);
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact()]
         public void PrepareArgsTest()
         {
             var command = "DIR";

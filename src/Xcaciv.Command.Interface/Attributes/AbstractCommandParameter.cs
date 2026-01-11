@@ -19,7 +19,7 @@ namespace Xcaciv.Command.Interface.Attributes
         public string Name
         {
             get { return _helpName; }
-            set { _helpName = CommandDescription.GetValidCommandName(value, false); }
+            set { _helpName = ICommandDescription.GetValidCommandName(value, false); }
         }
         /// <summary>
         /// Data type of the parameter

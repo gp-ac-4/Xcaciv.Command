@@ -47,5 +47,5 @@ public class NoOpAuditLogger : IAuditLogger
     /// <summary>
     /// Gets or sets the masking configuration (no-op).
     /// </summary>
-    public AuditMaskingConfiguration? MaskingConfiguration { get; set; }
+    public IAuditMaskingConfiguration? MaskingConfiguration { get; set; }
 }

@@ -26,7 +26,7 @@ namespace Xcaciv.Command.Interface.Attributes
         public string Command { 
             get;
             set
-            { field = CommandDescription.GetValidCommandName(value); }
+            { field = ICommandDescription.GetValidCommandName(value); }
         }
         /// <summary>
         /// version of the command

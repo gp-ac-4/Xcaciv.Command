@@ -15,7 +15,7 @@ namespace Xcaciv.Command.Tests
             public List<EnvironmentChangeLog> EnvironmentLogs { get; } = new();
             public List<AuditEvent> AuditEvents { get; } = new();
 
-            public AuditMaskingConfiguration? MaskingConfiguration { get; set; }
+            public IAuditMaskingConfiguration? MaskingConfiguration { get; set; }
 
             public void LogCommandExecution(
                 string commandName,
