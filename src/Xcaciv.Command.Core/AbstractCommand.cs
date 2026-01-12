@@ -172,13 +172,18 @@ namespace Xcaciv.Command.Core
                 {
                     try
                     {
-                        // Get the typed value from the parameter
-                        var value = parameterValue.RawValue;
-                            
-                        // Only set if value is not null and field type is compatible
-                        if (value != null && field.FieldType.IsAssignableFrom(value.GetType()))
+                        // Use reflection to call the generic GetValue<T> method with the field's type
+                        var getValue = typeof(IParameterValue).GetMethod(nameof(IParameterValue.TryGetValue));
+                        if (getValue != null)
                         {
-                            field.SetValue(this, value);
+                            var genericGetValue = getValue.MakeGenericMethod(field.FieldType);
+                            var parameters = new object?[] { null };
+                            var success = (bool)genericGetValue.Invoke(parameterValue, parameters)!;
+                            
+                            if (success && parameters[0] != null)
+                            {
+                                field.SetValue(this, parameters[0]);
+                            }
                         }
                     }
                     catch (Exception)

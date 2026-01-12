@@ -394,9 +394,19 @@ public class ParameterValueTypeConsistencyTests
         Assert.False(param.IsValid);
         Assert.NotNull(param.ValidationError);
         
-        // Value should be sentinel, not the raw string
-        Assert.IsNotType<string>(param.RawValue);
-        Assert.IsType<InvalidParameterValue>(param.RawValue);
+        // RawValue should always be the original string input
+        Assert.IsType<string>(param.RawValue);
+        Assert.Equal("invalid", param.RawValue);
+        
+        // UntypedValue should be the sentinel for invalid conversions
+        var abstractParam = param as IParameterValue;
+        Assert.NotNull(abstractParam);
+        
+        // Access UntypedValue through reflection since it's not in the interface
+        var untypedValueProp = param.GetType().GetProperty("UntypedValue");
+        Assert.NotNull(untypedValueProp);
+        var untypedValue = untypedValueProp.GetValue(param);
+        Assert.IsType<InvalidParameterValue>(untypedValue);
     }
 
     [Fact]
