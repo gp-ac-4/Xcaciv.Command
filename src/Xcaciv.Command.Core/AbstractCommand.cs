@@ -72,7 +72,8 @@ namespace Xcaciv.Command.Core
                 return $"{prefix}{baseCommand.Command,-12} {baseCommand.Description}";
             }
 
-            var commandDesc = CommandParameters.CreatePackageDescription(GetType(), null!);
+            var commandParameters = new CommandParameters();
+            var commandDesc = commandParameters.CreatePackageDescription(GetType(), null!);
             return _helpService.BuildOneLineHelp(commandDesc);
         }
 
@@ -130,7 +131,8 @@ namespace Xcaciv.Command.Core
                 return new Dictionary<string, IParameterValue>(StringComparer.OrdinalIgnoreCase);
             }
 
-            var processedParameters = CommandParameters.ProcessTypedParameters(
+            var commandParameters = new CommandParameters();
+            var processedParameters = commandParameters.ProcessParameters(
                 io.Parameters,
                 GetOrderedParameters(hasPipedInput),
                 GetFlagParameters(),
@@ -170,13 +172,18 @@ namespace Xcaciv.Command.Core
                 {
                     try
                     {
-                        // Get the typed value from the parameter
-                        var value = parameterValue.UntypedValue;
-                            
-                        // Only set if value is not null and field type is compatible
-                        if (value != null && field.FieldType.IsAssignableFrom(value.GetType()))
+                        // Use reflection to call the generic GetValue<T> method with the field's type
+                        var getValue = typeof(IParameterValue).GetMethod(nameof(IParameterValue.TryGetValue));
+                        if (getValue != null)
                         {
-                            field.SetValue(this, value);
+                            var genericGetValue = getValue.MakeGenericMethod(field.FieldType);
+                            var parameters = new object?[] { null };
+                            var success = (bool)genericGetValue.Invoke(parameterValue, parameters)!;
+                            
+                            if (success && parameters[0] != null)
+                            {
+                                field.SetValue(this, parameters[0]);
+                            }
                         }
                     }
                     catch (Exception)
@@ -197,7 +204,8 @@ namespace Xcaciv.Command.Core
         {
             var thisType = GetType();
             var attributes = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterOrderedAttribute)) as CommandParameterOrderedAttribute[] ?? Array.Empty<CommandParameterOrderedAttribute>();
-            
+
+            // when there is piped input, exclude parameters that use pipe, because the piped input will fill them
             return hasPipedInput 
                 ? attributes.Where(x => !x.UsePipe).ToArray() 
                 : attributes;
@@ -212,7 +220,8 @@ namespace Xcaciv.Command.Core
         {
             var thisType = GetType();
             var attributes = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterNamedAttribute)) as CommandParameterNamedAttribute[] ?? Array.Empty<CommandParameterNamedAttribute>();
-            
+
+            // when there is piped input, exclude parameters that use pipe, because the piped input will fill them
             return hasPipedInput 
                 ? attributes.Where(x => !x.UsePipe).ToArray() 
                 : attributes;
@@ -237,7 +246,8 @@ namespace Xcaciv.Command.Core
         {
             var thisType = GetType();
             var attributes = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterSuffixAttribute)) as CommandParameterSuffixAttribute[] ?? Array.Empty<CommandParameterSuffixAttribute>();
-            
+
+            // when there is piped input, exclude parameters that use pipe, because the piped input will fill them
             return hasPipedInput 
                 ? attributes.Where(x => !x.UsePipe).ToArray() 
                 : attributes;

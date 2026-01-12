@@ -38,7 +38,7 @@ public class StructuredAuditLogger : IAuditLogger
     /// <summary>
     /// Gets or sets the masking configuration for parameter redaction.
     /// </summary>
-    public AuditMaskingConfiguration? MaskingConfiguration { get; set; } = new AuditMaskingConfiguration();
+    public IAuditMaskingConfiguration? MaskingConfiguration { get; set; } = new AuditMaskingConfiguration();
 
     /// <summary>
     /// Log command execution using legacy method signature.

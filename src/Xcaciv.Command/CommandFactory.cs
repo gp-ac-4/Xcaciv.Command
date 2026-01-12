@@ -42,16 +42,49 @@ public class CommandFactory : ICommandFactory
 
         if (commandDescription.SubCommands.Count > 0 &&
             ioContext.Parameters != null &&
-            ioContext.Parameters.Length > 0 &&
-            commandDescription.SubCommands.TryGetValue(ioContext.Parameters[0].ToUpper(), out var subCommandDescription) &&
-            subCommandDescription != null)
+            ioContext.Parameters.Length > 0)
         {
-            // Contract: SetParameters must be fast and non-blocking. This call uses ConfigureAwait(false)
-            // and synchronous wait due to ICommandFactory being synchronous.
-            ioContext.SetParameters(ioContext.Parameters[1..]).ConfigureAwait(false).GetAwaiter().GetResult();
-            return CreateCommand(subCommandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
+            // Normalize sub-command key to uppercase for consistent lookup
+            var subCommandKey = CommandDescription.GetValidCommandName(ioContext.Parameters[0], upper: true);
+            
+            if (commandDescription.SubCommands.TryGetValue(subCommandKey, out var subCommandDescription) &&
+                subCommandDescription != null)
+            {
+                // Contract: SetParameters must be fast and non-blocking. This call uses ConfigureAwait(false)
+                // and synchronous wait due to ICommandFactory being synchronous.
+                ioContext.SetParameters(ioContext.Parameters[1..]).ConfigureAwait(false).GetAwaiter().GetResult();
+                return CreateCommand(subCommandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
+            }
+            else
+            {
+                // Sub-command not found - provide detailed error message
+                var availableSubCommands = string.Join(", ", commandDescription.SubCommands.Keys);
+                throw new InvalidOperationException(
+                    $"Sub-command '{subCommandKey}' not found under root command '{commandDescription.BaseCommand}'. " +
+                    $"Available sub-commands: {availableSubCommands}. " +
+                    $"Note: Sub-command names are case-insensitive.");
+            }
         }
 
+        // No sub-commands or no parameters provided - try to execute root command directly
+        if (string.IsNullOrWhiteSpace(commandDescription.FullTypeName))
+        {
+            if (commandDescription.SubCommands.Count > 0)
+            {
+                // This is a root command with sub-commands but no direct implementation
+                var availableSubCommands = string.Join(", ", commandDescription.SubCommands.Keys);
+                throw new InvalidOperationException(
+                    $"Command '{commandDescription.BaseCommand}' requires a sub-command. " +
+                    $"Available sub-commands: {availableSubCommands}. " +
+                    $"Usage: {commandDescription.BaseCommand} <sub-command> [options]");
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    $"Command '{commandDescription.BaseCommand}' has no implementation type defined.");
+            }
+        }
+        
         return CreateCommand(commandDescription.FullTypeName, commandDescription.PackageDescription.FullPath);
     }
 

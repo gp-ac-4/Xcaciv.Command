@@ -51,5 +51,5 @@ public interface IAuditLogger
     /// Gets or sets the masking configuration for parameter redaction in audit logs.
     /// If null, no masking is applied.
     /// </summary>
-    AuditMaskingConfiguration? MaskingConfiguration { get; set; }
+    IAuditMaskingConfiguration? MaskingConfiguration { get; set; }
 }

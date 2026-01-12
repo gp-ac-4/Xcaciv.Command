@@ -93,27 +93,45 @@ namespace Xcaciv.Command.Tests.TestImpementations
         public override string ToString()
         {
             string output = string.Empty;
-            if (HasPipedInput)
+            
+            // Gather child output first if there are children
+            if (Children.Count > 0)
             {
                 output = GatherChildOutput();
             }
 
-            output += string.Join(Environment.NewLine, Output);
+            // Add this context's output
+            var localOutput = string.Join(Environment.NewLine, Output);
+            if (!string.IsNullOrEmpty(output) && !string.IsNullOrEmpty(localOutput))
+            {
+                // Both have content - join with newline
+                output += Environment.NewLine + localOutput;
+            }
+            else if (!string.IsNullOrEmpty(localOutput))
+            {
+                // Only local output
+                output = localOutput;
+            }
+            // else: only child output (already in 'output') or nothing
 
             return output;
         }
 
         public string GatherChildOutput()
         {
-            // combine output into one string seperated by new lines
+            // combine output into one string separated by new lines
             // and then add the children output
-            string output = String.Empty;
-            foreach (var chidl in Children)
+            var childOutputs = new List<string>();
+            foreach (var child in Children)
             {
-                output += chidl.ToString() + Environment.NewLine;
+                var childOutput = child.ToString();
+                if (!string.IsNullOrEmpty(childOutput))
+                {
+                    childOutputs.Add(childOutput);
+                }
             }
 
-            return output;
+            return string.Join(Environment.NewLine, childOutputs);
         }
     }
 }

@@ -217,7 +217,8 @@ public class DefaultParameterConverter : IParameterConverter
             }
         }
         
-        return convertedValue;
+        // Return sentinel if conversion failed or value is null, otherwise return the converted value
+        return convertedValue ?? InvalidParameterValue.Instance;
     }
 
     public T ValidateAndConvert<T>(string parameterName, string rawValue, out string validationError, out bool isValid)

@@ -9,7 +9,6 @@ namespace Xcaciv.Command.Interface.Attributes
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public class CommandRootAttribute : Attribute
     {
-        private string _command = "";
         /// <summary>
         /// define how this command is to be called
         /// </summary>
@@ -25,11 +24,10 @@ namespace Xcaciv.Command.Interface.Attributes
         /// </summary>
         /// <example>DIR</example>
         public string Command { 
-            get
-            { return this._command; }
+            get;
             set
-            { this._command = CommandDescription.GetValidCommandName(value); }
-        }
+            { field = CommandNameValidator.GetValidCommandName(value); }
+        } = "";
         /// <summary>
         /// What does this command do
         /// </summary>

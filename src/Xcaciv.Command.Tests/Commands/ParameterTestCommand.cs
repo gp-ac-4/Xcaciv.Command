@@ -42,7 +42,7 @@ namespace Xcaciv.Command.Tests.Commands
             {
                 var valueStr = pair.Value.DataType == typeof(bool)
                     ? pair.Value.GetValue<bool>().ToString().ToLowerInvariant()
-                    : pair.Value.UntypedValue?.ToString() ?? string.Empty;
+                    : pair.Value.RawValue?.ToString() ?? string.Empty;
                 
                 builder.AppendLine($"{pair.Key} = {valueStr}");
             }
@@ -77,7 +77,8 @@ namespace Xcaciv.Command.Tests.Commands
                 suffixAttrs = suffixAttrs.Where(x => !x.UsePipe).ToArray();
             }
 
-            return CommandParameters.ProcessTypedParameters(
+            var commandParameters = new CommandParameters();
+            return commandParameters.ProcessParameters(
                 parameters,
                 orderedAttrs,
                 _flags ?? Array.Empty<CommandFlagAttribute>(),

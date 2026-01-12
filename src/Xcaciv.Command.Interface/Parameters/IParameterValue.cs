@@ -29,6 +29,11 @@ public interface IParameterValue
     /// <summary>
     /// Gets the boxed value as produced by conversion (may be InvalidParameterValue when invalid).
     /// </summary>
+    string RawValue { get; }
+
+    /// <summary>
+    /// Gets the boxed value as produced by conversion (may be InvalidParameterValue when invalid).
+    /// </summary>
     object? UntypedValue { get; }
 
     /// <summary>

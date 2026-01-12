@@ -99,7 +99,8 @@ public class Crawler : ICrawler
 
                         try
                         {
-                            var newDescription = CommandParameters.CreatePackageDescription(commandType, packagDesc);
+                            var commandParameters = new CommandParameters();
+                            var newDescription = commandParameters.CreatePackageDescription(commandType, packagDesc);
 
                             // when it is a sub command, we need to add it to a parent if it already exists
                             if (newDescription.SubCommands.Count > 0 && commands.TryGetValue(newDescription.BaseCommand, out ICommandDescription? description))
