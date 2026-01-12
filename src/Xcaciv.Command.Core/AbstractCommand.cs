@@ -199,7 +199,8 @@ namespace Xcaciv.Command.Core
         {
             var thisType = GetType();
             var attributes = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterOrderedAttribute)) as CommandParameterOrderedAttribute[] ?? Array.Empty<CommandParameterOrderedAttribute>();
-            
+
+            // when there is piped input, exclude parameters that use pipe, because the piped input will fill them
             return hasPipedInput 
                 ? attributes.Where(x => !x.UsePipe).ToArray() 
                 : attributes;
@@ -214,7 +215,8 @@ namespace Xcaciv.Command.Core
         {
             var thisType = GetType();
             var attributes = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterNamedAttribute)) as CommandParameterNamedAttribute[] ?? Array.Empty<CommandParameterNamedAttribute>();
-            
+
+            // when there is piped input, exclude parameters that use pipe, because the piped input will fill them
             return hasPipedInput 
                 ? attributes.Where(x => !x.UsePipe).ToArray() 
                 : attributes;
@@ -239,7 +241,8 @@ namespace Xcaciv.Command.Core
         {
             var thisType = GetType();
             var attributes = Attribute.GetCustomAttributes(thisType, typeof(CommandParameterSuffixAttribute)) as CommandParameterSuffixAttribute[] ?? Array.Empty<CommandParameterSuffixAttribute>();
-            
+
+            // when there is piped input, exclude parameters that use pipe, because the piped input will fill them
             return hasPipedInput 
                 ? attributes.Where(x => !x.UsePipe).ToArray() 
                 : attributes;

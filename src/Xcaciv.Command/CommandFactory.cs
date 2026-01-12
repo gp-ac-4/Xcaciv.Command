@@ -43,7 +43,7 @@ public class CommandFactory : ICommandFactory
         if (commandDescription.SubCommands.Count > 0 &&
             ioContext.Parameters != null &&
             ioContext.Parameters.Length > 0 &&
-            commandDescription.SubCommands.TryGetValue(ioContext.Parameters[0].ToUpper(), out var subCommandDescription) &&
+            commandDescription.SubCommands.TryGetValue(ioContext.Parameters[0], out var subCommandDescription) &&
             subCommandDescription != null)
         {
             // Contract: SetParameters must be fast and non-blocking. This call uses ConfigureAwait(false)

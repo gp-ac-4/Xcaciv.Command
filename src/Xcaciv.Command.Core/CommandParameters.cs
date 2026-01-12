@@ -130,9 +130,9 @@ public class CommandParameters
         foreach (var parameter in commandFlagAttributes ?? Array.Empty<CommandFlagAttribute>())
         {
             var index = 0;
-            Regex fullName = new Regex("-{1,2}" + parameter.Name);
+            Regex fullName = new Regex("-{1,2}" + parameter.Name, RegexOptions.IgnoreCase);
             Regex abbrName = string.IsNullOrEmpty(parameter.ShortAlias) ? new Regex("^$") :
-                new Regex("-{1,2}" + parameter.ShortAlias);
+                new Regex("-{1,2}" + parameter.ShortAlias, RegexOptions.IgnoreCase);
 
             var found = false;
 
@@ -163,9 +163,9 @@ public class CommandParameters
         foreach (var parameter in commandParametersNamed ?? Array.Empty<CommandParameterNamedAttribute>())
         {
             var index = 0;
-            Regex fullName = new Regex("-{1,2}" + parameter.Name);
+            Regex fullName = new Regex("-{1,2}" + parameter.Name, RegexOptions.IgnoreCase);
             Regex abbrName = string.IsNullOrEmpty(parameter.ShortAlias) ? new Regex("^$") :
-                new Regex("-{1,2}" + parameter.ShortAlias);
+                new Regex("-{1,2}" + parameter.ShortAlias, RegexOptions.IgnoreCase);
 
             var found = false;
             var foundValue = string.Empty;

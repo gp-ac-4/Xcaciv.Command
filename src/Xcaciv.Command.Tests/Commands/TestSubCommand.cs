@@ -14,7 +14,7 @@ namespace Xcaciv.Command.Packages
 {
     [CommandRegister("search", "Search for command packages using natural language terms")]
     [CommandRoot("package", "Manage command packages")]
-    [CommandParameterOrdered("terms", "Search terms")]
+    [CommandParameterOrdered("terms", "Search terms", UsePipe = true)]
     [CommandParameterNamed("take", "Number of results to return (default 20, max 1000)", DataType = typeof(int), DefaultValue = "200")]
     [CommandFlag("prerelease", "Include prerelease packages", DataType = typeof(bool))]
     [CommandParameterNamed("source", "Package source URL (HTTPS)")]
@@ -38,7 +38,7 @@ namespace Xcaciv.Command.Packages
             {
                 var value = parameter.Value;
                 var parameterType = value.DataType;
-                output.Append($"|{parameter.Key}/{value.Name} | {value.DataType.Name} | {value.IsValid} | {value.RawValue}|\n");
+                output.Append($"|{value.Name} | {value.DataType.Name} | {value.IsValid} | {value.RawValue}|\n");
             }
 
             return output.ToString();

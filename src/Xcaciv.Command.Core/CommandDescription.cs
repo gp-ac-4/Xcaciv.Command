@@ -30,7 +30,7 @@ public class CommandDescription : ICommandDescription
     /// sub command text
     /// used to limit the secondary command text
     /// </summary>
-    public Dictionary<string, ICommandDescription> SubCommands { get; set; } = [];
+    public Dictionary<string, ICommandDescription> SubCommands { get; set; } = new Dictionary<string, ICommandDescription>(StringComparer.OrdinalIgnoreCase);
     /// <summary>
     /// Fully Namespaced Type Name
     /// </summary>
