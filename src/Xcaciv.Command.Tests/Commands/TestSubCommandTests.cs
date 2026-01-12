@@ -29,25 +29,17 @@ namespace Xcaciv.Command.Tests.Commands
             // simulate user input
             await commands.Run("package search \"some phrase\" -tAke 99 -prerelease -verbosity normal", textio, env);
 
-            // Verify we got a child context
-            Assert.NotEmpty(textio.Children);
-            
-            // Get the child context output
-            //var childContext = textio.Children.First();
-            
-            // Verify the child has output
-            //Assert.NotEmpty(childContext.Output);
-            
-            // Check if the command executed successfully (no ERROR: prefix)
-            //var firstOutput = childContext.Output.First();
-            //Assert.DoesNotContain("ERROR:", firstOutput);
-
-            // Check all available output
+            // Check all available output (includes children)
             var allOutput = textio.ToString();
-
-            // Verify we got expected content - either in the aggregated output or trace
-            Assert.True(allOutput.Contains("Parameters") || allOutput.Contains("Piped Chunk"),
-                $"Expected output to contain 'Parameters' or 'Piped Chunk', got: {allOutput}");
+            
+            // The command should produce some output
+            Assert.NotEmpty(allOutput);
+            
+            // Verify no errors in the output
+            Assert.DoesNotContain("ERROR:", allOutput);
+            
+            // Verify it's showing parameters (basic smoke test)
+            Assert.Contains("Parameters", allOutput);
         }
 
         [Fact()]
