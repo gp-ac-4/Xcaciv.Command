@@ -36,19 +36,23 @@ public class CommandParameters
         {
             if (Attribute.GetCustomAttribute(commandType, typeof(CommandRootAttribute)) is CommandRootAttribute rootAttribute)
             {
+                // Normalize command names to uppercase for consistent lookups
+                var rootCommandName = CommandDescription.GetValidCommandName(rootAttribute.Command, upper: true);
+                var subCommandName = CommandDescription.GetValidCommandName(attributes.Command, upper: true);
+                
                 // this command is a sub command, add it to the parent
                 if (description == null)
                 {
                     return new CommandDescription()
                     {
-                        BaseCommand = rootAttribute.Command,
+                        BaseCommand = rootCommandName,
                         PackageDescription = packagDesc,
-                        SubCommands = new Dictionary<string, ICommandDescription>()
+                        SubCommands = new Dictionary<string, ICommandDescription>(StringComparer.OrdinalIgnoreCase)
                                     {
-                                        { attributes.Command,
+                                        { subCommandName,
                                         new CommandDescription()
                                         {
-                                            BaseCommand = attributes.Command,
+                                            BaseCommand = subCommandName,
                                             FullTypeName = commandType.FullName ?? String.Empty,
                                             PackageDescription = packagDesc
                                         } }
@@ -57,9 +61,9 @@ public class CommandParameters
                 }
                 else
                 {
-                    description.SubCommands[attributes.Command] = new CommandDescription()
+                    description.SubCommands[subCommandName] = new CommandDescription()
                     {
-                        BaseCommand = attributes.Command,
+                        BaseCommand = subCommandName,
                         FullTypeName = commandType.FullName ?? String.Empty,
                         PackageDescription = packagDesc
                     };

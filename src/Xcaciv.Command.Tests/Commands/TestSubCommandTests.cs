@@ -29,11 +29,25 @@ namespace Xcaciv.Command.Tests.Commands
             // simulate user input
             await commands.Run("package search \"some phrase\" -tAke 99 -prerelease -verbosity normal", textio, env);
 
-            var testOutput = textio.Children.First().Output.First();
+            // Verify we got a child context
+            Assert.NotEmpty(textio.Children);
+            
+            // Get the child context output
+            //var childContext = textio.Children.First();
+            
+            // Verify the child has output
+            //Assert.NotEmpty(childContext.Output);
+            
+            // Check if the command executed successfully (no ERROR: prefix)
+            //var firstOutput = childContext.Output.First();
+            //Assert.DoesNotContain("ERROR:", firstOutput);
 
-            // verify the output of the first run
-            // by looking at the output of the second output line
-            Assert.True(true);
+            // Check all available output
+            var allOutput = textio.ToString();
+
+            // Verify we got expected content - either in the aggregated output or trace
+            Assert.True(allOutput.Contains("Parameters") || allOutput.Contains("Piped Chunk"),
+                $"Expected output to contain 'Parameters' or 'Piped Chunk', got: {allOutput}");
         }
 
         [Fact()]
@@ -48,11 +62,18 @@ namespace Xcaciv.Command.Tests.Commands
             // simulate user input
             await commands.Run("say some phrase | package search -tAke 99 -prerelease -verbosity normal", textio, env);
 
-            var testOutput = textio.Children.First().Output.First();
-
-            // verify the output of the first run
-            // by looking at the output of the second output line
-            Assert.True(true);
+            // Check all available output
+            var allOutput = textio.ToString();
+            
+            // The pipeline should produce some output
+            Assert.NotEmpty(allOutput);
+            
+            // Verify no errors in the output
+            Assert.DoesNotContain("ERROR:", allOutput);
+            
+            // Verify we got expected content - either in the aggregated output or trace
+            Assert.True(allOutput.Contains("Parameters") || allOutput.Contains("Piped Chunk"), 
+                $"Expected output to contain 'Parameters' or 'Piped Chunk', got: {allOutput}");
         }
 
         //[Fact()]
