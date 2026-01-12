@@ -35,7 +35,7 @@ namespace Xcaciv.Command.Tests
             _output.WriteLine("Processed Parameters:");
             foreach (var kvp in processedParams)
             {
-                var valueStr = kvp.Value.UntypedValue?.ToString() ?? "null";
+                var valueStr = kvp.Value.RawValue?.ToString() ?? "null";
                 _output.WriteLine($"  {kvp.Key} = '{valueStr}' (Type: {kvp.Value.DataType.Name}, IsValid: {kvp.Value.IsValid})");
             }
 

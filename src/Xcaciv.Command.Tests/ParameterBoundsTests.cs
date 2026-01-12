@@ -50,7 +50,7 @@ namespace Xcaciv.Command.Tests
 
             // Assert
             Assert.True(parameterLookup.ContainsKey("name"));
-            Assert.Equal("defaultValue", parameterLookup["name"].UntypedValue);
+            Assert.Equal("defaultValue", parameterLookup["name"].RawValue);
         }
 
         /// <summary>
@@ -134,7 +134,7 @@ namespace Xcaciv.Command.Tests
 
             // Assert
             Assert.True(parameterLookup.ContainsKey("trailing"));
-            Assert.Equal("defaultValue", parameterLookup["trailing"].UntypedValue);
+            Assert.Equal("defaultValue", parameterLookup["trailing"].RawValue);
         }
 
         /// <summary>
@@ -221,7 +221,7 @@ namespace Xcaciv.Command.Tests
 
             // Assert
             Assert.True(parameterLookup.ContainsKey("trailing"));
-            Assert.Equal("defaultValue", parameterLookup["trailing"].UntypedValue);
+            Assert.Equal("defaultValue", parameterLookup["trailing"].RawValue);
         }
     }
 }

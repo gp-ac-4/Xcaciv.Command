@@ -173,7 +173,7 @@ namespace Xcaciv.Command.Core
                     try
                     {
                         // Get the typed value from the parameter
-                        var value = parameterValue.UntypedValue;
+                        var value = parameterValue.RawValue;
                             
                         // Only set if value is not null and field type is compatible
                         if (value != null && field.FieldType.IsAssignableFrom(value.GetType()))

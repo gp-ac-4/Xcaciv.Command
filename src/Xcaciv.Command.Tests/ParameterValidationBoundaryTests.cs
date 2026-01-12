@@ -27,7 +27,7 @@ namespace Xcaciv.Command.Tests
             _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters);
 
             // Assert - Empty string should be valid
-            Assert.Equal("", parameterLookup["name"].UntypedValue);
+            Assert.Equal("", parameterLookup["name"].RawValue);
         }
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace Xcaciv.Command.Tests
             _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters);
 
             // Assert
-            Assert.Equal(longString, parameterLookup["text"].UntypedValue);
+            Assert.Equal(longString, parameterLookup["text"].RawValue);
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace Xcaciv.Command.Tests
             _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters);
 
             // Assert - Special characters should pass through
-            Assert.Equal("test!@#$%^&*()", parameterLookup["text"].UntypedValue);
+            Assert.Equal("test!@#$%^&*()", parameterLookup["text"].RawValue);
         }
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace Xcaciv.Command.Tests
             _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters);
 
             // Assert - Metacharacters should be treated as literals
-            Assert.Equal(regexChars, parameterLookup["text"].UntypedValue);
+            Assert.Equal(regexChars, parameterLookup["text"].RawValue);
         }
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace Xcaciv.Command.Tests
             _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters);
 
             // Assert
-            Assert.Equal(unicodeStr, parameterLookup["text"].UntypedValue);
+            Assert.Equal(unicodeStr, parameterLookup["text"].RawValue);
         }
 
         /// <summary>
@@ -180,7 +180,7 @@ namespace Xcaciv.Command.Tests
             _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters);
 
             // Assert - Whitespace should be preserved
-            Assert.Equal(parameterWithSpaces, parameterLookup["text"].UntypedValue);
+            Assert.Equal(parameterWithSpaces, parameterLookup["text"].RawValue);
         }
 
         /// <summary>
@@ -200,7 +200,7 @@ namespace Xcaciv.Command.Tests
             _commandParameters.ProcessOrderedParameters(parameterList, parameterLookup, parameters);
 
             // Assert
-            Assert.Equal(parameterWithNewlines, parameterLookup["text"].UntypedValue);
+            Assert.Equal(parameterWithNewlines, parameterLookup["text"].RawValue);
         }
 
         /// <summary>
@@ -227,9 +227,9 @@ namespace Xcaciv.Command.Tests
 
             // Assert
             Assert.Equal(3, parameterLookup.Count);
-            Assert.Equal("", parameterLookup["text1"].UntypedValue);
-            Assert.Equal("normal", parameterLookup["text2"].UntypedValue);
-            Assert.Equal(500, parameterLookup["text3"].UntypedValue.ToString().Length);
+            Assert.Equal("", parameterLookup["text1"].RawValue);
+            Assert.Equal("normal", parameterLookup["text2"].RawValue);
+            Assert.Equal(500, parameterLookup["text3"].RawValue.ToString().Length);
         }
     }
 }

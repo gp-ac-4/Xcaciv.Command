@@ -31,7 +31,7 @@ namespace Xcaciv.Command.Tests
             _output.WriteLine("Processed Parameters:");
             foreach (var kvp in processedParams)
             {
-                _output.WriteLine($"  {kvp.Key} = '{kvp.Value.UntypedValue}'");
+                _output.WriteLine($"  {kvp.Key} = '{kvp.Value.RawValue}'");
             }
             _output.WriteLine($"\nFirstParam field = '{command.FirstParam}'");
             _output.WriteLine($"SecondParam field = '{command.SecondParam}'");
@@ -57,7 +57,7 @@ namespace Xcaciv.Command.Tests
             _output.WriteLine("Processed Parameters:");
             foreach (var kvp in processedParams)
             {
-                _output.WriteLine($"  {kvp.Key} = '{kvp.Value.UntypedValue}'");
+                _output.WriteLine($"  {kvp.Key} = '{kvp.Value.RawValue}'");
             }
             _output.WriteLine($"\nNamedParam field = '{command.NamedParam ?? "null"}'");
 
@@ -81,7 +81,7 @@ namespace Xcaciv.Command.Tests
             _output.WriteLine("Processed Parameters:");
             foreach (var kvp in processedParams)
             {
-                _output.WriteLine($"  {kvp.Key} = '{kvp.Value.UntypedValue}'");
+                _output.WriteLine($"  {kvp.Key} = '{kvp.Value.RawValue}'");
             }
             _output.WriteLine($"\nFlagParam field = {command.FlagParam}");
 

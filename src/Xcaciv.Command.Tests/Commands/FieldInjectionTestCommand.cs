@@ -67,7 +67,7 @@ namespace Xcaciv.Command.Tests.Commands
         {
             if (parameters.TryGetValue(key, out var param) && param.IsValid)
             {
-                return param.UntypedValue?.ToString() ?? "null";
+                return param.RawValue?.ToString() ?? "null";
             }
             return "missing";
         }

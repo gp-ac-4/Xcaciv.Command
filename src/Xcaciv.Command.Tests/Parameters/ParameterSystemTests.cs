@@ -395,8 +395,8 @@ public class ParameterValueTypeConsistencyTests
         Assert.NotNull(param.ValidationError);
         
         // Value should be sentinel, not the raw string
-        Assert.IsNotType<string>(param.UntypedValue);
-        Assert.IsType<InvalidParameterValue>(param.UntypedValue);
+        Assert.IsNotType<string>(param.RawValue);
+        Assert.IsType<InvalidParameterValue>(param.RawValue);
     }
 
     [Fact]

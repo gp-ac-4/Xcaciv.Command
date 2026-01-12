@@ -1,10 +1,11 @@
 ﻿using System;
+using System.ComponentModel;
 
 namespace Xcaciv.Command.Interface.Parameters
 {
     public abstract class AbstractParameterValue<T> : IParameterValue<T>, IParameterValue
     {
-        private readonly object? _boxedValue;
+        public object? UntypedValue { get; }
 
         public string Name { get; }
 
@@ -16,16 +17,14 @@ namespace Xcaciv.Command.Interface.Parameters
 
         public Type DataType { get; }
 
-        public object? UntypedValue => _boxedValue;
-
         protected AbstractParameterValue(string name, string raw, object? value, bool isValid, string? validationError)
         {
             Name = string.IsNullOrWhiteSpace(name)
                 ? throw new ArgumentNullException(nameof(name))
                 : name;
 
-            RawValue = raw ?? string.Empty;
-            _boxedValue = value;
+            RawValue = raw;
+            UntypedValue = value;
             IsValid = isValid;
             ValidationError = validationError;
             DataType = typeof(T);
@@ -59,26 +58,20 @@ namespace Xcaciv.Command.Interface.Parameters
                     "Hint: Ensure you're requesting the correct type.");
             }
 
-            if (_boxedValue == null)
+            if (UntypedValue == null && TryConvert(typeof(TResult), out object? converted))
             {
-                if (typeof(TResult).IsValueType && Nullable.GetUnderlyingType(typeof(TResult)) == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Cannot convert null to non-nullable value type {typeof(TResult).Name} for parameter '{Name}'.");
-                }
-
-                return default!;
+                return (TResult)converted!;
             }
 
-            if (_boxedValue is TResult requested)
+            if (UntypedValue is TResult requested)
             {
                 return requested;
             }
 
-            var actualType = _boxedValue.GetType();
+            var actualType = UntypedValue.GetType();
             throw new InvalidCastException(
                 $"Type mismatch for parameter '{Name}':\n" +
-                $"  Stored as: {actualType.Name} (value: {_boxedValue})\n" +
+                $"  Stored as: {actualType.Name} (value: {UntypedValue})\n" +
                 $"  Requested as: {typeof(TResult).Name}\n" +
                 $"  DataType indicates: {DataType.Name}\n" +
                 $"  Raw value: '{RawValue}'\n" +
@@ -89,12 +82,18 @@ namespace Xcaciv.Command.Interface.Parameters
         {
             value = default!;
 
-            if (!IsValid || _boxedValue == null || _boxedValue is InvalidParameterValue)
+            if (!IsValid || UntypedValue is InvalidParameterValue)
             {
                 return false;
             }
-
-            if (_boxedValue is TResult requested)
+            
+            if (UntypedValue == null && TryConvert(typeof(TResult), out object? converted))
+            {
+                value = (TResult)converted!;
+                return true;
+            }
+            
+            if (UntypedValue is TResult requested)
             {
                 value = requested;
                 return true;
@@ -102,5 +101,60 @@ namespace Xcaciv.Command.Interface.Parameters
 
             return false;
         }
+
+        /// <summary>
+        /// Attempts to convert the current raw value to the specified target type.
+        /// </summary>
+        /// <remarks>This method supports conversion for types that provide a static TryParse method, are
+        /// supported by a TypeConverter, or are compatible with Convert.ChangeType. If the conversion fails, the result
+        /// parameter is set to null.</remarks>
+        /// <param name="targetType">The type to which to attempt to convert the raw value.</param>
+        /// <param name="result">When this method returns, contains the converted value if the conversion succeeded; otherwise, null. This
+        /// parameter is passed uninitialized.</param>
+        /// <returns>true if the conversion was successful; otherwise, false.</returns>
+        private bool TryConvert(Type targetType, out object? result)
+        {
+            result = null;
+
+            // 1. Try built-in TryParse via reflection
+            var tryParse = targetType.GetMethod(
+                "TryParse",
+                new[] { typeof(string), targetType.MakeByRefType() }
+            );
+
+            if (tryParse != null)
+            {
+                var parameters = new object?[] { RawValue, null };
+                bool success = (bool)tryParse.Invoke(null, parameters)!;
+                if (success)
+                {
+                    result = parameters[1];
+                    return true;
+                }
+            }
+
+            // 2. Try TypeConverter
+            var converter = TypeDescriptor.GetConverter(targetType);
+            if (converter.CanConvertFrom(typeof(string)))
+            {
+                try
+                {
+                    result = converter.ConvertFrom(RawValue);
+                    return true;
+                }
+                catch { }
+            }
+
+            // 3. Try Convert.ChangeType
+            try
+            {
+                result = Convert.ChangeType(RawValue, targetType);
+                return true;
+            }
+            catch { }
+
+            return false;
+        }
+
     }
 }
