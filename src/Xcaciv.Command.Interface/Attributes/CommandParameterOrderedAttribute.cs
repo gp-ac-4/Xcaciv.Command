@@ -14,6 +14,7 @@ namespace Xcaciv.Command.Interface.Attributes
     public class CommandParameterOrderedAttribute : AbstractCommandParameter
     {
         private string _defaultValue = "";
+        private string[] allowedValues = [];
 
         /// <summary>
         /// An unnamed parameter that is determined by the order of the value in the parameters
@@ -30,30 +31,29 @@ namespace Xcaciv.Command.Interface.Attributes
         /// input values that are allowed, anything else will throw an error
         /// case is ignored
         /// </summary>
-        public string[] AllowedValues 
-        { 
-            get;
-            set 
+        public string[] AllowedValues
+        {
+            get => allowedValues;
+            set
             {
-                field = value ?? [];
-                
+                allowedValues = value ?? [];
+
                 // Auto-set default value to first allowed value if not already set
-                if (field.Length > 0 && string.IsNullOrEmpty(_defaultValue))
+                if (allowedValues.Length > 0 && string.IsNullOrEmpty(_defaultValue))
                 {
-                    _defaultValue = field[0];
+                    _defaultValue = allowedValues[0];
                 }
-                
+
                 // Validate existing default value against new allowed values
                 if (!string.IsNullOrEmpty(_defaultValue))
                 {
-                    ValidateDefaultValue(_defaultValue, field);
+                    ValidateDefaultValue(_defaultValue, allowedValues);
                 }
             }
-        } = [];
-        /// <summary>
-        /// used when no value is provided
-        /// this satisfies the IsRequired flag
-        /// </summary>
+        }         /// <summary>
+                  /// used when no value is provided
+                  /// this satisfies the IsRequired flag
+                  /// </summary>
         public string DefaultValue 
         { 
             get => _defaultValue;
