@@ -10,7 +10,7 @@ using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
 using Xcaciv.Command.Interface.Parameters;
 
-namespace Xcaciv.Command.Packages
+namespace Xcaciv.Command.Tests.Commands
 {
     [CommandRoot("Package", "Package commands")]
     [CommandRegister("Install", "install a package")]

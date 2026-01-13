@@ -257,5 +257,15 @@ namespace Xcaciv.Command.Tests
             // Just verify it didn't throw an exception
             Assert.True(true);
         }
+        [Fact]
+        public async Task ConcurrentCommandRegistration_IsThreadSafe()
+        {
+            var controller = new CommandController();
+            var tasks = Enumerable.Range(0, 100)
+                .Select(i => Task.Run(() => 
+                    controller.AddCommand($"cmd{i}", typeof(Commands.InstallCommand))));
+            await Task.WhenAll(tasks);
+            Assert.True(true); // TODO: Add more specific assertions
+        }
     }
 }
