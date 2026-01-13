@@ -11,7 +11,8 @@ using Xcaciv.Command.FileLoader;
 using System.IO.Abstractions.TestingHelpers;
 using Moq;
 using Xcaciv.Command.Tests.TestImpementations;
-using Xcaciv.Command.Packages;
+using Xcaciv.Command.Tests.Commands;
+
 
 namespace Xcaciv.Command.Tests
 {

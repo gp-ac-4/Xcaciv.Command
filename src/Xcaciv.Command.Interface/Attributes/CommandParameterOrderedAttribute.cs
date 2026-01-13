@@ -87,5 +87,15 @@ namespace Xcaciv.Command.Interface.Attributes
                     $"Allowed values: {string.Join(", ", allowedValues)}");
             }
         }
+
+        public override string GetValueDescription()
+        {
+            string description = ValueDescription;
+            if (AllowedValues.Length > 0)
+            {
+                description += $" (Allowed values: {string.Join(", ", AllowedValues)})";
+            }
+            return description;
+        }
     }
 }
