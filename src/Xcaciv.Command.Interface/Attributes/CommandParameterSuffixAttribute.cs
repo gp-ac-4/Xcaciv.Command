@@ -9,6 +9,8 @@ namespace Xcaciv.Command.Interface.Attributes
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public class CommandParameterSuffixAttribute : AbstractCommandParameter
     {
+        private string _defaultValue = "";
+        private string[] _allowedValues = [];
 
         public CommandParameterSuffixAttribute(string name, string description) 
         { 
@@ -16,10 +18,42 @@ namespace Xcaciv.Command.Interface.Attributes
             this.ValueDescription = description;
         }
         /// <summary>
+        /// input values that are allowed, anything else will throw an error
+        /// case is ignored
+        /// </summary>
+        public string[] AllowedValues 
+        { 
+            get => _allowedValues;
+            set 
+            {
+                _allowedValues = value ?? [];
+                
+                // Auto-set default value to first allowed value if not already set
+                if (_allowedValues.Length > 0 && string.IsNullOrEmpty(_defaultValue))
+                {
+                    _defaultValue = _allowedValues[0];
+                }
+                
+                // Validate existing default value against new allowed values
+                if (!string.IsNullOrEmpty(_defaultValue))
+                {
+                    ValidateDefaultValue(_defaultValue, _allowedValues);
+                }
+            }
+        }
+        /// <summary>
         /// used when no value is provided
         /// this satisfies the IsRequired flag
         /// </summary>
-        public string DefaultValue { get; set; } = "";
+        public string DefaultValue 
+        { 
+            get => _defaultValue;
+            set 
+            {
+                ValidateDefaultValue(value, _allowedValues);
+                _defaultValue = value;
+            }
+        }
         /// <summary>
         /// specify if the value is required
         /// </summary>
@@ -29,5 +63,30 @@ namespace Xcaciv.Command.Interface.Attributes
         /// only the first parameter specified for pipeline population will be used
         /// </summary>
         public bool UsePipe { get; set; } = false;
+
+        public override string GetValueDescription()
+        {
+            string description = ValueDescription;
+            if (AllowedValues.Length > 0)
+            {
+                description += $" (Allowed values: {string.Join(", ", AllowedValues)})";
+            }
+            return description;
+        }
+
+        private void ValidateDefaultValue(string defaultValue, string[] allowedValues)
+        {
+            if (string.IsNullOrEmpty(defaultValue) || allowedValues == null || allowedValues.Length == 0)
+            {
+                return;
+            }
+
+            if (!allowedValues.Contains(defaultValue, StringComparer.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException(
+                    $"Default value '{defaultValue}' is not in the allowed values list for parameter '{Name}'. " +
+                    $"Allowed values: {string.Join(", ", allowedValues)}");
+            }
+        }
     }
 }

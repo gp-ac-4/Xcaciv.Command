@@ -9,7 +9,6 @@ using Xcaciv.Command.Core;
 using Xcaciv.Command.FileLoader;
 using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
-using Xcaciv.Command.Packages;
 using Xunit;
 
 namespace Xcaciv.Command.Tests.Commands

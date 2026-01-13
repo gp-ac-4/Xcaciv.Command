@@ -10,7 +10,7 @@ using Xcaciv.Command.Interface;
 using Xcaciv.Command.Interface.Attributes;
 using Xcaciv.Command.Interface.Parameters;
 
-namespace Xcaciv.Command.Packages
+namespace Xcaciv.Command.Tests.Commands
 {
     [CommandRegister("search", "Search for command packages using natural language terms")]
     [CommandRoot("package", "Manage command packages")]

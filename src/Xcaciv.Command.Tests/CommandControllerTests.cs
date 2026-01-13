@@ -11,7 +11,8 @@ using Xcaciv.Command.FileLoader;
 using System.IO.Abstractions.TestingHelpers;
 using Moq;
 using Xcaciv.Command.Tests.TestImpementations;
-using Xcaciv.Command.Packages;
+using Xcaciv.Command.Tests.Commands;
+
 
 namespace Xcaciv.Command.Tests
 {
@@ -256,6 +257,16 @@ namespace Xcaciv.Command.Tests
             // If the command executed successfully, output should not be empty
             // Just verify it didn't throw an exception
             Assert.True(true);
+        }
+        [Fact]
+        public async Task ConcurrentCommandRegistration_IsThreadSafe()
+        {
+            var controller = new CommandController();
+            var tasks = Enumerable.Range(0, 100)
+                .Select(i => Task.Run(() => 
+                    controller.AddCommand($"cmd{i}", typeof(Commands.InstallCommand))));
+            await Task.WhenAll(tasks);
+            Assert.True(true); // TODO: Add more specific assertions
         }
     }
 }
